@@ -252,11 +252,11 @@ def _packed_unet(
         in_channels (int): _description_
         num_classes (int): _description_
         num_blocks (list[int]): _description_
-        bilinear (bool, optional): _description_. Defaults to False.
-        alpha (float, optional): _description_. Defaults to 1.
-        num_estimators (int, optional): _description_. Defaults to 1.
-        gamma (int, optional): _description_. Defaults to 1.
-        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
+        bilinear (bool): _description_. Defaults to False.
+        alpha (float): _description_. Defaults to 1.
+        num_estimators (int): _description_. Defaults to 1.
+        gamma (int): _description_. Defaults to 1.
+        dropout_rate (float): Dropout rate for the model. Defaults to 0.0.
 
     Returns:
         PackedUNet: _description_
@@ -286,14 +286,14 @@ def packed_small_unet(
 
     Args:
         in_channels (int): Number of input channels.
-        num_classes (int): Number of output classes.
-        bilinear (bool, optional): If ``True``, use bilinear interpolation instead of
+        num_classes (int): Number of classes to predict.
+        bilinear (bool): If ``True``, use bilinear interpolation instead of
             transposed convolutions for upsampling. This can help to reduce the number
             of parameters and improve the performance of the model. Defaults to ``False``.
-        alpha (float, optional): _description_. Defaults to 1.
-        num_estimators (int, optional): _description_. Defaults to 1.
-        gamma (int, optional): _description_. Defaults to 1.
-        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
+        alpha (float): Expansion factor affecting the width of the estimators. Defaults to ``1``.
+        num_estimators (int): Number of estimators in the ensemble. Defaults to ``1``.
+        gamma (int):  Number of groups within each estimator.. Defaults to ``1``.
+        dropout_rate (float): Dropout rate for the model. Defaults to ``0.0``.
 
     Returns:
         PackedUNet: U-Net model.
@@ -324,13 +324,13 @@ def packed_unet(
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
-        bilinear (bool, optional): If ``True``, use bilinear interpolation instead
+        bilinear (bool): If ``True``, use bilinear interpolation instead
             of transposed convolutions for upsampling. This can help to reduce the number
             of parameters and improve the performance of the model. Defaults to ``False``.
-        alpha (float, optional): _description_. Defaults to 1.
-        num_estimators (int, optional): _description_. Defaults to 1.
-        gamma (int, optional): _description_. Defaults to 1.
-        dropout_rate (float, optional): Dropout rate for the model. Defaults to 0.0.
+        alpha (float): Expansion factor affecting the width of the estimators. Defaults to ``1``.
+        num_estimators (int): Number of estimators in the ensemble. Defaults to ``1``.
+        gamma (int): Number of groups within each estimator. Defaults to ``1``.
+        dropout_rate (float): Dropout rate for the model. Defaults to ``0.0``.
 
     Returns:
         PackedUNet: U-Net model.

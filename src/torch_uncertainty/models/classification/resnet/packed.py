@@ -405,19 +405,19 @@ def packed_resnet(
         arch (int): The architecture of the ResNet.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
+        dropout_rate (float): Dropout rate. Defaults to ``0``.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
-        width_multiplier (float): Width multiplier. Defaults to 1.
-        groups (int): Number of groups within each estimator.
+        width_multiplier (float): Width multiplier. Defaults to ``1``.
+        groups (int): Number of groups within each estimator group.
         style (bool, optional): Whether to use the ImageNet
             structure. Defaults to ``True``.
         normalization_layer (nn.Module, optional): Normalization layer.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
         linear_implementation (str, optional): Implementation of the
-            packed linear layer. Defaults to ``conv1d``.
+            packed linear layer. Defaults to ``"conv1d"``.
 
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet.
