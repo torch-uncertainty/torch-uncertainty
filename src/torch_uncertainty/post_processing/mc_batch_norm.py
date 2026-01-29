@@ -22,19 +22,28 @@ class MCBatchNorm(PostProcessing):
         mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Monte Carlo Batch Normalization wrapper.
+        """Monte Carlo Batch Normalization wrapper for 2d inputs.
 
         Args:
             model (nn.Module): model to be converted.
             num_estimators (int): number of estimators.
             convert (bool): whether to convert the model. Defaults to ``True``.
             mc_batch_size (int, optional): Monte Carlo batch size. The smaller the more variability
-            in the predictions. Defaults to 32.
+                in the predictions. Defaults to ``32``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
 
+        Warning:
+            The update of the batch statistics slightly differs from the method as worded in the
+            original paper but sticks to its implementation. Instead of updating the training-based
+            statistics with 1 new batch of data, we perform a direct replacement.
+            See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
+
         Note:
             This wrapper will be stochastic in eval mode only.
+
+        Note: 
+            Raise an issue if you would like a wrapper for 1d and 3d inputs.
 
         References:
             [1] `Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for batch normalized deep networks. In ICML 2018
@@ -68,13 +77,14 @@ class MCBatchNorm(PostProcessing):
         Args:
             dataloader (DataLoader): DataLoader with the post-processing dataset.
 
+        Warning:
+            The ``batch_size`` of the DataLoader (i.e. :attr:`mc_batch_size`) should be carefully
+            chosen as it will have an impact on diversity of the statistics of the MC BatchNorm
+            layers and therefore of the predictions.
+
         Note:
             This method is used to populate the MC BatchNorm layers.
             Use the post-processing dataset.
-
-        Warning:
-            The ``batch_size`` of the DataLoader should be carefully chosen as it
-            will have an impact on the statistics of the MC BatchNorm layers.
 
         Raises:
             ValueError: If there are less batches than the number of estimators.
@@ -150,9 +160,7 @@ class MCBatchNorm(PostProcessing):
                     num_features=module.num_features,
                     num_estimators=self.num_estimators,
                     eps=module.eps,
-                    momentum=module.momentum,
                     affine=module.affine,
-                    track_running_stats=module.track_running_stats,
                     device=module.weight.device,
                     dtype=module.weight.dtype,
                 )

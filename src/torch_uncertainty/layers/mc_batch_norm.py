@@ -11,22 +11,37 @@ class _MCBatchNorm(_BatchNorm):
         num_features: int,
         num_estimators: int,
         eps: float = 0.00001,
-        momentum: float = 0.1,
         affine: bool = True,
-        track_running_stats: bool = True,
         device=None,
         dtype=None,
     ) -> None:
-        super().__init__(
-            num_features,
-            eps,
-            momentum,
-            affine,
-            track_running_stats,
-            device,
-            dtype,
-        )
+        """Base class for Monte-Carlo Batch Normalization layers.
 
+        Args:
+            num_features (int): number of input features.
+            num_estimators (int): number of stochastic estimators.
+            eps (float, optional): eps arg. for the core batch normalization. Defaults to ``0.00001``.
+            affine (bool, optional): affine arg. for the core batch normalization. Defaults to `True`.
+            dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
+            device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
+                Defaults to ``None``
+
+        Warning:
+            The update of the batch statistics slightly differs from the method as worded in the
+            original paper but sticks to its implementation. Instead of updating the training-based
+            statistics with 1 new batch of data, we perform a direct replacement.
+            See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
+        """
+        super().__init__(
+            num_features=num_features,
+            eps=eps,
+            momentum=0.1,
+            affine=affine,
+            track_running_stats=False,
+            device=device,
+            dtype=dtype,
+        )
+        self.device, self.dtype = device, dtype
         if num_estimators < 1 or not isinstance(num_estimators, int):
             raise ValueError(
                 "num_estimators should be an integer greater or equal than 1. "
@@ -41,14 +56,21 @@ class _MCBatchNorm(_BatchNorm):
             "vars",
             torch.zeros(num_estimators, num_features, device=device, dtype=dtype),
         )
-
-        self.accumulate = True
         self.num_estimators = num_estimators
         self.reset_mc_statistics()
 
     @torch.no_grad()
     def forward(self, x: Tensor) -> Tensor:
         """Forward pass.
+
+        There are three different operating modes:
+        - if :attr:`training` is ``True``: we apply the batchnorm as in its normal training mode
+        - if :attr:`training` is ``False`` and :attr:`accumulate` is ``False`` we use the
+            statistics corresponding to the current :attr:`counter` value to normalize the
+            inputs
+        - if :attr:`training` is ``False`` and :attr:`accumulate` is ``True`` we compute and
+            append the statistics to increase the number of available samples for further
+            predictions.
 
         Args:
             x (Tensor): Input tensor.
@@ -74,8 +96,9 @@ class _MCBatchNorm(_BatchNorm):
     def reset_mc_statistics(self) -> None:
         """Reset the batch statistics."""
         self.counter = 0
-        self.means = torch.zeros_like(self.means)
-        self.vars = torch.zeros_like(self.vars)
+        self.accumulate = True
+        self.means = torch.zeros_like(self.means, device=self.device, dtype=self.device)
+        self.vars = torch.ones_like(self.vars, device=self.device, dtype=self.device)
 
 
 class MCBatchNorm1d(_MCBatchNorm):
@@ -84,17 +107,20 @@ class MCBatchNorm1d(_MCBatchNorm):
     Args:
         num_features (int): Number of features.
         num_estimators (int): Number of estimators.
-        eps (float, optional): Epsilon. Defaults to 0.00001.
-        momentum (float, optional): Momentum. Defaults to 0.1.
-        affine (bool, optional): Affine. Defaults to True.
-        track_running_stats (bool, optional): Track running statistics.
-            Defaults to True.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+        eps (float, optional): Epsilon. Defaults to ``0.00001``.
+        affine (bool, optional): Affine. Defaults to ``True``.
+        device (optional): Device. Defaults to ``None``.
+        dtype (optional): Data type. Defaults to ``None``.
 
     Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
+
+    Warning:
+        The update of the batch statistics slightly differs from the method as worded in the
+        original paper but sticks to its implementation. Instead of updating the training-based
+        statistics with 1 new batch of data, we perform a direct replacement.
+        See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
     """
 
     def _check_input_dim(self, inputs) -> None:
@@ -108,17 +134,20 @@ class MCBatchNorm2d(_MCBatchNorm):
     Args:
         num_features (int): Number of features.
         num_estimators (int): Number of estimators.
-        eps (float, optional): Epsilon. Defaults to 0.00001.
-        momentum (float, optional): Momentum. Defaults to 0.1.
-        affine (bool, optional): Affine. Defaults to True.
-        track_running_stats (bool, optional): Track running statistics.
-            Defaults to True.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+        eps (float, optional): Epsilon. Defaults to ``0.00001``.
+        affine (bool, optional): Affine. Defaults to ``True``.
+        device (optional): Device. Defaults to ``None``.
+        dtype (optional): Data type. Defaults to ``None``.
 
     Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
+
+    Warning:
+        The update of the batch statistics slightly differs from the method as worded in the
+        original paper but sticks to its implementation. Instead of updating the training-based
+        statistics with 1 new batch of data, we perform a direct replacement.
+        See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
     """
 
     def _check_input_dim(self, inputs) -> None:
@@ -132,17 +161,20 @@ class MCBatchNorm3d(_MCBatchNorm):
     Args:
         num_features (int): Number of features.
         num_estimators (int): Number of estimators.
-        eps (float, optional): Epsilon. Defaults to 0.00001.
-        momentum (float, optional): Momentum. Defaults to 0.1.
-        affine (bool, optional): Affine. Defaults to True.
-        track_running_stats (bool, optional): Track running statistics.
-            Defaults to True.
-        device (optional): Device. Defaults to None.
-        dtype (optional): Data type. Defaults to None.
+        eps (float, optional): Epsilon. Defaults to ``0.00001``.
+        affine (bool, optional): Affine. Defaults to ``True``.
+        device (optional): Device. Defaults to ``None``.
+        dtype (optional): Data type. Defaults to ``None``.
 
     Warning:
         This layer should not be used out of the corresponding wrapper.
         Check MCBatchNorm in torch_uncertainty/post_processing/.
+
+    Warning:
+        The update of the batch statistics slightly differs from the method as worded in the
+        original paper but sticks to its implementation. Instead of updating the training-based
+        statistics with 1 new batch of data, we perform a direct replacement.
+        See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
     """
 
     def _check_input_dim(self, inputs) -> None:
