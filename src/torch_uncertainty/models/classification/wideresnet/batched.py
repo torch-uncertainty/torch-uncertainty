@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Literal
 
+from einops import repeat
 from torch import Tensor, nn
 from torch.nn.functional import relu
 
@@ -84,11 +85,16 @@ class _BatchWideResNet(nn.Module):
         style: Literal["imagenet", "cifar"] = "imagenet",
         activation_fn: Callable = relu,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+        repeat_strategy: Literal["legacy", "paper"] = "legacy",
     ) -> None:
+        if repeat_strategy not in ("legacy", "paper"):
+            raise ValueError(f"Unknown repeat_strategy. Got {repeat_strategy}.")
+
         super().__init__()
         self.num_estimators = num_estimators
         self.activation_fn = activation_fn
         self.in_planes = 16
+        self.repeat_strategy = repeat_strategy
 
         if (depth - 4) % 6 != 0:
             raise ValueError(f"Wide-resnet depth should be 6n+4. Got {depth}.")
@@ -212,8 +218,9 @@ class _BatchWideResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def feats_forward(self, x: Tensor) -> Tensor:
-        out = x.repeat(self.num_estimators, 1, 1, 1)
-        out = self.activation_fn(self.bn1(self.conv1(out)))
+        if not self.training or self.repeat_strategy == "legacy":
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
+        out = self.activation_fn(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -235,6 +242,7 @@ def batched_wideresnet28x10(
     style: Literal["imagenet", "cifar"] = "imagenet",
     activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+    repeat_strategy: Literal["legacy", "paper"] = "paper",
 ) -> _BatchWideResNet:
     """BatchEnsemble of Wide-ResNet-28x10.
 
@@ -252,6 +260,13 @@ def batched_wideresnet28x10(
             ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.
             Defaults to ``torch.nn.BatchNorm2d``.
+        repeat_strategy ("legacy"|"paper", optional): The repeat
+            strategy to use during training:
+
+            - "legacy": Repeat inputs for each estimator during both training
+              and evaluation.
+            - "paper"(default): Repeat inputs for each estimator only during
+              evaluation.
 
     Returns:
         _BatchWideResNet: A BatchEnsemble-style Wide-ResNet-28x10.
@@ -268,4 +283,5 @@ def batched_wideresnet28x10(
         style=style,
         activation_fn=activation_fn,
         normalization_layer=normalization_layer,
+        repeat_strategy=repeat_strategy,
     )

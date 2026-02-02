@@ -1,6 +1,7 @@
 from typing import Literal
 
 import torch.nn.functional as F
+from einops import repeat
 from torch import Tensor, nn
 
 from torch_uncertainty.layers import MaskedConv2d, MaskedLinear
@@ -168,13 +169,18 @@ class _MaskedResNet(nn.Module):
         style: Literal["imagenet", "cifar"] = "imagenet",
         in_planes: int = 64,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+        repeat_strategy: Literal["legacy", "paper"] = "legacy",
     ) -> None:
+        if repeat_strategy not in ("legacy", "paper"):
+            raise ValueError(f"Unknown repeat_strategy. Got {repeat_strategy}.")
+
         super().__init__()
         self.in_channels = in_channels
         self.in_planes = in_planes
         block_planes = self.in_planes
 
         self.num_estimators = num_estimators
+        self.repeat_strategy = repeat_strategy
 
         if style == "imagenet":
             self.conv1 = nn.Conv2d(
@@ -304,8 +310,9 @@ class _MaskedResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x: Tensor) -> Tensor:
-        out = x.repeat(self.num_estimators, 1, 1, 1)
-        out = F.relu(self.bn1(self.conv1(out)))
+        if not self.training or self.repeat_strategy == "legacy":
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
+        out = F.relu(self.bn1(self.conv1(x)))
         out = self.optional_pool(out)
         out = self.layer1(out)
         out = self.layer2(out)
@@ -329,6 +336,7 @@ def masked_resnet(
     dropout_rate: float = 0,
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
+    repeat_strategy: Literal["legacy", "paper"] = "paper",
 ) -> _MaskedResNet:
     """Masksembles of ResNet.
 
@@ -342,9 +350,16 @@ def masked_resnet(
         groups (int): Number of groups within each estimator. Defaults to 1.
         conv_bias (bool): Whether to use bias in convolutions. Defaults to
             ``True``.
-        dropout_rate (float): Dropout rate. Defaults to 0.
-        style (str, optional): The style of the model. Defaults to "imagenet".
+        dropout_rate (float): Dropout rate. Defaults to ``0``.
+        style (str, optional): The style of the model. Defaults to ``"imagenet"``.
         normalization_layer (nn.Module, optional): Normalization layer.
+        repeat_strategy ("legacy"|"paper", optional): The repeat
+            strategy to use during training:
+
+            - "legacy": Repeat inputs for each estimator during both training
+              and evaluation.
+            - "paper"(default): Repeat inputs for each estimator only during
+              evaluation.
 
     Returns:
         _MaskedResNet: A Masksembles-style ResNet.
@@ -364,4 +379,5 @@ def masked_resnet(
         style=style,
         in_planes=int(in_planes * width_multiplier),
         normalization_layer=normalization_layer,
+        repeat_strategy=repeat_strategy,
     )

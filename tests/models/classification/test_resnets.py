@@ -58,6 +58,11 @@ class TestMaskedResnet:
     def test_main(self) -> None:
         model = masked_resnet(1, 10, 20, 2, 2)
         with torch.no_grad():
+            model(torch.randn(2, 1, 32, 32))
+            model(torch.randn(4, 1, 32, 32))
+
+        model = masked_resnet(1, 10, 20, 2, 2, repeat_strategy="legacy")
+        with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
 
     def test_error(self) -> None:
@@ -70,6 +75,12 @@ class TestBatchedResnet:
 
     def test_main(self) -> None:
         model = batched_resnet(1, 10, 20, 2, conv_bias=True)
+        with torch.no_grad():
+            model(torch.randn(1, 1, 32, 32))
+            model(torch.randn(2, 1, 32, 32))
+            model(torch.randn(5, 1, 32, 32))
+
+        model = batched_resnet(1, 10, 20, 2, repeat_strategy="legacy")
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
 

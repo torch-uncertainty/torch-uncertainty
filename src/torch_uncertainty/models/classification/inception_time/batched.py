@@ -1,4 +1,6 @@
 # Code inspired by https://github.com/timeseriesAI/tsai/blob/main/tsai/models/InceptionTime.py
+from typing import Literal
+
 import torch
 from einops import repeat
 from torch import Tensor, nn
@@ -66,7 +68,11 @@ class _BatchedInceptionTime(nn.Module):
         num_blocks: int = 6,
         dropout: float = 0.0,
         residual: bool = True,
-    ):
+        repeat_strategy: Literal["legacy", "paper"] = "legacy",
+    ) -> None:
+        if repeat_strategy not in ("legacy", "paper"):
+            raise ValueError(f"Unknown repeat_strategy. Got {repeat_strategy}.")
+
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -75,7 +81,7 @@ class _BatchedInceptionTime(nn.Module):
         self.embed_dim = embed_dim
         self.num_blocks = num_blocks
         self.residual = residual
-
+        self.repeat_strategy = repeat_strategy
         self.layers = nn.ModuleList()
         self.shortcut = nn.ModuleList() if residual else None
 
@@ -116,7 +122,8 @@ class _BatchedInceptionTime(nn.Module):
         Returns:
             Tensor: Output tensor of shape (batch_size, num_classes).
         """
-        x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
+        if not self.training or self.repeat_strategy == "legacy":
+            x = repeat(x, "b ... -> (m b) ...", m=self.num_estimators)
         res = x
         for i, layer in enumerate(self.layers):
             x = layer(x)
@@ -139,29 +146,38 @@ def batched_inception_time(
     num_blocks: int = 6,
     dropout: float = 0.0,
     residual: bool = True,
+    repeat_strategy: Literal["legacy", "paper"] = "paper",
 ) -> _BatchedInceptionTime:
-    """Create a BatchEnsemble InceptionTime model.
+    """BatchEnsemble of InceptionTime.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
         num_estimators (int): Number of estimators for BatchEnsemble.
-        kernel_size (int): Size of the convolutional kernels.
-        embed_dim (int): Dimension of the embedding.
-        num_blocks (int): Number of inception blocks.
-        dropout (float): Dropout rate.
-        residual (bool): Whether to use residual connections.
+        kernel_size (int): Size of the convolutional kernels. Default is ``40``.
+        embed_dim (int): Dimension of the embedding. Default is ``32``.
+        num_blocks (int): Number of inception blocks. Default is ``6``.
+        dropout (float): Dropout rate. Default is ``0.0``.
+        residual (bool): Whether to use residual connections. Default is ``True``.
+        repeat_strategy ("legacy"|"paper", optional): The repeat
+            strategy to use during training:
+
+            - "legacy": Repeat inputs for each estimator during both training
+              and evaluation.
+            - "paper"(default): Repeat inputs for each estimator only during
+              evaluation.
 
     Returns:
         _BatchedInceptionTime: An instance of the InceptionTime model.
     """
     return _BatchedInceptionTime(
-        in_channels,
-        num_classes,
-        num_estimators,
-        kernel_size,
-        embed_dim,
-        num_blocks,
-        dropout,
-        residual,
+        in_channels=in_channels,
+        num_classes=num_classes,
+        num_estimators=num_estimators,
+        kernel_size=kernel_size,
+        embed_dim=embed_dim,
+        num_blocks=num_blocks,
+        dropout=dropout,
+        residual=residual,
+        repeat_strategy=repeat_strategy,
     )

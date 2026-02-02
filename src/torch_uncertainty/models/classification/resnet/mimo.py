@@ -62,6 +62,24 @@ def mimo_resnet(
     style: Literal["imagenet", "cifar"] = "imagenet",
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
+    """MIMO ResNet.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        arch (int): The architecture of the ResNet.
+        num_estimators (int): Number of estimators in the ensemble.
+        conv_bias (bool, optional): Whether to use bias in convolutional layers. Defaults to ``True``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
+        width_multiplier (float, optional): Width multiplier. Defaults to ``1.0``.
+        groups (int, optional): Number of groups for grouped convolution. Defaults to ``1``.
+        style (Literal["imagenet", "cifar"], optional): Style of ResNet. Defaults to ``"imagenet"``.
+        normalization_layer (nn.Module, optional): Normalization layer.
+            Defaults to ``torch.nn.BatchNorm2d``.
+
+    Returns:
+        _MIMOResNet: _description_
+    """
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _MIMOResNet(

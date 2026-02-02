@@ -186,19 +186,19 @@ def packed_inception_time(
     dropout: float = 0.0,
     residual: bool = True,
 ) -> _PackedInceptionTime:
-    """Create a Packed-Ensembles InceptionTime model.
+    """Packed-Ensembles of InceptionTime.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
         num_estimators (int): Number of estimators for Packed-Ensembles.
         alpha (float): Alpha parameter for Packed-Ensembles.
-        gamma (int): Gamma parameter for Packed-Ensembles.
-        kernel_size (int): Size of the convolutional kernels.
-        embed_dim (int): Dimension of the embedding.
-        num_blocks (int): Number of inception blocks.
-        dropout (float): Dropout rate.
-        residual (bool): Whether to use residual connections.
+        gamma (int): Gamma parameter for Packed-Ensembles. Default is ``1``.
+        kernel_size (int): Size of the convolutional kernels. Default is ``40``.
+        embed_dim (int): Dimension of the embedding. Default is ``32``.
+        num_blocks (int): Number of inception blocks. Default is ``6``.
+        dropout (float): Dropout rate. Default is ``0.0``.
+        residual (bool): Whether to use residual connections. Default is ``True``.
 
     Returns:
         _InceptionTime: An instance of the InceptionTime model.

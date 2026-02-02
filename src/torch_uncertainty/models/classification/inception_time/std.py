@@ -126,16 +126,17 @@ def inception_time(
     dropout: float = 0.0,
     residual: bool = True,
 ) -> _InceptionTime:
-    """Create an InceptionTime model.
+    """InceptionTime from `InceptionTime: Finding AlexNet for Time Series Classification
+    <https://arxiv.org/abs/1909.04939>`_.
 
     Args:
         in_channels (int): Number of input channels.
         num_classes (int): Number of output classes.
-        kernel_size (int): Size of the convolutional kernels.
-        embed_dim (int): Dimension of the embedding.
-        num_blocks (int): Number of inception blocks.
-        dropout (float): Dropout rate.
-        residual (bool): Whether to use residual connections.
+        kernel_size (int): Size of the convolutional kernels. Default is ``40``.
+        embed_dim (int): Dimension of the embedding. Default is ``32``.
+        num_blocks (int): Number of inception blocks. Default is ``6``.
+        dropout (float): Dropout rate. Default is ``0.0``.
+        residual (bool): Whether to use residual connections. Default is ``True``.
 
     Returns:
         _InceptionTime: An instance of the InceptionTime model.
