@@ -32,6 +32,7 @@ routine:
       num_estimators: 4
       scale: 2
       style: cifar
+      repeat_strategy: legacy
   num_classes: 100
   loss: CrossEntropyLoss
   format_batch_fn:

@@ -20,6 +20,7 @@ routine:
       in_channels: 1
       num_classes: 3
       num_estimators: 4
+      repeat_strategy: legacy
   is_ensemble: true
   num_classes: 3
   loss: CrossEntropyLoss

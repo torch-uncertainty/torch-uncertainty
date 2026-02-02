@@ -31,6 +31,7 @@ routine:
       arch: 50
       num_estimators: 4
       style: cifar
+      repeat_strategy: legacy
   num_classes: 100
   loss: CrossEntropyLoss
   is_ensemble: true
