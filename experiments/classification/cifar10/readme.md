@@ -11,36 +11,36 @@ This folder contains the code to train models on the CIFAR10 dataset. The task i
 * Training a standard ResNet18 model as in [Packed-Ensembles for Efficient Uncertainty Estimation](https://arxiv.org/abs/2210.09184):
 
 ```bash
-python resnet.py fit --config configs/resnet18/standard.yaml
+python main.py fit --config configs/resnet18/standard.yaml
 ```
 
 * Training Packed-Ensembles ResNet50 model as in [Packed-Ensembles for Efficient Uncertainty Estimation](https://arxiv.org/abs/2210.09184):
 
 ```bash
-python resnet.py fit --config configs/resnet50/packed.yaml
+python main.py fit --config configs/resnet50/packed.yaml
 ```
 
 ## Available configurations:
 
 ### ResNet
 
-||ResNet18|ResNet34|ResNet50|ResNet101|ResNet152|
-|---|---|---|---|---|---|
-|Standard|✅|✅|✅|✅|✅|
-|Packed-Ensembles|✅|✅|✅|✅|✅|
-|BatchEnsemble|✅|✅|✅|✅|✅|
-|Masked-Ensembles|✅|✅|✅|✅|✅|
-|MIMO|✅|✅|✅|✅|✅|
-|MC Dropout|✅|✅|✅|✅|✅|
+|                  | ResNet18 | ResNet34 | ResNet50 | ResNet101 | ResNet152 |
+| ---------------- | -------- | -------- | -------- | --------- | --------- |
+| Standard         | ✅        | ✅        | ✅        | ✅         | ✅         |
+| Packed-Ensembles | ✅        | ✅        | ✅        | ✅         | ✅         |
+| BatchEnsemble    | ✅        | ✅        | ✅        | ✅         | ✅         |
+| Masked-Ensembles | ✅        | ✅        | ✅        | ✅         | ✅         |
+| MIMO             | ✅        | ✅        | ✅        | ✅         | ✅         |
+| MC Dropout       | ✅        | ✅        | ✅        | ✅         | ✅         |
 
 
 ### WideResNet
 
-||WideResNet28-10|
-|---|---|
-|Standard|✅|
-|Packed-Ensembles|✅|
-|BatchEnsemble|✅|
-|Masked-Ensembles|✅|
-|MIMO|✅|
-|MC Dropout|✅|
+|                  | WideResNet28-10 |
+| ---------------- | --------------- |
+| Standard         | ✅               |
+| Packed-Ensembles | ✅               |
+| BatchEnsemble    | ✅               |
+| Masked-Ensembles | ✅               |
+| MIMO             | ✅               |
+| MC Dropout       | ✅               |

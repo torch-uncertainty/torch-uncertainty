@@ -20,7 +20,7 @@ else:  # coverage: ignore
 
 MIXUP_PARAMS = {
     "mixtype": None,
-    "mixmode": "elem",
+    "isobatch": False,
     "kernel_tau_max": 1.0,
     "kernel_tau_std": 0.5,
     "mixup_alpha": 0,
@@ -291,7 +291,7 @@ def build_mixup(
     mixtype: str,
     mixup_alpha: float,
     cutmix_alpha: float | None,
-    mixmode: str,
+    isobatch: bool,
     num_classes: int,
     kernel_tau_max: float | None = None,
     kernel_tau_std: float | None = None,
@@ -306,27 +306,27 @@ def build_mixup(
         "timm": lambda: timm_Mixup(
             mixup_alpha=mixup_alpha,
             cutmix_alpha=cutmix_alpha,
-            mode=mixmode,
+            mode="batch" if isobatch else "elem",
             num_classes=num_classes,
         ),
         "mixup": lambda: Mixup(
             alpha=mixup_alpha,
-            mode=mixmode,
+            isobatch=isobatch,
             num_classes=num_classes,
         ),
         "mixup_io": lambda: MixupIO(
             alpha=mixup_alpha,
-            mode=mixmode,
+            isobatch=isobatch,
             num_classes=num_classes,
         ),
         "regmixup": lambda: RegMixup(
             alpha=mixup_alpha,
-            mode=mixmode,
+            isobatch=isobatch,
             num_classes=num_classes,
         ),
         "kernel_warping": lambda: WarpingMixup(
             alpha=mixup_alpha,
-            mode=mixmode,
+            isobatch=isobatch,
             num_classes=num_classes,
             apply_kernel=True,
             tau_max=kernel_tau_max,
