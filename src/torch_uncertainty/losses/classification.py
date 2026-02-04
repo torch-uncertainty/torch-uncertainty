@@ -410,7 +410,7 @@ class MixupMPLoss(nn.CrossEntropyLoss):
         self,
         mixup_ratio: float = 1.0,
         weight: Tensor | None = None,
-        ignore_index: int | None = None,
+        ignore_index: int = -100,
         reduction: str = "mean",
     ) -> None:
         """MixupMP loss from Wu & Williamson.
@@ -431,8 +431,8 @@ class MixupMPLoss(nn.CrossEntropyLoss):
                 output by the MixupMP transform. This should match the transform's
                 :attr:`mixup_ratio` hyperparameter. Defaults to ``1.0`` (equal weighting).
             weight (Tensor | None): a manual rescaling weight given to each class.
-            ignore_index (int | None): Specifies a target value that is ignored
-                and does not contribute to the input gradient.
+            ignore_index (int): Specifies a target value that is ignored
+                and does not contribute to the input gradient. Defaults to ``-100``.
             reduction (str): Specifies the reduction to apply to the output: 'none'|'mean'|'sum'.
 
         See Also:
@@ -486,15 +486,13 @@ class MixupMPLoss(nn.CrossEntropyLoss):
         if mixup_targets.dtype.is_floating_point:
             # use KL divergence for soft labels
             log_prob = F.log_softmax(mixup_preds, dim=-1)
-            loss_mixup = F.kl_div(log_prob, mixup_targets, reduction=self.reduction)
+            loss_mixup = F.kl_div(
+                log_prob,
+                mixup_targets,
+                reduction="batchmean" if self.reduction == "mean" else self.reduction,
+            )
         else:
             loss_mixup = super().forward(mixup_preds, mixup_targets)
 
-        # weight the two losses
-        if r <= 1.0:
-            loss = r * loss_mixup + (1 - r) * loss_norm
-        else:
-            inv_r = 1.0 / r
-            loss = (1 - inv_r) * loss_mixup + inv_r * loss_norm
-
-        return loss
+        # unnormalized as in the implementation
+        return r * loss_mixup + loss_norm

@@ -252,13 +252,13 @@ class MixupMP(AbstractMixup):
             num_mixup = max(1, round(r * batch_size))
             mix_idx = torch.randperm(batch_size, device=device)[:num_mixup]
             out_x = torch.cat([mixed_x[mix_idx], x], dim=0)
-            out_y = torch.cat([mixed_y[mix_idx], y], dim=0)
+            out_y = torch.cat([mixed_y[mix_idx], F.one_hot(y, self.num_classes).float()], dim=0)
         else:
             # keep all mixup samples, subsample normal samples
             num_normal = max(1, round(batch_size / r))
             norm_idx = torch.randperm(batch_size, device=device)[:num_normal]
             out_x = torch.cat([mixed_x, x[norm_idx]], dim=0)
-            out_y = torch.cat([mixed_y, y[norm_idx]], dim=0)
+            out_y = torch.cat([mixed_y, F.one_hot(y[norm_idx], self.num_classes).float()], dim=0)
         return out_x, out_y
 
 
@@ -366,7 +366,7 @@ class WarpingMixup(AbstractMixup):
 
 
 def build_mixup(
-    mixtype: str,
+    mixtype: str | None,
     mixup_alpha: float,
     cutmix_alpha: float,
     isobatch: bool,
@@ -375,6 +375,9 @@ def build_mixup(
     kernel_tau_max: float,
     kernel_tau_std: float,
 ) -> nn.Module:
+    if mixtype is None:
+        return Identity()
+
     if mixup_alpha < 0 or (cutmix_alpha is not None and cutmix_alpha < 0):
         raise ValueError(
             f"Cutmix alpha and Mixup alpha must be positive. Got {mixup_alpha} and {cutmix_alpha}."
@@ -392,13 +395,13 @@ def build_mixup(
             isobatch=isobatch,
             num_classes=num_classes,
         ),
-        "mixup_mp": lambda: MixupMP(
+        "mixupmp": lambda: MixupMP(
             alpha=mixup_alpha,
             isobatch=isobatch,
             num_classes=num_classes,
             mixup_ratio=mixupmp_ratio,
         ),
-        "mixup_io": lambda: MixupIO(
+        "mixupio": lambda: MixupIO(
             alpha=mixup_alpha,
             isobatch=isobatch,
             num_classes=num_classes,
@@ -417,4 +420,7 @@ def build_mixup(
             tau_std=kernel_tau_std,
         ),
     }
-    return factories.get(mixtype, Identity)()
+    mixup_module = factories.get(mixtype)
+    if mixup_module is None:
+        raise ValueError(f"Incorrect value for mixtype. Got {mixtype}")
+    return mixup_module()
