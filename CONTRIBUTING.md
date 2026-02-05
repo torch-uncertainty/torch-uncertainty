@@ -66,7 +66,7 @@ We are use `ruff` for code formatting, linting, and imports (as a drop-in
 replacement for `black`, `isort`, and `flake8`). The `pre-commit` hooks will
 ensure that your code is properly formatted and linted before committing.
 
-To ensure that your code complies with the standards, run the following and check for warnings: 
+To ensure that your code complies with the standards, run the following and check for warnings:
 
 ```sh
 uv run ruff check --fix
@@ -118,7 +118,7 @@ We intend to include datamodules for the most popular datasets only.
 For now, we intend to follow scikit-learn style API for post-processing
 methods (except that we use a validation dataset for now). You can get
 inspiration from the already implemented
-[temperature-scaling](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py).
+[temperature-scaling](https://github.com/torch-uncertainty/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py).
 
 ## License
 

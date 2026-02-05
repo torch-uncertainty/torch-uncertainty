@@ -8,7 +8,7 @@ This Docker image is designed for users and contributors who want to run experim
 
 ### Step 1: Fork the Repository
 
-Before proceeding, ensure you have forked the `torch-uncertainty` repository to your own GitHub account. You can do this by visiting the [torch-uncertainty GitHub repository](https://github.com/ENSTA-U2IS-AI/torch-uncertainty) and clicking the **Fork** button in the top-right corner.
+Before proceeding, ensure you have forked the `torch-uncertainty` repository to your own GitHub account. You can do this by visiting the [torch-uncertainty GitHub repository](https://github.com/torch-uncertainty/torch-uncertainty) and clicking the **Fork** button in the top-right corner.
 
 Once forked, clone your forked repository to your local machine:
 
