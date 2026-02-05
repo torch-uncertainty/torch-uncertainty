@@ -50,6 +50,7 @@ class SegmentationRoutine(LightningModule):
         model: nn.Module,
         num_classes: int,
         loss: nn.Module | None = None,
+        *,
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,

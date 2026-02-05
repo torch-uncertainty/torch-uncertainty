@@ -8,6 +8,7 @@ from torch_uncertainty.losses import (
     CrossEntropyMaxSupLoss,
     DECLoss,
     FocalLoss,
+    MixupMPLoss,
 )
 
 
@@ -154,3 +155,19 @@ class TestCrossEntropyMaxSupLoss:
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
         loss = CrossEntropyMaxSupLoss(max_sup=0.1, reduction=None)
         loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
+
+
+class TestMixupMPLoss:
+    """Testing the MixupMPLoss class."""
+
+    def test_main(self) -> None:
+        loss = MixupMPLoss(mixup_ratio=2, reduction="mean")
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.long))
+        loss(torch.tensor([[0.0, 0.0]]), torch.tensor([0], dtype=torch.float32))
+
+    def test_failures(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match=r"mixup_ratio must be > 0. Got ",
+        ):
+            MixupMPLoss(mixup_ratio=-1)

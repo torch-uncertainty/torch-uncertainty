@@ -7,7 +7,6 @@ from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT
-from timm.data import Mixup as timm_Mixup
 from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
@@ -17,7 +16,6 @@ from torchmetrics.classification import (
     BinaryAveragePrecision,
 )
 
-from torch_uncertainty.layers import Identity
 from torch_uncertainty.losses import DECLoss, ELBOLoss
 from torch_uncertainty.metrics import (
     AUGRC,
@@ -46,24 +44,8 @@ from torch_uncertainty.ood_criteria import (
     get_ood_criterion,
 )
 from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
-from torch_uncertainty.transforms import (
-    Mixup,
-    MixupIO,
-    RegMixup,
-    RepeatTarget,
-    WarpingMixup,
-)
+from torch_uncertainty.transforms import MIXUP_PARAMS, RepeatTarget, build_mixup
 from torch_uncertainty.utils import csv_writer, plot_hist
-
-MIXUP_PARAMS = {
-    "mixtype": "erm",
-    "mixmode": "elem",
-    "dist_sim": "emb",
-    "kernel_tau_max": 1.0,
-    "kernel_tau_std": 0.5,
-    "mixup_alpha": 0,
-    "cutmix_alpha": 0,
-}
 
 
 class ClassificationRoutine(LightningModule):
@@ -75,6 +57,7 @@ class ClassificationRoutine(LightningModule):
         model: nn.Module,
         num_classes: int,
         loss: nn.Module | None = None,
+        *,
         is_ensemble: bool = False,
         num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
@@ -308,49 +291,9 @@ class ClassificationRoutine(LightningModule):
         if mixup_params is None:
             mixup_params = {}
         mixup_params = MIXUP_PARAMS | mixup_params
-        self.mixup_params = mixup_params
-
-        if mixup_params["mixup_alpha"] < 0 or mixup_params["cutmix_alpha"] < 0:
-            raise ValueError(
-                "Cutmix alpha and Mixup alpha must be positive."
-                f"Got {mixup_params['mixup_alpha']} and {mixup_params['cutmix_alpha']}."
-            )
-
-        if mixup_params["mixtype"] == "timm":
-            return timm_Mixup(
-                mixup_alpha=mixup_params["mixup_alpha"],
-                cutmix_alpha=mixup_params["cutmix_alpha"],
-                mode=mixup_params["mixmode"],
-                num_classes=self.num_classes,
-            )
-        if mixup_params["mixtype"] == "mixup":
-            return Mixup(
-                alpha=mixup_params["mixup_alpha"],
-                mode=mixup_params["mixmode"],
-                num_classes=self.num_classes,
-            )
-        if mixup_params["mixtype"] == "mixup_io":
-            return MixupIO(
-                alpha=mixup_params["mixup_alpha"],
-                mode=mixup_params["mixmode"],
-                num_classes=self.num_classes,
-            )
-        if mixup_params["mixtype"] == "regmixup":
-            return RegMixup(
-                alpha=mixup_params["mixup_alpha"],
-                mode=mixup_params["mixmode"],
-                num_classes=self.num_classes,
-            )
-        if mixup_params["mixtype"] == "kernel_warping":
-            return WarpingMixup(
-                alpha=mixup_params["mixup_alpha"],
-                mode=mixup_params["mixmode"],
-                num_classes=self.num_classes,
-                apply_kernel=True,
-                tau_max=mixup_params["kernel_tau_max"],
-                tau_std=mixup_params["kernel_tau_std"],
-            )
-        return Identity()
+        self.has_kernel_warping_mixup = mixup_params["mixtype"] == "kernel_warping"
+        self.kw_on_embeddings = mixup_params.pop("kw_on_embeddings")
+        return build_mixup(num_classes=self.num_classes, **mixup_params)
 
     def _apply_mixup(self, batch: tuple[Tensor, Tensor]) -> tuple[Tensor, Tensor]:
         """Apply the mixup augmentation on a :attr:`batch` of images.
@@ -362,12 +305,12 @@ class ClassificationRoutine(LightningModule):
             tuple[Tensor, Tensor]: the images and the corresponding targets transformed with mixup.
         """
         if not self.is_ensemble:
-            if self.mixup_params["mixtype"] == "kernel_warping":
-                if self.mixup_params["dist_sim"] == "emb":
+            if self.has_kernel_warping_mixup:
+                if self.kw_on_embeddings:
                     with torch.no_grad():
                         feats = self.model.feats_forward(batch[0]).detach()
                     batch = self.mixup(*batch, feats)
-                else:  # self.mixup_params["dist_sim"] == "inp":
+                else:
                     batch = self.mixup(*batch, batch[0])
             else:
                 batch = self.mixup(*batch)

@@ -73,6 +73,33 @@ For Monte-Carlo Dropout, consider citing:
 * Authors: *Yarin Gal and Zoubin Ghahramani*
 * Paper: `ICML 2016 <https://arxiv.org/pdf/1506.02142.pdf>`__.
 
+Mixup Ensembles
+^^^^^^^^^^^^^^^
+
+For Mixup Ensembles, consider citing:
+
+**Combining ensembles and data augmentation can harm your calibration**
+
+* Authors: *Yeming Wen, Ghassen Jerfel, Rafael Muller, Michael W. Dusenberry, Jasper Snoek, Balaji Lakshminarayanan, and Dustin Tran*
+* Paper: `ICLR 2021 <https://arxiv.org/pdf/2010.09875>`__.
+
+and 
+
+**Uncertainty quantification and deep ensembles**
+
+* Authors: *Rahul Rahaman & Alexandre H. Thiery*
+* Paper: `NeurIPS 2021 <https://arxiv.org/pdf/2007.08792>`__.
+
+MixupMP
+^^^^^^^
+
+For MixupMP, consider citing:
+
+**Posterior Uncertainty Quantification in Neural Networks using Data Augmentation**
+
+* Authors: *Luhuan Wu & Sinead Williamson*
+* Paper: `AISTATS 2024 <https://arxiv.org/abs/2403.12729>`__.
+
 Stochastic Weight Averaging
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

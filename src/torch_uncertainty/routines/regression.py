@@ -41,6 +41,7 @@ class RegressionRoutine(LightningModule):
         loss: nn.Module | None = None,
         dist_family: str | None = None,
         dist_estimate: str = "mean",
+        *,
         is_ensemble: bool = False,
         optim_recipe: dict | Optimizer | None = None,
         eval_shift: bool = False,

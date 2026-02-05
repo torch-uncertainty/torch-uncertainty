@@ -1,5 +1,9 @@
 FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime
 
+# Look at docker/DOCKER.md for more information on how to use this file and define this variable
+ARG UV_EXTRA=gpu
+ENV UV_EXTRA=${UV_EXTRA}
+
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     LC_ALL=C.UTF-8 \
@@ -10,21 +14,19 @@ RUN apt-get update && apt-get install -y \
     git \
     openssh-server \
     libgl1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
-# Create an empty README.md file and an empty torch_uncertainty module to satisfy flit
-RUN touch README.md && mkdir -p torch_uncertainty && touch torch_uncertainty/__init__.py
-
 # Copy dependency file
 COPY pyproject.toml /workspace/
 
-# Install dependencies all dependencies
-RUN pip install --no-cache-dir -e ".[all]"
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Always activate Conda when opening a new terminal
-RUN echo "source /opt/conda/bin/activate" >> /root/.bashrc
+# Install all dependencies with the chosen extra (GPU or CPU)
+RUN uv sync --extra ${UV_EXTRA}
 
 # Configure SSH server
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \

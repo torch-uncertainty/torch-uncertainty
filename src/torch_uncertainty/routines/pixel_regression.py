@@ -57,6 +57,7 @@ class PixelRegressionRoutine(LightningModule):
         loss: nn.Module | None = None,
         dist_family: str | None = None,
         dist_estimate: str = "mean",
+        *,
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
         optim_recipe: dict | Optimizer | None = None,

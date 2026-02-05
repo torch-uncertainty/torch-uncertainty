@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 
-class TUDataModule(ABC, LightningDataModule):
+class TUDataModule(LightningDataModule, ABC):
     training_task: str
     train: Dataset
     val: Dataset

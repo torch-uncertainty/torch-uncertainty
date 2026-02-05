@@ -7,5 +7,6 @@ from .classification import (
     CrossEntropyMaxSupLoss,
     DECLoss,
     FocalLoss,
+    MixupMPLoss,
 )
 from .regression import BetaNLL, DERLoss, DistributionNLLLoss

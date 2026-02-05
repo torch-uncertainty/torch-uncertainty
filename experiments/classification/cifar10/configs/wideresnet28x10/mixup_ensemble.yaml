@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs/wideresnet28x10
-      name: deep_ensembles
+      name: mixup_ensemble
       default_hp_metric: false
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
@@ -32,13 +32,16 @@ routine:
           in_channels: 3
           num_classes: 10
           style: cifar
-          dropout_rate: 0.3
+          dropout_rate: 0.0
       num_estimators: 4
       task: classification
-      # possibly pass the checkpoints of standard wideresnet28x10 models here
-      # ckpt_paths: [path/to/ckpt1, path/to/ckpt2, path/to/ckpt3, path/to/ckpt4]
+      # replace by yours
+      # torch-uncertainty/experiments/classification/cifar10/logs/wideresnet28x10/mixup/version_0/checkpoints/epoch=194-step=76245-val_nll=0.222.ckpt,
+      # torch-uncertainty/experiments/classification/cifar10/logs/wideresnet28x10/mixup/version_1/checkpoints/epoch=188-step=73899-val_nll=0.218.ckpt,
+      # torch-uncertainty/experiments/classification/cifar10/logs/wideresnet28x10/mixup/version_2/checkpoints/epoch=183-step=71944-val_nll=0.211.ckpt,
+      # torch-uncertainty/experiments/classification/cifar10/logs/wideresnet28x10/mixup/version_3/checkpoints/epoch=197-step=77418-val_nll=0.216.ckpt,
+      ckpt_paths: []
   num_classes: 10
-  loss: CrossEntropyLoss
   is_ensemble: true
   format_batch_fn:
     class_path: torch_uncertainty.transforms.RepeatTarget
@@ -47,18 +50,3 @@ routine:
 data:
   root: ./data
   batch_size: 128
-optimizer:
-  class_path: torch.optim.SGD
-  init_args:
-    lr: 0.4 # initial learning rate times 4 (num_estimators)
-    momentum: 0.9
-    weight_decay: 5e-4
-    nesterov: true
-lr_scheduler:
-  class_path: torch.optim.lr_scheduler.MultiStepLR
-  init_args:
-    milestones:
-      - 60
-      - 120
-      - 160
-    gamma: 0.2

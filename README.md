@@ -1,13 +1,13 @@
 <div align="center">
 
-![TorchUncertaintyLogo](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/docs/source/_static/images/torch_uncertainty.png)
+![TorchUncertaintyLogo](https://github.com/torch-uncertainty/torch-uncertainty/blob/main/docs/source/_static/images/torch_uncertainty.png)
 
 [![pypi](https://img.shields.io/pypi/v/torch_uncertainty.svg)](https://pypi.python.org/pypi/torch_uncertainty)
-[![tests](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/actions/workflows/run-tests.yml)
-[![Docs](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/actions/workflows/build-docs.yml/badge.svg)](https://torch-uncertainty.github.io/)
-[![PRWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ENSTA-U2IS-AI/torch-uncertainty/pulls)
+[![tests](https://github.com/torch-uncertainty/torch-uncertainty/actions/workflows/run-tests.yml/badge.svg?branch=main&event=push)](https://github.com/torch-uncertainty/torch-uncertainty/actions/workflows/run-tests.yml)
+[![Docs](https://github.com/torch-uncertainty/torch-uncertainty/actions/workflows/build-docs.yml/badge.svg)](https://torch-uncertainty.github.io/)
+[![PRWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/torch-uncertainty/torch-uncertainty/pulls)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Code Coverage](https://codecov.io/github/ENSTA-U2IS-AI/torch-uncertainty/coverage.svg?branch=master)](https://codecov.io/gh/ENSTA-U2IS-AI/torch-uncertainty)
+[![Code Coverage](https://codecov.io/github/torch-uncertainty/torch-uncertainty/coverage.svg?branch=master)](https://codecov.io/gh/torch-uncertainty/torch-uncertainty)
 [![Downloads](https://static.pepy.tech/badge/torch-uncertainty)](https://pepy.tech/project/torch-uncertainty)
 [![Discord Badge](https://dcbadge.vercel.app/api/server/HMCawt5MJu?compact=true&style=flat)](https://discord.gg/HMCawt5MJu)
 </div>
@@ -66,6 +66,7 @@ To date, the following deep learning uncertainty quantification modes have been 
 - [Deep Ensembles](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_from_de_to_pe.html), BatchEnsemble, Masksembles, & MIMO
 - [MC-Dropout](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_mc_dropout.html)
 - [Packed-Ensembles](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_from_de_to_pe.html) (see [Blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
+- Mixup Ensembles and MixupMP
 - [Variational Bayesian Neural Networks](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_bayesian.html)
 - Checkpoint Ensembles & Snapshot Ensembles
 - Stochastic Weight Averaging & Stochastic Weight Averaging Gaussian
@@ -115,7 +116,7 @@ The following projects use TorchUncertainty:
 
 If you use this software, please cite its corresponding paper:
 
-```
+```bibtex
 @inproceedings{lafage2025torch_uncertainty,
     title={Torch-Uncertainty: A Deep Learning Framework for Uncertainty Quantification},
     author={Lafage, Adrien and Laurent, Olivier and Gabetni, Firas and Franchi, Gianni},

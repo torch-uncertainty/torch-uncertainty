@@ -33,7 +33,7 @@ from .image import (
     Solarize,
     Translate,
 )
-from .mixup import Mixup, MixupIO, RegMixup, WarpingMixup
+from .mixup import MIXUP_PARAMS, Mixup, MixupIO, MixupMP, RegMixup, WarpingMixup, build_mixup
 
 augmentations = [
     AutoContrast,

@@ -22,7 +22,7 @@ trainer:
         monitor: val/cls/Acc
         patience: 1000
         check_finite: true
-model:
+routine:
   model:
     class_path: torch_uncertainty.models.deep_ensembles
     init_args:
@@ -50,7 +50,7 @@ data:
 optimizer:
   class_path: torch.optim.SGD
   init_args:
-    lr: 0.2  # initial learning rate times 4 (num_estimators)
+    lr: 0.2 # initial learning rate times 4 (num_estimators)
     momentum: 0.9
     weight_decay: 5e-4
 lr_scheduler:

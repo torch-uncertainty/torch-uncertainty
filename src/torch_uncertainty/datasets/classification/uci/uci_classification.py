@@ -12,7 +12,7 @@ from torchvision.datasets.utils import (
 )
 
 
-class UCIClassificationDataset(ABC, Dataset):
+class UCIClassificationDataset(Dataset, ABC):
     md5_zip: str = ""
     url: str = ""
     filename: str = ""

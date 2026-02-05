@@ -11,53 +11,53 @@ on:
 
 env:
   PYTHON_VERSION: "3.13"
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   documentation:
     runs-on: [self-hosted]
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install uv and set the Python version
-      uses: astral-sh/setup-uv@v6
-      with:
-        version: "0.9.0"
-        python-version: ${{ env.PYTHON_VERSION }}
-        enable-cache: "true"
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.0"
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: "true"
 
-    - name: Full Python version
-      run: |
-        echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
+      - name: Full Python version
+        run: |
+          echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
 
-    - name: Cache folder for TorchUncertainty
-      uses: actions/cache@v4
-      id: cache-folder
-      with:
-        path: |
-          auto_tutorial_source
-        key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
+      - name: Cache folder for TorchUncertainty
+        uses: actions/cache@v4
+        id: cache-folder
+        with:
+          path: |
+            auto_tutorial_source
+          key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
 
-    - name: Install dependencies
-      run: |
-        uv sync --locked --dev --extra gpu
+      - name: Install dependencies
+        run: |
+          uv sync --locked --dev --extra gpu
 
-    - name: Sphinx build
-      if: github.event.pull_request.draft == false
-      run: |
-        cd docs && make clean && make html
+      - name: Sphinx build
+        if: github.event.pull_request.draft == false
+        run: |
+          cd docs && make clean && make html
 
-    - name: Deploy on GitHub pages
-      uses: peaceiris/actions-gh-pages@v4
-      if: ${{ github.event_name != 'pull_request' }}
-      with:
-        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        external_repository: torch-uncertainty/torch-uncertainty.github.io
-        publish_branch: main
-        publish_dir: docs/build/html
-      continue-on-error: true
-    
-    # ||: not to error if there is no running ssh-agent
-    - name: Kill SSH Agent
-      run: |
-        killall ssh-agent ||:
+      - name: Deploy on GitHub pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          external_repository: torch-uncertainty/torch-uncertainty.github.io
+          publish_branch: main
+          publish_dir: docs/build/html
+        continue-on-error: true
+
+      # ||: not to error if there is no running ssh-agent
+      - name: Kill SSH Agent
+        run: |
+          killall ssh-agent ||:

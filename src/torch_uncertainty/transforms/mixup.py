@@ -1,9 +1,14 @@
+from abc import ABC, abstractmethod
 from importlib import util
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from timm.data.mixup import Mixup as timm_Mixup
 from torch import Tensor, nn
+
+from torch_uncertainty.layers import Identity
 
 if util.find_spec("scipy"):
     import scipy
@@ -11,6 +16,18 @@ if util.find_spec("scipy"):
     scipy_installed = True
 else:  # coverage: ignore
     scipy_installed = False
+
+
+MIXUP_PARAMS = {
+    "mixtype": None,
+    "isobatch": False,
+    "kernel_tau_max": 1.0,
+    "kernel_tau_std": 0.5,
+    "mixup_alpha": 1,
+    "cutmix_alpha": 0,
+    "mixupmp_ratio": 1,
+    "kw_on_embeddings": True,
+}
 
 
 def beta_warping(x, alpha_cdf: float = 1.0, eps: float = 1e-12) -> float:
@@ -85,23 +102,30 @@ def sim_gauss_kernel(dist, tau_max: float = 1.0, tau_std: float = 0.5) -> float:
 #     return 1 / (dist_rate + 1e-12)
 
 
-# TODO: Should be a torchvision transform
-class AbstractMixup(nn.Module):
-    def __init__(self, alpha: float = 1.0, mode: str = "batch", num_classes: int = 1000) -> None:
-        super().__init__()
-        self.rng = np.random.default_rng()
-        self.alpha = alpha
-        self.num_classes = num_classes
-        self.mode = mode
+class AbstractMixup(nn.Module, ABC):
+    def __init__(
+        self, alpha: float, num_classes: int, isobatch: bool = False, **kwargs: Any
+    ) -> None:
+        """Abstract Mixup class.
 
-    def _get_params(self, batch_size: int, device: torch.device) -> tuple[float, Tensor]:
-        if self.mode == "batch":
-            lam = self.rng.beta(a=self.alpha, b=self.alpha)
+        Args:
+            alpha (float, optional): Mixup alpha.
+            num_classes (int): Number of classes.
+            isobatch (bool, optional): Whether to use a single coefficient for the whole batch
+                instead of for each pair. Defaults to ``False``.
+            **kwargs (Any): Keyword arguments for compatibility.
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.distribution = torch.distributions.Beta(alpha, alpha)
+        self.num_classes = num_classes
+        self.isobatch = isobatch
+
+    def _get_params(self, batch_size: int, device: torch.device) -> tuple[Tensor, Tensor]:
+        if self.isobatch:
+            lam = self.distribution.sample().to(device)
         else:
-            lam = torch.as_tensor(
-                self.rng.beta(a=self.alpha, b=self.alpha, size=batch_size),
-                device=device,
-            )
+            lam = self.distribution.sample((batch_size,)).to(device=device)
         index = torch.randperm(batch_size, device=device)
         return lam, index
 
@@ -121,15 +145,32 @@ class AbstractMixup(nn.Module):
         target: Tensor,
         index: Tensor,
     ) -> Tensor:
-        y1 = F.one_hot(target, self.num_classes)
-        y2 = F.one_hot(target[index], self.num_classes)
+        y1 = F.one_hot(target, self.num_classes).float()
+        y2 = F.one_hot(target[index], self.num_classes).float()
         if isinstance(lam, Tensor):
-            lam = lam.view(-1, *[1 for _ in range(y1.ndim - 1)]).float()
+            lam = lam.view(-1, *[1 for _ in range(y1.ndim - 1)])
 
         return lam * y1 + (1 - lam) * y2
 
-    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
-        raise NotImplementedError
+    @abstractmethod
+    def forward(
+        self,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor | None,
+        warp_param: float | None,
+    ) -> tuple[Tensor, Tensor]:
+        """Apply mixup on a batch of inputs and targets.
+
+        Args:
+            x (Tensor): input or input batch.
+            y (Tensor): target or target batch.
+            feats (Tensor | None): features for warping mixup.
+            warp_param (float | None): warping parameter.
+
+        Returns:
+            tuple[Tensor, Tensor]: mixed-up inputs and targets.
+        """
 
 
 class Mixup(AbstractMixup):
@@ -140,11 +181,85 @@ class Mixup(AbstractMixup):
         http://arxiv.org/abs/1710.09412.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor | None = None,
+        warp_param: float | None = None,
+    ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
         mixed_x = self._linear_mixing(lam, x, index)
         mixed_y = self._mix_target(lam, y, index)
         return mixed_x, mixed_y
+
+
+class MixupMP(AbstractMixup):
+    def __init__(
+        self,
+        alpha: float,
+        num_classes: int,
+        mixup_ratio: float = 1,
+        isobatch: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """MixupMP method from Wu & Williamson.
+
+        In this implementation, we return both the mixuped and the normal
+        inputs and targets, all concatenated.
+
+        Args:
+            alpha (float, optional): Mixup alpha.
+            num_classes (int): Number of classes.
+            mixup_ratio (float): Ratio of the number of mixup-ed pairs and normal pairs. Defaults
+                to ``1``. This parameter is named "r" in the paper.
+            isobatch (bool, optional): Whether to use a single coefficient for the whole batch
+                instead of for each pair. Defaults to ``False``.
+            **kwargs (Any): Keyword arguments for compatibility.
+
+        Warning:
+            When training MixupMP models with r != 1, you should use the MixupMPLoss
+            available in the losses/classification file.
+
+        See Also:
+            torch_uncertainty/losses/classification.py — MixupMPLoss implementation.
+
+        Reference:
+            "Posterior Uncertainty Quantification in Neural Networks using Data Augmentation" (AISTATS 2024)
+            http://arxiv.org/abs/2403.12729.
+        """
+        super().__init__(alpha, num_classes, isobatch, **kwargs)
+        if mixup_ratio <= 0:
+            raise ValueError(f"mixup_ratio must be strictly positive. Got {mixup_ratio}.")
+        self.mixup_ratio = mixup_ratio
+
+    def forward(
+        self,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor | None = None,
+        warp_param: float | None = None,
+    ) -> tuple[Tensor, Tensor]:
+        batch_size = x.size(0)
+        device = x.device
+        lam, index = self._get_params(batch_size, device)
+        mixed_x = self._linear_mixing(lam, x, index)
+        mixed_y = self._mix_target(lam, y, index)
+        r = self.mixup_ratio
+
+        if r <= 1.0:
+            # keep all normal samples, subsample mixup samples
+            num_mixup = max(1, round(r * batch_size))
+            mix_idx = torch.randperm(batch_size, device=device)[:num_mixup]
+            out_x = torch.cat([mixed_x[mix_idx], x], dim=0)
+            out_y = torch.cat([mixed_y[mix_idx], F.one_hot(y, self.num_classes).float()], dim=0)
+        else:
+            # keep all mixup samples, subsample normal samples
+            num_normal = max(1, round(batch_size / r))
+            norm_idx = torch.randperm(batch_size, device=device)[:num_normal]
+            out_x = torch.cat([mixed_x, x[norm_idx]], dim=0)
+            out_y = torch.cat([mixed_y, F.one_hot(y[norm_idx], self.num_classes).float()], dim=0)
+        return out_x, out_y
 
 
 class MixupIO(AbstractMixup):
@@ -155,16 +270,20 @@ class MixupIO(AbstractMixup):
         https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_On_the_Pitfall_of_Mixup_for_Uncertainty_Calibration_CVPR_2023_paper.pdf.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor | None = None,
+        warp_param: float | None = None,
+    ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
-
         mixed_x = self._linear_mixing(lam, x, index)
 
-        if self.mode == "batch":
+        if self.isobatch:
             mixed_y = self._mix_target(float(lam > 0.5), y, index)
         else:
             mixed_y = self._mix_target((lam > 0.5).float(), y, index)
-
         return mixed_x, mixed_y
 
 
@@ -176,7 +295,13 @@ class RegMixup(AbstractMixup):
         https://arxiv.org/abs/2206.14502.
     """
 
-    def __call__(self, x: Tensor, y: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(
+        self,
+        x: Tensor,
+        y: Tensor,
+        feats: Tensor | None = None,
+        warp_param: float | None = None,
+    ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
         part_x = self._linear_mixing(lam, x, index)
         part_y = self._mix_target(lam, y, index)
@@ -189,13 +314,16 @@ class WarpingMixup(AbstractMixup):
     def __init__(
         self,
         alpha: float = 1.0,
-        mode: str = "batch",
+        isobatch: bool = True,
         num_classes: int = 1000,
         apply_kernel: bool = True,
         tau_max: float = 1.0,
         tau_std: float = 0.5,
     ) -> None:
         """Kernel Warping Mixup method from Bouniot et al.
+
+        Note: The original implementation used :attr:`mode`=``"batch"`` by default, and was
+            converted to :attr:`isobatch`=`True` for consistency.
 
         Reference:
             "Tailoring Mixup to Data using Kernel Warping functions" (2023)
@@ -207,28 +335,17 @@ class WarpingMixup(AbstractMixup):
                 "torch_uncertainty with the all option:"
                 """pip install -U "torch_uncertainty[all]"."""
             )
-        super().__init__(alpha=alpha, mode=mode, num_classes=num_classes)
+        super().__init__(alpha=alpha, isobatch=isobatch, num_classes=num_classes)
         self.apply_kernel = apply_kernel
         self.tau_max = tau_max
         self.tau_std = tau_std
 
-    def _get_params(
-        self, batch_size: int, device: torch.device
-    ) -> tuple[float | np.ndarray, Tensor]:
-        if self.mode == "batch":
-            lam = self.rng.beta(a=self.alpha, b=self.alpha)
-        else:
-            lam = self.rng.beta(a=self.alpha, b=self.alpha, size=batch_size)
-
-        index = torch.randperm(batch_size, device=device)
-        return lam, index
-
-    def __call__(
+    def forward(
         self,
         x: Tensor,
         y: Tensor,
-        feats: Tensor,
-        warp_param: float = 1.0,
+        feats: Tensor | None,
+        warp_param: float | None = 1.0,
     ) -> tuple[Tensor, Tensor]:
         lam, index = self._get_params(x.size()[0], x.device)
 
@@ -246,3 +363,64 @@ class WarpingMixup(AbstractMixup):
         mixed_x = self._linear_mixing(k_lam, x, index)
         mixed_y = self._mix_target(k_lam, y, index)
         return mixed_x, mixed_y
+
+
+def build_mixup(
+    mixtype: str | None,
+    mixup_alpha: float,
+    cutmix_alpha: float,
+    isobatch: bool,
+    num_classes: int,
+    mixupmp_ratio: float,
+    kernel_tau_max: float,
+    kernel_tau_std: float,
+) -> nn.Module:
+    if mixtype is None:
+        return Identity()
+
+    if mixup_alpha <= 0 or (cutmix_alpha is not None and cutmix_alpha < 0):
+        raise ValueError(
+            f"Cutmix alpha and Mixup alpha must be positive. Got {mixup_alpha} and {cutmix_alpha}."
+        )
+
+    factories = {
+        "timm": lambda: timm_Mixup(
+            mixup_alpha=mixup_alpha,
+            cutmix_alpha=cutmix_alpha,
+            mode="batch" if isobatch else "elem",
+            num_classes=num_classes,
+        ),
+        "mixup": lambda: Mixup(
+            alpha=mixup_alpha,
+            isobatch=isobatch,
+            num_classes=num_classes,
+        ),
+        "mixupmp": lambda: MixupMP(
+            alpha=mixup_alpha,
+            isobatch=isobatch,
+            num_classes=num_classes,
+            mixup_ratio=mixupmp_ratio,
+        ),
+        "mixupio": lambda: MixupIO(
+            alpha=mixup_alpha,
+            isobatch=isobatch,
+            num_classes=num_classes,
+        ),
+        "regmixup": lambda: RegMixup(
+            alpha=mixup_alpha,
+            isobatch=isobatch,
+            num_classes=num_classes,
+        ),
+        "kernel_warping": lambda: WarpingMixup(
+            alpha=mixup_alpha,
+            isobatch=isobatch,
+            num_classes=num_classes,
+            apply_kernel=True,
+            tau_max=kernel_tau_max,
+            tau_std=kernel_tau_std,
+        ),
+    }
+    mixup_module = factories.get(mixtype)
+    if mixup_module is None:
+        raise ValueError(f"Incorrect value for mixtype. Got {mixtype}")
+    return mixup_module()

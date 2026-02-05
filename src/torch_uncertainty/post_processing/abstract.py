@@ -4,8 +4,9 @@ from torch import Tensor, nn
 from torch.utils.data import DataLoader
 
 
-class PostProcessing(ABC, nn.Module):
+class PostProcessing(nn.Module, ABC):
     def __init__(self, model: nn.Module | None = None) -> None:
+        """Abstract post-processing class."""
         super().__init__()
         self.model = model
         self.trained = False

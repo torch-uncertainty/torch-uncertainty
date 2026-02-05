@@ -22,77 +22,77 @@ jobs:
     env:
       PYTHON_VERSION: ${{ matrix.python-version }}
     steps:
-    - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
-    - name: Install uv and set the Python version
-      uses: astral-sh/setup-uv@v7
-      with:
-        version: "0.9.0"
-        python-version: ${{ matrix.python-version }}
-        enable-cache: "true"
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.0"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: "true"
 
-    - name: Get changed files
-      id: changed-files-specific
-      uses: tj-actions/changed-files@v47
-      with:
-        files: |
-          auto_tutorials_source/**
-          data/**
-          experiments/**
-          docs/**
-          *.md
-          *.yaml
-          *.yml
-          LICENSE
-          .gitignore
+      - name: Get changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v47
+        with:
+          files: |
+            auto_tutorials_source/**
+            data/**
+            experiments/**
+            docs/**
+            *.md
+            *.yaml
+            *.yml
+            LICENSE
+            .gitignore
 
-    - name: Install the project
-      if: steps.changed-files-specific.outputs.only_changed != 'true'
-      run: uv sync --locked --dev --extra cpu
+      - name: Install the project
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: uv sync --locked --dev --extra cpu
 
-    - name: Check that torch-uncertainty can be imported
-      if: steps.changed-files-specific.outputs.only_changed != 'true'
-      run: |
-        uv run python -c "import torch_uncertainty; from torch_uncertainty.datamodules import MNISTDataModule"
+      - name: Check that torch-uncertainty can be imported
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: |
+          uv run python -c "import torch_uncertainty; from torch_uncertainty.datamodules import MNISTDataModule"
 
-    - name: Check style & format
-      if: steps.changed-files-specific.outputs.only_changed != 'true'
-      run: |
-        uv run ruff check src/torch_uncertainty --no-fix --statistics
-        uv run ruff format src/torch_uncertainty --check
+      - name: Check style & format
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: |
+          uv run ruff check src/torch_uncertainty --no-fix --statistics
+          uv run ruff format src/torch_uncertainty --check
 
-    - name: Test with pytest and compute coverage
-      if: steps.changed-files-specific.outputs.only_changed != 'true'
-      run: |
-        uv run --frozen pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
+      - name: Test with pytest and compute coverage
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: |
+          uv run --frozen pytest tests --cov --cov-report xml --cov-report term --durations 10 --junitxml=junit.xml
 
-    # Store Python version
-    - name: Full Python version
-      run: |
-        echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
+      # Store Python version
+      - name: Full Python version
+        run: |
+          echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
-    - name: Upload coverage to Codecov
-      if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      uses: codecov/codecov-action@v4
-      continue-on-error: true
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: coverage.xml
-        flags: pytest
-        name: CPU-coverage
-        env_vars: PYTHON_VERSION
+      - name: Upload coverage to Codecov
+        if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+        uses: codecov/codecov-action@v4
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.xml
+          flags: pytest
+          name: CPU-coverage
+          env_vars: PYTHON_VERSION
 
-    - name: Upload test results to Codecov
-      if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
-      uses: codecov/codecov-action@v5
-      continue-on-error: true
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        flags: pytest
-        env_vars: PYTHON_VERSION
-        report_type: test_results
+      - name: Upload test results to Codecov
+        if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: pytest
+          env_vars: PYTHON_VERSION
+          report_type: test_results
 
-    - name: Test sphinx build without tutorials
-      if: steps.changed-files-specific.outputs.only_changed != 'true'
-      run: |
-        cd docs && make clean && make html-noplot
+      - name: Test sphinx build without tutorials
+        if: steps.changed-files-specific.outputs.only_changed != 'true'
+        run: |
+          cd docs && make clean && make html-noplot

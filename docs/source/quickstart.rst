@@ -27,7 +27,7 @@ Training with TorchUncertainty's Uncertainty-aware Routines
 -----------------------------------------------------------
 
 TorchUncertainty provides a set of Ligthning training and evaluation routines that wrap PyTorch models. Let's have a look at the
-`Classification routine <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_
+`Classification routine <https://github.com/torch-uncertainty/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_
 and its parameters.
 
 .. code:: python

@@ -26,7 +26,7 @@ class OODCriterionInputType(Enum):
     POST_PROCESSING = 4
 
 
-class TUOODCriterion(ABC, nn.Module):
+class TUOODCriterion(nn.Module, ABC):
     input_type: OODCriterionInputType
     single_only = False
     ensemble_only = False

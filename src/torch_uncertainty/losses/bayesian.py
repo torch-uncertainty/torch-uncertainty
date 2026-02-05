@@ -33,6 +33,8 @@ class KLDiv(nn.Module):
 
 
 class ELBOLoss(nn.Module):
+    model: nn.Module
+
     def __init__(
         self,
         model: nn.Module | None,
@@ -60,7 +62,8 @@ class ELBOLoss(nn.Module):
         """
         super().__init__()
         _elbo_loss_checks(inner_loss, kl_weight, num_samples)
-        self.set_model(model)
+        if model is not None:
+            self.set_model(model)
 
         self.inner_loss = inner_loss
         self.kl_weight = kl_weight
@@ -90,7 +93,7 @@ class ELBOLoss(nn.Module):
             aggregated_elbo += self.kl_weight * self._kl_div().to(inputs.device)
         return aggregated_elbo / self.num_samples
 
-    def set_model(self, model: nn.Module | None) -> None:
+    def set_model(self, model: nn.Module) -> None:
         self.model = model
         if model is not None:
             self._kl_div = KLDiv(model)

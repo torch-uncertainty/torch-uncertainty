@@ -96,7 +96,7 @@ def deep_ensembles(
     reset_model_parameters: bool = True,
     store_on_cpu: bool = False,
     ckpt_paths: list[str | Path] | Path | None = None,
-    use_tu_ckpt_format: bool = False,
+    use_tu_ckpt_format: bool = True,
 ) -> _DeepEnsembles:
     """Build a Deep Ensembles out of the original models.
 
@@ -118,7 +118,7 @@ def deep_ensembles(
             the checkpoint will be loaded using the torch-uncertainty loading function. If
             ``False``, the checkpoint will be loaded using the default PyTorch loading function.
             Note that this option is only used if :attr:ckpt_paths is provided. Defaults to
-            ``False``.
+            ``True``.
 
     Returns:
         _DeepEnsembles | _RegDeepEnsembles: The ensembled model.

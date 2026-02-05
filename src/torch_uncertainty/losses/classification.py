@@ -317,9 +317,9 @@ class FocalLoss(nn.Module):
 class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
     def __init__(
         self,
+        label_smoothing: float = 0.0,
         weight: Tensor | None = None,
         reduction: str = "mean",
-        label_smoothing: float = 0.0,
     ) -> None:
         """Binary Cross Entropy with Logits Loss with label smoothing.
 
@@ -365,11 +365,12 @@ class BCEWithLogitsLSLoss(nn.BCEWithLogitsLoss):
 class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
     def __init__(
         self,
+        label_smoothing: float = 0,
+        max_sup: float = 0,
+        *,
         weight: Tensor | None = None,
         size_average=None,
         reduction: str | None = "mean",
-        label_smoothing: float = 0,
-        max_sup: float = 0,
     ) -> None:
         """Max suppression cross-entropy loss.
 
@@ -402,3 +403,82 @@ class CrossEntropyMaxSupLoss(nn.CrossEntropyLoss):
         if self.reduction == "sum":
             return loss.sum()
         return loss
+
+
+class MixupMPLoss(nn.CrossEntropyLoss):
+    def __init__(
+        self,
+        mixup_ratio: float = 1.0,
+        weight: Tensor | None = None,
+        ignore_index: int = -100,
+        reduction: str = "mean",
+    ) -> None:
+        """MixupMP loss from Wu & Williamson.
+
+        When using the MixupMP transform, the batch returned to the model
+        consists of **mixup-augmented samples** and **original samples** concatenated.
+        The `mixup_ratio` (r) controls the number of mixup samples relative to normal samples
+        produced by the transform:
+
+          - r <= 1.0: selects fewer mixup samples,
+          - r > 1.0: selects more mixup samples.
+
+        Both mixup and normal samples use cross-entropy but should be **weighted** according to the
+        ratio r.
+
+        Args:
+            mixup_ratio (float): Ratio of number of mixup samples vs normal samples
+                output by the MixupMP transform. This should match the transform's
+                :attr:`mixup_ratio` hyperparameter. Defaults to ``1.0`` (equal weighting).
+            weight (Tensor | None): a manual rescaling weight given to each class.
+            ignore_index (int): Specifies a target value that is ignored
+                and does not contribute to the input gradient. Defaults to ``-100``.
+            reduction (str): Specifies the reduction to apply to the output: 'none'|'mean'|'sum'.
+
+        See Also:
+            torch_uncertainty/transforms/mixup.py — MixupMP transform implementation.
+
+        Reference:
+            "Posterior Uncertainty Quantification in Neural Networks using Data Augmentation"
+            (AISTATS 2024) by Luhuan Wu & Sinead Williamson.
+        """
+        super().__init__(weight=weight, ignore_index=ignore_index, reduction=reduction)
+        if mixup_ratio <= 0:
+            raise ValueError(f"mixup_ratio must be > 0. Got {mixup_ratio} < 0.")
+        self.mixup_ratio = mixup_ratio
+
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        """The mixup transform should arrange outputs as `[mixup, normal]` or
+        `[normal, mixup]` depending on r; this splits them accordingly.
+
+        Mixup targets may be soft labels (one-hot float tensor), so we handle
+        that case by manually using F.kl_div if needed.
+
+        Args:
+            inputs (Tensor): model logits shape (N_total, num_classes)
+            targets (Tensor): target labels (one-hot or class indices) shape (N_total, ...)
+        """
+        # determine how many samples correspond to mixup vs normal
+        mixup_count = round((self.mixup_ratio / (self.mixup_ratio + 1)) * inputs.size(0))
+
+        # slices: assume mixup first, then normal
+        mixup_preds, mixup_targets = inputs[:mixup_count], targets[:mixup_count]
+        norm_preds, norm_targets = inputs[mixup_count:], targets[mixup_count:]
+
+        # standard cross entropy for normal samples
+        loss_norm = super().forward(norm_preds, norm_targets)
+
+        # mixup may have soft labels
+        if mixup_targets.dtype.is_floating_point:
+            # use KL divergence for soft labels
+            log_prob = F.log_softmax(mixup_preds, dim=-1)
+            loss_mixup = F.kl_div(
+                log_prob,
+                mixup_targets,
+                reduction="batchmean" if self.reduction == "mean" else self.reduction,
+            )
+        else:
+            loss_mixup = super().forward(mixup_preds, mixup_targets)
+
+        # unnormalized as in the paper's implementation
+        return self.mixup_ratio * loss_mixup + loss_norm

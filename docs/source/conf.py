@@ -20,7 +20,7 @@ copyright = (  # noqa: A001
     f"{datetime.now().year!s}, Adrien Lafage and Olivier Laurent"
 )
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.9.0"
+release = "0.10.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -121,7 +121,7 @@ html_theme_options = {
         "alt_text": "TorchUncertainty Logo",  # Alternative text for accessibility
     },
     "navbar_start": ["navbar-logo"],
-    "github_url": "https://github.com/ENSTA-U2IS-AI/torch-uncertainty",
+    "github_url": "https://github.com/torch-uncertainty/torch-uncertainty",
     "footer_end": [],
     "footer_start": [],
     "footer_center": ["copyright"],
