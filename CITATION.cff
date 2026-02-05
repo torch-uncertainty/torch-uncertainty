@@ -8,7 +8,7 @@ authors:
     given-names: "Olivier"
 date-released: 2023-02-15
 license: "Apache-2.0"
-url: "https://github.com/ENSTA-U2IS-AI/torch-uncertainty"
+url: "https://github.com/torch-uncertainty/torch-uncertainty"
 preferred-citation:
   type: "conference-paper"
   title: "Torch-Uncertainty: A Deep Learning Framework for Uncertainty Quantification"

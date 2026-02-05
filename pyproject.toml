@@ -103,7 +103,7 @@ explicit = true
 [project.urls]
 homepage = "https://torch-uncertainty.github.io/"
 documentation = "https://torch-uncertainty.github.io/quickstart.html"
-repository = "https://github.com/ENSTA-U2IS-AI/torch-uncertainty.git"
+repository = "https://github.com/torch-uncertainty/torch-uncertainty.git"
 
 [tool.flit.module]
 name = "torch_uncertainty"

@@ -105,7 +105,7 @@ Post-processing methods
 For now, we intend to follow scikit-learn style API for post-processing
 methods (except that we use a validation dataset instead of a numpy array).
 You may get inspiration from the already implemented
-`temperature-scaling <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py>`_.
+`temperature-scaling <https://github.com/torch-uncertainty/torch-uncertainty/blob/dev/torch_uncertainty/post_processing/calibration/temperature_scaler.py>`_.
 
 
 License

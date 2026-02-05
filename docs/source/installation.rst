@@ -6,7 +6,7 @@ Installation
 
 
 You can install the package either from PyPI or from source. Choose the latter if you
-want to access the files included the `experiments <https://github.com/ENSTA-U2IS-AI/torch-uncertainty/tree/main/experiments>`_
+want to access the files included the `experiments <https://github.com/torch-uncertainty/torch-uncertainty/tree/main/experiments>`_
 folder or if you want to contribute to the project.
 
 
@@ -35,7 +35,7 @@ Again, with PyTorch already installed, clone the repository with:
 
 .. parsed-literal::
 
-    git clone https://github.com/ENSTA-U2IS-AI/torch-uncertainty.git
+    git clone https://github.com/torch-uncertainty/torch-uncertainty.git
     cd torch-uncertainty
 
 Create a new conda environment and activate it:
