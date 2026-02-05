@@ -39,6 +39,7 @@ class DummyClassificationBaseline:
         kernel_tau_std: float = 0.5,
         mixup_alpha: float = 1,
         cutmix_alpha: float = 0,
+        mixup_ratio: float = 0,
         no_mixup_params: bool = False,
         ema: bool = False,
         swa: bool = False,
@@ -61,6 +62,7 @@ class DummyClassificationBaseline:
                 "kw_on_embeddings": kw_on_embeddings,
                 "kernel_tau_max": kernel_tau_max,
                 "kernel_tau_std": kernel_tau_std,
+                "mixupmp_ratio": mixup_ratio,
             }
         else:
             mixup_params = None

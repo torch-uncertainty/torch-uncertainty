@@ -440,11 +440,11 @@ class MixupMPLoss(nn.CrossEntropyLoss):
 
         Reference:
             "Posterior Uncertainty Quantification in Neural Networks using Data Augmentation"
-            (AISTATS 2024) by Luhuan Wu & Sinead Williamson. :contentReference[oaicite:1]{index=1}
+            (AISTATS 2024) by Luhuan Wu & Sinead Williamson.
         """
         super().__init__(weight=weight, ignore_index=ignore_index, reduction=reduction)
         if mixup_ratio <= 0:
-            raise ValueError(f"mixup_ratio must be > 0. Got {mixup_ratio}.")
+            raise ValueError(f"mixup_ratio must be > 0. Got {mixup_ratio} < 0.")
         self.mixup_ratio = mixup_ratio
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
@@ -458,26 +458,12 @@ class MixupMPLoss(nn.CrossEntropyLoss):
             inputs (Tensor): model logits shape (N_total, num_classes)
             targets (Tensor): target labels (one-hot or class indices) shape (N_total, ...)
         """
-        # compute expected counts based on mixup_ratio
-        r = self.mixup_ratio
-
-        num_total_samples = inputs.size(0)
         # determine how many samples correspond to mixup vs normal
-        if r <= 1.0:
-            mixup_count = round((r / (1.0 + r)) * num_total_samples)
-            normal_count = num_total_samples - mixup_count
-        else:
-            normal_count = round(((1.0 / r) / (1.0 + (1.0 / r))) * num_total_samples)
-            mixup_count = num_total_samples - normal_count
+        mixup_count = round((self.mixup_ratio / (self.mixup_ratio + 1)) * inputs.size(0))
 
         # slices: assume mixup first, then normal
-        mix_slice = slice(0, mixup_count)
-        norm_slice = slice(mixup_count, mixup_count + normal_count)
-
-        mixup_preds = inputs[mix_slice]
-        mixup_targets = targets[mix_slice]
-        norm_preds = inputs[norm_slice]
-        norm_targets = targets[norm_slice]
+        mixup_preds, mixup_targets = inputs[:mixup_count], targets[:mixup_count]
+        norm_preds, norm_targets = inputs[mixup_count:], targets[mixup_count:]
 
         # standard cross entropy for normal samples
         loss_norm = super().forward(norm_preds, norm_targets)
@@ -494,5 +480,5 @@ class MixupMPLoss(nn.CrossEntropyLoss):
         else:
             loss_mixup = super().forward(mixup_preds, mixup_targets)
 
-        # unnormalized as in the implementation
-        return r * loss_mixup + loss_norm
+        # unnormalized as in the paper's implementation
+        return self.mixup_ratio * loss_mixup + loss_norm

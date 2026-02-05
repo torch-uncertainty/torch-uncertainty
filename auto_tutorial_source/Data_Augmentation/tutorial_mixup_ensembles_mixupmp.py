@@ -180,7 +180,7 @@ print(ensemble_mixup_config)
 #
 # MixupMP is a variant of mixup that produces posterior samples from a predictive
 # distribution that is more realistic than deep ensembles alone, according to the
-# `MixupMP` paper (Martingale posterior based construction).:contentReference[oaicite:1]{index=1}
+# `MixupMP` paper (Martingale posterior based construction).
 #
 # The two key differences vs standard Mixup:
 #   - You use a specialized loss: `MixupMPLoss`
