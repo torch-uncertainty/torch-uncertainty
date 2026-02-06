@@ -20,6 +20,8 @@ _TorchUncertainty_ is a package designed to help leverage [uncertainty quantific
 
 TorchUncertainty contains the _official implementations_ of multiple papers from _major machine-learning and computer vision conferences_ and was featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
 
+Torch-Uncertainty is published at [NeurIPS D&B 2025](https://neurips.cc/virtual/2025/loc/san-diego/poster/121463). Please consider citing the paper if the framework is helpful for your research.
+
 ---
 
 This package provides a multi-level API, including:
