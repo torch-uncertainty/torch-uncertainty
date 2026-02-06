@@ -576,35 +576,7 @@ class ClassificationRoutine(LightningModule):
         self.log_dict(result_dict, sync_dist=True)
 
         if isinstance(self.logger, Logger) and self.log_plots:
-            self.logger.experiment.add_figure(
-                "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
-            )
-            self.logger.experiment.add_figure(
-                "Risk-Coverage curve",
-                self.test_cls_metrics["sc/AURC"].plot()[0],
-            )
-            self.logger.experiment.add_figure(
-                "Generalized Risk-Coverage curve",
-                self.test_cls_metrics["sc/AUGRC"].plot()[0],
-            )
-
-            if self.post_processing is not None and not isinstance(self.post_processing, Conformal):
-                self.logger.experiment.add_figure(
-                    "Reliabity diagram after calibration",
-                    self.post_cls_metrics["cal/ECE"].plot()[0],
-                )
-
-            # plot histograms of logits and likelihoods
-            if self.eval_ood:
-                id_scores = torch.cat(self.id_score_storage, dim=0)
-                ood_scores = torch.cat(self.ood_score_storage, dim=0)
-
-                score_fig = plot_hist(
-                    [id_scores, ood_scores],
-                    20,
-                    "Histogram of the OOD scores",
-                )[0]
-                self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
+            self._plot_results()
 
         # reset metrics
         self.test_cls_metrics.reset()
@@ -630,6 +602,38 @@ class ClassificationRoutine(LightningModule):
                 Path(self.logger.log_dir) / self.csv_filename,
                 result_dict,
             )
+
+    def _plot_results(self):
+        """Plot uncertainty quantification metrics."""
+        self.logger.experiment.add_figure(
+            "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
+        )
+        self.logger.experiment.add_figure(
+            "Risk-Coverage curve",
+            self.test_cls_metrics["sc/AURC"].plot()[0],
+        )
+        self.logger.experiment.add_figure(
+            "Generalized Risk-Coverage curve",
+            self.test_cls_metrics["sc/AUGRC"].plot()[0],
+        )
+
+        if self.post_processing is not None and not isinstance(self.post_processing, Conformal):
+            self.logger.experiment.add_figure(
+                "Reliabity diagram after calibration",
+                self.post_cls_metrics["cal/ECE"].plot()[0],
+            )
+
+        # plot histograms of logits and likelihoods
+        if self.eval_ood:
+            id_scores = torch.cat(self.id_score_storage, dim=0)
+            ood_scores = torch.cat(self.ood_score_storage, dim=0)
+
+            score_fig = plot_hist(
+                [id_scores, ood_scores],
+                20,
+                "Histogram of the OOD scores",
+            )[0]
+            self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
 
 
 def _classification_routine_checks(

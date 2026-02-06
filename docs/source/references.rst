@@ -306,6 +306,29 @@ For Laplace Approximation, consider citing:
 * Authors: *Erik Daxberger, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen, Matthias Bauer, and Philipp Hennig*
 * Paper: `NeurIPS 2021 <https://arxiv.org/abs/2106.14806>`__.
 
+Conformal Predictions
+^^^^^^^^^^^^^^^^^^^^^
+
+For Conformal Prediction, consider citing:
+
+**A tutorial on conformal prediction**
+
+* Authors: *Glenn Shafer & Vladimir Vovk*
+
+* Paper: `Journal of Machine Learning Research, 2008 <https://www.jmlr.org/papers/volume9/shafer08a/shafer08a.pdf?trk=public_post_comment-text>`__
+
+Adaptive Prediction Sets (APS & RAPS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Adaptive Prediction Sets (APS) and Regularized Adaptive Prediction Sets (RAPS), consider citing:
+
+**Classification with Valid and Adaptive Coverage**
+
+* Authors: *Yaniv Romano, Matteo Sesia, and Emmanuel J. Candès*
+
+* Paper: `NeurIPS 2020 <https://arxiv.org/abs/2006.02544>`__
+
+
 Losses
 ------
 

@@ -287,7 +287,7 @@ class SegmentationRoutine(LightningModule):
         valid_mask = (targets != 255) * (targets < self.num_classes)
         probs, targets = probs[valid_mask], targets[valid_mask]
         self.val_seg_metrics.update(probs, targets)
-        self.val_sbsmpl_seg_metrics.update(*self.subsample(probs, targets))
+        self.val_sbsmpl_seg_metrics.update(*self._subsample(probs, targets))
 
     def test_step(
         self,
@@ -346,7 +346,7 @@ class SegmentationRoutine(LightningModule):
         if dataloader_idx == 0:
             id_probs, _, id_targets = probs[id_mask], probs_per_est[id_mask], targets[id_mask]
             self.test_seg_metrics.update(id_probs, id_targets)
-            self.test_sbsmpl_seg_metrics.update(*self.subsample(id_probs, id_targets))
+            self.test_sbsmpl_seg_metrics.update(*self._subsample(id_probs, id_targets))
 
         if self.eval_ood and dataloader_idx == 1:
             if self.ood_criterion.input_type == OODCriterionInputType.PROB:
@@ -392,22 +392,7 @@ class SegmentationRoutine(LightningModule):
         self.log_dict(result_dict, logger=True, sync_dist=True)
 
         if isinstance(self.logger, Logger) and self.log_plots:
-            self.logger.experiment.add_figure(
-                "Calibration/Reliabity diagram",
-                self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
-            )
-            self.logger.experiment.add_figure(
-                "Selective Classification/Risk-Coverage curve",
-                self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
-            )
-            self.logger.experiment.add_figure(
-                "Selective Classification/Generalized Risk-Coverage curve",
-                self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
-            )
-            if self.trainer.datamodule is not None:
-                self.log_segmentation_plots()
-            else:
-                logging.info("No datamodule found, skipping segmentation plots.")
+            self._plot_results()
 
         self.test_seg_metrics.reset()
         self.test_sbsmpl_seg_metrics.reset()
@@ -420,7 +405,26 @@ class SegmentationRoutine(LightningModule):
                 result_dict,
             )
 
-    def log_segmentation_plots(self) -> None:
+    def _plot_results(self):
+        """Plot uncertainty quantification metrics and segmentation figures."""
+        self.logger.experiment.add_figure(
+            "Calibration/Reliabity diagram",
+            self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
+        )
+        self.logger.experiment.add_figure(
+            "Selective Classification/Risk-Coverage curve",
+            self.test_sbsmpl_seg_metrics["sc/AURC"].plot()[0],
+        )
+        self.logger.experiment.add_figure(
+            "Selective Classification/Generalized Risk-Coverage curve",
+            self.test_sbsmpl_seg_metrics["sc/AUGRC"].plot()[0],
+        )
+        if self.trainer.datamodule is not None:
+            self._log_segmentation_plots()
+        else:
+            logging.info("No datamodule found, skipping segmentation plots.")
+
+    def _log_segmentation_plots(self) -> None:
         """Build and log examples of segmentation plots from the test set."""
         for i, (img, pred, tgt) in enumerate(self.sample_buffer):
             pred = pred == torch.arange(self.num_classes, device=pred.device)[:, None, None]
@@ -443,7 +447,7 @@ class SegmentationRoutine(LightningModule):
                 show_segmentation_predictions(pred_mask, gt_mask),
             )
 
-    def subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
+    def _subsample(self, pred: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
         """Select a random sample of the data to compute the loss onto.
 
         Args:

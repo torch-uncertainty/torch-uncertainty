@@ -396,7 +396,8 @@ Post-Processing Methods
     
     LaplaceApprox
     MCBatchNorm
-    
+
+
 Scaling Methods
 ^^^^^^^^^^^^^^^
 
@@ -410,9 +411,22 @@ Scaling Methods
     VectorScaler
 
 
+Conformal Methods
+^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class_inherited.rst
+
+    Conformal
+    ConformalClsAPS
+    ConformalClsRAPS
+    ConformalClsTHR
+
 
 OOD Scores
------------------------
+----------
 
 .. currentmodule:: torch_uncertainty.ood_criteria
 
