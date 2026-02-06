@@ -100,7 +100,6 @@ lr_scheduler:
       - 160
     gamma: 0.2
 """
-print(mixup_config)
 
 # %%
 # 2. How to Ensemble Mixup Models
@@ -172,7 +171,6 @@ data:
   root: ./data
   batch_size: 128
 """
-print(ensemble_mixup_config)
 
 # %%
 # 3. Training with MixupMP
@@ -256,7 +254,6 @@ lr_scheduler:
       - 160
     gamma: 0.2
 """
-print(mixupmp_config)
 
 # %%
 # 4. How to Ensemble MixupMP Models
