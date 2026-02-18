@@ -72,7 +72,9 @@ class TestBatchedResnet:
     """Testing the ResNet batched class."""
 
     def test_main(self) -> None:
-        model = batched_resnet(1, 10, 20, 2, conv_bias=True, repeat_strategy="legacy", style=ResNetStyle.IMAGENET)
+        model = batched_resnet(
+            1, 10, 20, 2, conv_bias=True, repeat_strategy="legacy", style=ResNetStyle.IMAGENET
+        )
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
             model(torch.randn(5, 1, 32, 32))
