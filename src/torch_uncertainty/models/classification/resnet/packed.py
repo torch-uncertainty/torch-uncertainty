@@ -6,7 +6,7 @@ from torch import Tensor, nn
 from torch_uncertainty.layers import PackedConv2d, PackedLinear
 from torch_uncertainty.utils import load_hf
 
-from .utils import get_resnet_num_blocks
+from .utils import ResNetStyle, get_resnet_num_blocks
 
 __all__ = [
     "packed_resnet",
@@ -201,7 +201,7 @@ class _PackedResNet(nn.Module):
         alpha: int = 2,
         gamma: int = 1,
         groups: int = 1,
-        style: Literal["imagenet", "cifar"] = "imagenet",
+        style: ResNetStyle = ResNetStyle.IMAGENET,
         in_planes: int = 64,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
         linear_implementation: str = "conv1d",
@@ -217,7 +217,7 @@ class _PackedResNet(nn.Module):
         self.in_planes = in_planes
         block_planes = in_planes
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.conv1 = PackedConv2d(
                 self.in_channels,
                 block_planes,
@@ -231,7 +231,7 @@ class _PackedResNet(nn.Module):
                 bias=conv_bias,
                 first=True,
             )
-        elif style == "cifar":
+        else:  # style == "cifar":
             self.conv1 = PackedConv2d(
                 self.in_channels,
                 block_planes,
@@ -245,12 +245,10 @@ class _PackedResNet(nn.Module):
                 bias=conv_bias,
                 first=True,
             )
-        else:
-            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes * alpha)
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
@@ -403,17 +401,16 @@ def packed_resnet(
         in_channels (int): Number of input channels.
         num_classes (int): Number of classes to predict.
         arch (int): The architecture of the ResNet.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to ``True``.
         dropout_rate (float): Dropout rate. Defaults to ``0``.
         num_estimators (int): Number of estimators in the ensemble.
         alpha (int): Expansion factor affecting the width of the estimators.
         gamma (int): Number of groups within each estimator.
         width_multiplier (float): Width multiplier. Defaults to ``1``.
         groups (int): Number of groups within each estimator group.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
-        normalization_layer (nn.Module, optional): Normalization layer.
+        style (ResNetStyle | Literal["imagenet", "cifar"]): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``ResNetStyle.IMAGENET``.
+        normalization_layer (nn.Module): Normalization layer. Defaults to ``nn.BatchNorm2d``.
         pretrained (bool, optional): Whether to load pretrained weights.
             Defaults to ``False``.
         linear_implementation (str, optional): Implementation of the
@@ -422,6 +419,9 @@ def packed_resnet(
     Returns:
         _PackedResNet: A Packed-Ensembles ResNet.
     """
+    if isinstance(style, str):
+        style = ResNetStyle(style)
+
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     net = _PackedResNet(

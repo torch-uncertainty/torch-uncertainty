@@ -24,6 +24,31 @@ class FrostImages(VisionDataset):
         transform: Callable[..., Any] | None = None,
         target_transform: Callable[..., Any] | None = None,
     ) -> None:
+        """Frost corruption image dataset.
+
+        This dataset provides a small collection of frost-corrupted images that are
+        primarily used to simulate distribution shift in vision experiments. It is
+        typically leveraged for robustness evaluation, out-of-distribution (OOD)
+        testing, and uncertainty estimation under image corruption.
+
+        The dataset contains five JPEG images (``frost1.jpg`` to ``frost5.jpg``)
+        stored in the ``torch-uncertainty-assets`` package. No labels are provided,
+        and each sample consists only of an image.
+
+        Args:
+            transform (Callable[..., Any] | None, optional): A function/transform
+                applied to the input image. Default: ``None``.
+            target_transform (Callable[..., Any] | None, optional): A function/transform
+                applied to the target. Since no targets are provided, this argument is
+                kept for API compatibility. Default: ``None``.
+
+        Raises:
+            ImportError: If the ``torch-uncertainty-assets`` package with image
+                support is not installed.
+
+        Note:
+            This dataset is intended for generating controlled distribution shifts.
+        """
         if not tu_assets_installed:  # coverage: ignore
             raise ImportError(
                 "The torch-uncertainty-assets library is not installed. Please install "

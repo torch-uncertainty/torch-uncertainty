@@ -11,7 +11,7 @@ class DECLoss(nn.Module):
         loss_type: str = "log",
         reduction: str | None = "mean",
     ) -> None:
-        """The deep evidential classification loss.
+        """The Deep Evidential Classification loss.
 
         Args:
             annealing_step (int): Annealing step for the weight of the

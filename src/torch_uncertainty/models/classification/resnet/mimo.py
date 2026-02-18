@@ -5,7 +5,7 @@ from einops import rearrange
 from torch import nn
 
 from .std import _BasicBlock, _Bottleneck, _ResNet
-from .utils import get_resnet_num_blocks
+from .utils import ResNetStyle, get_resnet_num_blocks
 
 __all__ = [
     "mimo_resnet",
@@ -23,7 +23,7 @@ class _MIMOResNet(_ResNet):
         conv_bias: bool,
         dropout_rate: float,
         groups: int = 1,
-        style: Literal["imagenet", "cifar"] = "imagenet",
+        style: ResNetStyle = ResNetStyle.IMAGENET,
         in_planes: int = 64,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     ) -> None:
@@ -59,7 +59,7 @@ def mimo_resnet(
     dropout_rate: float = 0.0,
     width_multiplier: float = 1.0,
     groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
+    style: ResNetStyle | Literal["imagenet", "cifar"] = ResNetStyle.IMAGENET,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOResNet:
     """MIMO ResNet.
@@ -73,13 +73,17 @@ def mimo_resnet(
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.0``.
         width_multiplier (float, optional): Width multiplier. Defaults to ``1.0``.
         groups (int, optional): Number of groups for grouped convolution. Defaults to ``1``.
-        style (Literal["imagenet", "cifar"], optional): Style of ResNet. Defaults to ``"imagenet"``.
+        style (ResNetStyle | Literal["imagenet", "cifar"]): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``ResNetStyle.IMAGENET``.
         normalization_layer (nn.Module, optional): Normalization layer.
             Defaults to ``torch.nn.BatchNorm2d``.
 
     Returns:
         _MIMOResNet: A MIMO-style ResNet.
     """
+    if isinstance(style, str):
+        style = ResNetStyle(style)
+
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _MIMOResNet(

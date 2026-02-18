@@ -39,11 +39,55 @@ class KITTIDepth(VisionDataset):
         download: bool = False,
         remove_unused: bool = False,
     ) -> None:
+        """KITTI Depth Estimation dataset.
+
+        PyTorch ``VisionDataset`` wrapper for depth estimation
+        benchmark derived from the KITTI raw dataset. This dataset provides RGB
+        images from the left color camera (``leftImg8bit``) paired with projected
+        LiDAR depth maps (``leftDepth``).
+
+        The dataset is automatically structured as:
+
+            root/
+                KITTIDepth/
+                    train/
+                        leftImg8bit/*.png
+                        leftDepth/*.png
+                    val/
+                        leftImg8bit/*.png
+                        leftDepth/*.png
+
+        Args:
+            root (str or Path): Root directory where the dataset will be stored.
+            split (Literal["train", "val"]): Dataset split to use.
+            min_depth (float, default=0.0): Minimum valid depth value (in meters). Depth values
+                smaller than or equal to this threshold are set to NaN.
+            max_depth (float, default=80.0): Maximum valid depth value (in meters). Depth values
+                greater than this threshold are set to NaN.
+            transforms (Callable, optional): A function/transform that takes an ``(image, target)``
+                pair and returns the transformed pair.
+            download (bool, default=False): If True, downloads and restructures the depth
+                annotations and raw KITTI data if not already present.
+            remove_unused (bool, default=False): If True, removes the extracted raw files after
+                restructuring to save disk space.
+
+        Returns:
+            tuple[tv_tensors.Image, tv_tensors.Mask]:
+                - image: RGB image as ``tv_tensors.Image``.
+                - target: Depth map as ``tv_tensors.Mask`` in meters (float),
+                with invalid values set to NaN.
+
+        Notes:
+            - Depth maps are stored as 16-bit PNG files and converted to meters
+            by dividing by 256.0.
+            - Usage of this dataset is subject to the original KITTI license
+            (CC BY-NC-SA 3.0).
+        """
         logging.info(
             "KITTIDepth is copyrighted by the Karlsruhe Institute of Technology "
             "(KIT) and the Toyota Technological Institute at Chicago (TTIC). "
             "By using KITTIDepth, you agree to the terms and conditions of the "
-            "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License. "
+            "CC BY-NC-SA 3.0 License. "
             "This means that you must attribute the work in the manner specified "
             "by the authors, you may not use this work for commercial purposes "
             "and if you alter, transform, or build upon this work, you may "

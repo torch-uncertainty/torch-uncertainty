@@ -6,7 +6,7 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers import BatchConv2d, BatchLinear
 
-from .utils import get_resnet_num_blocks
+from .utils import ResNetStyle, get_resnet_num_blocks
 
 __all__ = [
     "batched_resnet",
@@ -153,7 +153,7 @@ class _BatchedResNet(nn.Module):
         dropout_rate: float,
         groups: int = 1,
         width_multiplier: int = 1,
-        style: Literal["imagenet", "cifar"] = "imagenet",
+        style: ResNetStyle = ResNetStyle.IMAGENET,
         in_planes: int = 64,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
         repeat_strategy: Literal["legacy", "paper"] = "legacy",
@@ -170,7 +170,7 @@ class _BatchedResNet(nn.Module):
         self.width_multiplier = width_multiplier
         self.repeat_strategy = repeat_strategy
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.conv1 = BatchConv2d(
                 3,
                 block_planes,
@@ -181,7 +181,7 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        elif style == "cifar":
+        else:  # style == "cifar":
             self.conv1 = BatchConv2d(
                 in_channels,
                 block_planes,
@@ -192,12 +192,10 @@ class _BatchedResNet(nn.Module):
                 groups=groups,
                 bias=False,
             )
-        else:
-            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes)
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
@@ -315,7 +313,7 @@ def batched_resnet(
     dropout_rate: float = 0,
     width_multiplier: float = 1.0,
     groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
+    style: ResNetStyle | Literal["imagenet", "cifar"] = ResNetStyle.IMAGENET,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
     repeat_strategy: Literal["legacy", "paper"] = "paper",
 ) -> _BatchedResNet:
@@ -326,13 +324,12 @@ def batched_resnet(
         num_classes (int): Number of classes to predict.
         arch (int): The architecture of the ResNet.
         num_estimators (int): Number of estimators in the ensemble.
-        conv_bias (bool): Whether to use bias in convolutions. Defaults to
-            ``True``.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to ``True``.
         dropout_rate (float): Dropout rate. Defaults to ``0``.
         width_multiplier (float): Width multiplier. Defaults to ``1.0``.
         groups (int): Number of groups within each estimator.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
+        style (ResNetStyle | Literal["imagenet", "cifar"]): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``ResNetStyle.IMAGENET``.
         normalization_layer (nn.Module, optional): Normalization layer.
         repeat_strategy (Literal["legacy", "paper"], optional): The repeatrepeat_strategy ("legacy"|"paper", optional): The repeat
             strategy to use during training:
@@ -345,6 +342,9 @@ def batched_resnet(
     Returns:
         _BatchedResNet: A BatchEnsemble-style ResNet.
     """
+    if isinstance(style, str):
+        style = ResNetStyle(style)
+
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _BatchedResNet(

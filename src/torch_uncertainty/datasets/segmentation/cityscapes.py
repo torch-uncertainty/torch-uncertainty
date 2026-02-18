@@ -44,6 +44,34 @@ class Cityscapes(TVCityscapes):
         target_transform: Callable[..., Any] | None = None,
         transforms: Callable[..., Any] | None = None,
     ) -> None:
+        """Cityscapes dataset wrapper with train ID color mapping.
+
+        This class extends the `TVCityscapes` dataset to provide a fixed
+        color palette for visualization and encode/decode utilities for
+        semantic segmentation targets using Cityscapes train IDs. It also
+        sets up mapping from train IDs to RGB colors for easier interpretation
+        of predicted masks.
+
+        Attributes:
+            color_palette (list[tuple[int, int, int]]):
+                List of RGB tuples for each class label in the Cityscapes dataset.
+            train_id_to_color (torch.Tensor):
+                Tensor mapping train IDs to RGB colors for output decoding.
+
+        Args:
+            root (str): Root directory of the Cityscapes dataset.
+            split (str, optional): Dataset split to use, such as "train", "val", or "test".
+            mode (str, optional): Annotation mode, e.g., "fine" or "coarse".
+            target_type (list[str] | str, optional):
+                One or more target types to load ("instance", "semantic", etc.).
+            transform (Callable[..., Any] | None, optional):
+                Transformation applied to the input image.
+            target_transform (Callable[..., Any] | None, optional):
+                Transformation applied to the target.
+            transforms (Callable[..., Any] | None, optional):
+                Combined transformation for image and target.
+
+        """
         super().__init__(
             root,
             split,

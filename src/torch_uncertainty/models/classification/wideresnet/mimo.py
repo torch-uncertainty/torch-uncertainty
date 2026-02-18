@@ -60,6 +60,26 @@ def mimo_wideresnet28x10(
     activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _MIMOWideResNet:
+    """MIMO of Wide-ResNet-28x10.
+
+    Args:
+        in_channels (int): Number of input channels.
+        num_classes (int): Number of classes to predict.
+        num_estimators (int): Number of estimators in the ensemble.
+        groups (int): Number of subgroups in the convolutions.
+        conv_bias (bool): Whether to use bias in convolutions. Defaults to
+            ``True``.
+        dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
+        style (str, optional): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``imagenet``.
+        activation_fn (Callable, optional): Activation function. Defaults to
+            ``torch.nn.functional.relu``.
+        normalization_layer (nn.Module, optional): Normalization layer.
+            Defaults to ``torch.nn.BatchNorm2d``.
+
+    Returns:
+        _MIMOWideResNet: A MIMO Wide-ResNet-28x10.
+    """
     return _MIMOWideResNet(
         depth=28,
         widen_factor=10,

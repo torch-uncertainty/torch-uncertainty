@@ -4,7 +4,7 @@ from typing import Literal
 from torch import Tensor, nn
 from torch.nn.functional import relu
 
-from .utils import get_resnet_num_blocks
+from .utils import ResNetStyle, get_resnet_num_blocks
 
 __all__ = ["resnet"]
 
@@ -199,7 +199,7 @@ class _ResNet(nn.Module):
         conv_bias: bool,
         dropout_rate: float,
         groups: int,
-        style: Literal["imagenet", "cifar"] = "imagenet",
+        style: ResNetStyle = ResNetStyle.IMAGENET,
         in_planes: int = 64,
         activation_fn: Callable = relu,
         normalization_layer: type[nn.Module] = nn.BatchNorm2d,
@@ -211,7 +211,7 @@ class _ResNet(nn.Module):
         self.dropout_rate = dropout_rate
         self.activation_fn = activation_fn
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.conv1 = nn.Conv2d(
                 in_channels,
                 block_planes,
@@ -221,7 +221,7 @@ class _ResNet(nn.Module):
                 groups=1,  # No groups in the first layer
                 bias=conv_bias,
             )
-        elif style == "cifar":
+        else:  # ResNetStyle.CIFAR:
             self.conv1 = nn.Conv2d(
                 in_channels,
                 block_planes,
@@ -231,12 +231,10 @@ class _ResNet(nn.Module):
                 groups=1,  # No groups in the first layer
                 bias=conv_bias,
             )
-        else:
-            raise ValueError(f"Unknown style. Got {style}.")
 
         self.bn1 = normalization_layer(block_planes)
 
-        if style == "imagenet":
+        if style == ResNetStyle.IMAGENET:
             self.optional_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.optional_pool = nn.Identity()
@@ -352,7 +350,7 @@ def resnet(
     dropout_rate: float = 0.0,
     width_multiplier: float = 1.0,
     groups: int = 1,
-    style: Literal["imagenet", "cifar"] = "imagenet",
+    style: ResNetStyle | Literal["imagenet", "cifar"] = ResNetStyle.IMAGENET,
     activation_fn: Callable = relu,
     normalization_layer: type[nn.Module] = nn.BatchNorm2d,
 ) -> _ResNet:
@@ -367,8 +365,8 @@ def resnet(
         dropout_rate (float): Dropout rate. Defaults to 0.0.
         width_multiplier (float): Width multiplier. Defaults to 1.0.
         groups (int): Number of groups in convolutions. Defaults to 1.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
+        style (ResNetStyle | Literal["imagenet", "cifar"]): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``ResNetStyle.IMAGENET``.
         activation_fn (Callable, optional): Activation function. Defaults to
             ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.
@@ -377,6 +375,9 @@ def resnet(
     Returns:
         _ResNet: The ResNet model.
     """
+    if isinstance(style, str):
+        style = ResNetStyle(style)
+
     block = _BasicBlock if arch in [18, 20, 34, 44, 56, 110, 1202] else _Bottleneck
     in_planes = 16 if arch in [20, 44, 56, 110, 1202] else 64
     return _ResNet(

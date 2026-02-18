@@ -262,8 +262,8 @@ def masked_wideresnet28x10(
         dropout_rate (float, optional): Dropout rate. Defaults to ``0.3``.
         groups (int): Number of groups within each estimator. Defaults to
             ``1``.
-        style (bool, optional): Whether to use the ImageNet
-            structure. Defaults to ``True``.
+        style (str, optional): Whether to use the ImageNet or CIFAR
+            structure. Defaults to ``imagenet``.
         activation_fn (Callable, optional): Activation function. Defaults to
             ``torch.nn.functional.relu``.
         normalization_layer (nn.Module, optional): Normalization layer.

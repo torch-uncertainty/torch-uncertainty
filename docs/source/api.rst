@@ -128,13 +128,11 @@ Convolution Layers
     StudentTConvNd
     NormalInverseGammaConvNd
 
-Models
-------
+Model Backbones
+---------------
 
 .. currentmodule:: torch_uncertainty.models
 
-Backbones
-^^^^^^^^^
 
 ResNet
 """"""
@@ -179,11 +177,15 @@ InceptionTime
     packed_inception_time
 
 
-Wrappers
-^^^^^^^^
+Model Wrappers
+--------------
+
+Wrappers encapsulate your models to enable better uncertainty estimation.
 
 Functions
 """""""""
+
+Some wrappers can be directly created through functions such as the following: 
 
 .. autosummary::
     :toctree: generated/
@@ -197,6 +199,8 @@ Functions
 Classes
 """""""
 
+Some wrappers need to be instantiated as classes such as the following:
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:
@@ -208,6 +212,7 @@ Classes
     StochasticModel
     SWA
     SWAG
+    Zero
 
 Metrics
 -------

@@ -1,4 +1,4 @@
-# ruff: noqa: E402, D212, D415, T201
+# ruff: noqa: D212, D415
 """
 Mixup and MixupMP Training & Ensembles with TorchUncertainty
 ============================================================
