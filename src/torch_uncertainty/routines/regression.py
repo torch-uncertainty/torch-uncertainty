@@ -4,7 +4,7 @@ from pathlib import Path
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
-from lightning.pytorch.utilities.types import STEP_OUTPUT
+from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
 from torch.distributions import (
     Distribution,
@@ -144,7 +144,7 @@ class RegressionRoutine(LightningModule):
             self.val_prob_metrics = reg_prob_metrics.clone(prefix="val/")
             self.test_prob_metrics = reg_prob_metrics.clone(prefix="test/")
 
-    def configure_optimizers(self) -> Optimizer | dict:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore

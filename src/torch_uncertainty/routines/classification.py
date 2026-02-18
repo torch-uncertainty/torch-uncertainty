@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
-from lightning.pytorch.utilities.types import STEP_OUTPUT
+from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
@@ -316,7 +316,7 @@ class ClassificationRoutine(LightningModule):
                 batch = self.mixup(*batch)
         return batch
 
-    def configure_optimizers(self) -> Optimizer | dict:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore

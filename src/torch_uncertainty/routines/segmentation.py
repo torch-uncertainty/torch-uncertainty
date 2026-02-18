@@ -5,7 +5,7 @@ import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
-from lightning.pytorch.utilities.types import STEP_OUTPUT
+from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
@@ -201,7 +201,7 @@ class SegmentationRoutine(LightningModule):
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
 
-    def configure_optimizers(self) -> Optimizer | dict:
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         return self.optim_recipe
 
     def forward(self, inputs: Tensor) -> Tensor:
