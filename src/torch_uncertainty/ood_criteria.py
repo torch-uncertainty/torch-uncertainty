@@ -252,11 +252,11 @@ class VariationRatioCriterion(TUOODCriterion):
         return self.vr_metric(inputs.transpose(0, 1))
 
 
-def get_ood_criterion(ood_criterion: type[TUOODCriterion] | str) -> TUOODCriterion:
+def get_ood_criterion(ood_criterion: type[TUOODCriterion] | TUOODCriterion | str) -> TUOODCriterion:
     """Get an OOD criterion instance based on a string identifier or class type.
 
     Args:
-        ood_criterion (str or type): A string identifier for a predefined OOD criterion
+        ood_criterion (str, type or TUOODCriterion): A string identifier for a predefined OOD criterion
             or a subclass of `TUOODCriterion`.
 
     Returns:
