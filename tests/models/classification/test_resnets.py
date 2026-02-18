@@ -65,7 +65,7 @@ class TestMaskedResnet:
 
         model = masked_resnet(1, 10, 50, 2, 2, repeat_strategy="paper", style="cifar")
         with torch.no_grad():
-            model(torch.randn(1, 1, 32, 32))
+            model(torch.randn(2, 1, 32, 32))
 
 
 class TestBatchedResnet:
