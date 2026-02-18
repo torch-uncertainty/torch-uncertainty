@@ -44,8 +44,12 @@ class TestPackedResnet:
     """Testing the ResNet packed class."""
 
     def test_main(self) -> None:
-        model = packed_resnet(1, 10, 20, 2, 2, 1)
-        model = packed_resnet(1, 10, 152, 2, 2, 1, style=ResNetStyle.CIFAR)
+        model = packed_resnet(1, 10, 20, 2, 2, 1, style="imagenet")
+        with torch.no_grad():
+            model(torch.randn(2, 1, 32, 32))
+        model = packed_resnet(1, 10, 50, 2, 2, 1, style=ResNetStyle.CIFAR)
+        with torch.no_grad():
+            model(torch.randn(2, 1, 32, 32))
         assert model.check_config({"alpha": 2, "gamma": 1, "groups": 1, "num_estimators": 2})
         assert not model.check_config({"alpha": 1, "gamma": 1, "groups": 1, "num_estimators": 2})
 
@@ -54,12 +58,12 @@ class TestMaskedResnet:
     """Testing the ResNet masked class."""
 
     def test_main(self) -> None:
-        model = masked_resnet(1, 10, 20, 2, 2, style=ResNetStyle.IMAGENET)
+        model = masked_resnet(1, 10, 20, 2, 2, repeat_strategy="legacy", style=ResNetStyle.IMAGENET)
         with torch.no_grad():
             model(torch.randn(2, 1, 32, 32))
             model(torch.randn(4, 1, 32, 32))
 
-        model = masked_resnet(1, 10, 20, 2, 2, repeat_strategy="legacy")
+        model = masked_resnet(1, 10, 50, 2, 2, repeat_strategy="paper", style="cifar")
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
 
@@ -68,13 +72,12 @@ class TestBatchedResnet:
     """Testing the ResNet batched class."""
 
     def test_main(self) -> None:
-        model = batched_resnet(1, 10, 20, 2, conv_bias=True, style=ResNetStyle.IMAGENET)
+        model = batched_resnet(1, 10, 20, 2, conv_bias=True, repeat_strategy="legacy", style=ResNetStyle.IMAGENET)
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
-            model(torch.randn(2, 1, 32, 32))
             model(torch.randn(5, 1, 32, 32))
 
-        model = batched_resnet(1, 10, 20, 2, repeat_strategy="legacy")
+        model = batched_resnet(1, 10, 50, 2, repeat_strategy="paper", style="cifar")
         with torch.no_grad():
             model(torch.randn(1, 1, 32, 32))
 
@@ -96,6 +99,6 @@ class TestMIMOResnet:
 
     def test_main(self) -> None:
         model = mimo_resnet(1, 10, 34, 2, style=ResNetStyle.IMAGENET, conv_bias=False)
-        model = mimo_resnet(1, 10, 34, 2, style="cifar")
+        model = mimo_resnet(1, 10, 50, 2, style="cifar")
         model.train()
         model(torch.rand((2, 1, 28, 28)))
