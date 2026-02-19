@@ -301,12 +301,11 @@ name = "bitsandbytes"
 version = "0.49.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
-    { name = "packaging" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu') or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (extra != 'extra-17-torch-uncertainty-cpu' and extra != 'extra-17-torch-uncertainty-gpu')" },
+    { name = "numpy", marker = "sys_platform != 'darwin' or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
+    { name = "packaging", marker = "sys_platform != 'darwin' or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and extra != 'extra-17-torch-uncertainty-cpu' and extra != 'extra-17-torch-uncertainty-gpu') or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
     { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-17-torch-uncertainty-cpu') or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
-    { name = "torch", version = "2.8.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "torch", version = "2.8.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'darwin' and extra == 'extra-17-torch-uncertainty-gpu') or (extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d8/7d/f1fe0992334b18cd8494f89aeec1dcc674635584fcd9f115784fea3a1d05/bitsandbytes-0.49.2-py3-none-macosx_14_0_arm64.whl", hash = "sha256:87be5975edeac5396d699ecbc39dfc47cf2c026daaf2d5852a94368611a6823f", size = 131940, upload-time = "2026-02-16T21:26:04.572Z" },
@@ -1940,7 +1939,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "nvidia-cublas-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/41/e79269ce215c857c935fd86bcfe91a451a584dfc27f1e068f568b9ad1ab7/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:c9132cc3f8958447b4910a1720036d9eff5928cc3179b0a51fb6d167c6cc87d8", size = 705026878, upload-time = "2025-06-06T21:52:51.348Z" },
@@ -1953,7 +1952,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/bc/7771846d3a0272026c416fbb7e5f4c1f146d6d80704534d0b187dd6f4800/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:848ef7224d6305cdb2a4df928759dca7b1201874787083b6e7550dd6765ce69a", size = 193109211, upload-time = "2025-03-07T01:44:56.873Z" },
@@ -1985,9 +1984,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "nvidia-cublas-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
+    { name = "nvidia-cusparse-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/32/f7cd6ce8a7690544d084ea21c26e910a97e077c9b7f07bf5de623ee19981/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:db9ed69dbef9715071232caa9b69c52ac7de3a95773c2db65bdba85916e4e5c0", size = 267229841, upload-time = "2025-03-07T01:46:54.356Z" },
@@ -2000,7 +1999,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/f7/cd777c4109681367721b00a106f491e0d0d15cfa1fd59672ce580ce42a97/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b6c161cb130be1a07a27ea6923df8141f3c295852f4b260c65f18f3e0a091dc", size = 288117129, upload-time = "2025-03-07T01:47:40.407Z" },
@@ -3615,7 +3614,7 @@ dev = [
     { name = "pre-commit-hooks" },
     { name = "pydata-sphinx-theme" },
     { name = "pytest-cov" },
-    { name = "ruff" },
+    { name = "ruff", specifier = "==0.15.1" },
     { name = "sphinx", specifier = "==7.4.7" },
     { name = "sphinx-codeautolink" },
     { name = "sphinx-copybutton" },
@@ -3636,7 +3635,7 @@ docs = [
 lint = [
     { name = "pre-commit" },
     { name = "pre-commit-hooks" },
-    { name = "ruff" },
+    { name = "ruff", specifier = "==0.15.1" },
 ]
 test = [
     { name = "pytest-cov" },
@@ -3838,7 +3837,7 @@ name = "triton"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "setuptools", marker = "extra == 'extra-17-torch-uncertainty-gpu'" },
+    { name = "setuptools", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-gpu') or (python_full_version < '3.11' and sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'darwin' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'emscripten' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'win32' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu') or (sys_platform == 'linux' and extra == 'extra-17-torch-uncertainty-cpu' and extra == 'extra-17-torch-uncertainty-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/ee/0ee5f64a87eeda19bbad9bc54ae5ca5b98186ed00055281fd40fb4beb10e/triton-3.4.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7ff2785de9bc02f500e085420273bb5cc9c9bb767584a4aa28d6e360cec70128", size = 155430069, upload-time = "2025-07-30T19:58:21.715Z" },
