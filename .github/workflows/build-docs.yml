@@ -36,6 +36,7 @@ jobs:
         with:
           path: |
             auto_tutorial_source
+            docs
           key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
 
       - name: Install dependencies
