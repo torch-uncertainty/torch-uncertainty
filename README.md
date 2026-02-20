@@ -9,7 +9,6 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code Coverage](https://codecov.io/github/torch-uncertainty/torch-uncertainty/coverage.svg?branch=master)](https://codecov.io/gh/torch-uncertainty/torch-uncertainty)
 [![Downloads](https://static.pepy.tech/badge/torch-uncertainty)](https://pepy.tech/project/torch-uncertainty)
-[![Discord Badge](https://dcbadge.vercel.app/api/server/HMCawt5MJu?compact=true&style=flat)](https://discord.gg/HMCawt5MJu)
 </div>
 
 _TorchUncertainty_ is a package designed to help leverage [uncertainty quantification techniques](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning) to make deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
@@ -103,6 +102,10 @@ It includes the official codes of the following papers:
 ## Tutorials
 
 Check out all our tutorials at [torch-uncertainty.github.io/auto_tutorials](https://torch-uncertainty.github.io/auto_tutorials/index.html).
+
+## Experiments
+
+We provide some configuration files in the `experiments` folder. You may find more examples in other repositories related to the Torch-Uncertainty organization, such as the [Packed-Ensembles reproducibility repo.](https://github.com/torch-uncertainty/packed-ensembles-ICLR-experiments) or the [Torch-Uncertainty reproducibility repo](https://github.com/torch-uncertainty/torch-uncertainty-neurIPS-experiments).
 
 ## :telescope: Projects using TorchUncertainty
 
