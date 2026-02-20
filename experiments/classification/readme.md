@@ -1,27 +1,3 @@
 # Classification Benchmarks
 
-In this folder, you will find the different experiment files for classification
-datasets.
-
-## Image Classification
-
-### CIFAR-10
-
-* ResNet
-
-### MNIST
-
-* LeNet
-* Bayesian LeNet
-
-### Tiny-ImageNet200
-
-* ResNet
-
-## Time-Series Classification
-
-### UCR/UEA
-
-* InceptionTime
-
-TODO: rework this readme.
+You may find more image classification configuration files in the [Packed-Ensembles reproducibility repository](https://github.com/torch-uncertainty/packed-ensembles-ICLR-experiments) and the [Torch-Uncertainty reproducibility repository](https://github.com/torch-uncertainty/torch-uncertainty-neurIPS-experiments) for time-series classification.

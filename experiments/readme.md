@@ -1,29 +1,27 @@
 # Experiments
 
-Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantification methods.
+Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantification methods. To ease the maintenance
+of the repository, the number of configuration files has been reduced. However, we include more configs in various repos
+in the [Torch-Uncertainty](https://github.com/torch-uncertainty) organization such as:
+
+- [The Packed-Ensembles reproducibility repository](https://github.com/torch-uncertainty/packed-ensembles-ICLR-experiments)
+- [The Torch-Uncertainty reproducibility repository](https://github.com/torch-uncertainty/torch-uncertainty-neurIPS-experiments)
+- [The UCI regression benchmark repository](https://github.com/torch-uncertainty/uci-regression-experiment)
+
+In this folder, you will find experiments relative to:
 
 ## Classification
 
 ### Images
 
 * CIFAR-10
-* CIFAR-100
 * MNIST
-* Tiny-ImageNet200
+* Tiny-ImageNet
 
 ### Time-series
 
 * UCR/UEA
-  * Adiac
-  * Beef
-  * CricketX
-  * CricketY
-  * CricketZ
-  * InlineSkate
-  * Lightning7
-  * Mallat
   * OliveOil
-  * TwoPatterns
 
 ## Segmentation
 
@@ -37,14 +35,3 @@ Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantifica
 
 * UCI Regression
   * Boston Housing
-  * Concrete
-  * Energy Efficiency
-  * Kin8nm
-  * Naval Propulsion
-  * Power Plant
-  * Protein
-  * Wine Quality
-
-## Pixel Regression
-
-*Work in progress*
