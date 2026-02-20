@@ -21,12 +21,22 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from torchvision.transforms import CenterCrop, Compose, Resize, ToTensor
 
+# Wikipedia URLs (unusable from time to times)
+# urls = [
+#     "https://upload.wikimedia.org/wikipedia/commons/d/d9/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
+#     "https://upload.wikimedia.org/wikipedia/commons/5/5d/Border_Collie_Blanca_y_Negra_Hembra_%28Belen%2C_Border_Collie_Los_Baganes%29.png",
+#     "https://upload.wikimedia.org/wikipedia/commons/f/f8/Birmakatze_Seal-Point.jpg",
+#     "https://upload.wikimedia.org/wikipedia/commons/a/a9/Garranos_fight.jpg",
+#     "https://upload.wikimedia.org/wikipedia/commons/8/8b/Cottontail_Rabbit.jpg",
+# ]
+
+# HF URLs (more reliable)
 urls = [
-    "https://upload.wikimedia.org/wikipedia/commons/d/d9/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/5d/Border_Collie_Blanca_y_Negra_Hembra_%28Belen%2C_Border_Collie_Los_Baganes%29.png",
-    "https://upload.wikimedia.org/wikipedia/commons/f/f8/Birmakatze_Seal-Point.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/a/a9/Garranos_fight.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/8/8b/Cottontail_Rabbit.jpg",
+    "https://huggingface.co/torch-uncertainty/tutorial-images/resolve/main/Carduelis_tristis_-Michigan%2C_USA_-male-8.jpg",
+    "https://huggingface.co/torch-uncertainty/tutorial-images/resolve/main/Border_Collie_Blanca_y_Negra_Hembra_(Belen%2C_Border_Collie_Los_Baganes).png",
+    "https://huggingface.co/torch-uncertainty/tutorial-images/resolve/main/Birmakatze_Seal-Point.jpg",
+    "https://huggingface.co/torch-uncertainty/tutorial-images/resolve/main/Garranos_fight.jpg",
+    "https://huggingface.co/torch-uncertainty/tutorial-images/resolve/main/Cottontail_Rabbit.jpg",
 ]
 
 
