@@ -1,4 +1,4 @@
-# ruff: noqa: E402, D212, D415
+# ruff: noqa: E402, D212, D415, ERA001
 """
 Corrupting Images with TorchUncertainty to Benchmark Robustness
 ===============================================================
