@@ -103,6 +103,10 @@ It includes the official codes of the following papers:
 
 Check out all our tutorials at [torch-uncertainty.github.io/auto_tutorials](https://torch-uncertainty.github.io/auto_tutorials/index.html).
 
+## Experiments
+
+We provide some configuration files in the `experiments` folder. You may find more examples in other repositories related to the Torch-Uncertainty organization, such as the [Packed-Ensembles reproducibility repo.](https://github.com/torch-uncertainty/packed-ensembles-ICLR-experiments) or the [Torch-Uncertainty reproducibility repo](https://github.com/torch-uncertainty/torch-uncertainty-neurIPS-experiments).
+
 ## :telescope: Projects using TorchUncertainty
 
 The following projects use TorchUncertainty:
