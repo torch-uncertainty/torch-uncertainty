@@ -3475,7 +3475,7 @@ wheels = [
 
 [[package]]
 name = "torch-uncertainty"
-version = "0.10.1"
+version = "0.10.1.post0"
 source = { editable = "." }
 dependencies = [
     { name = "einops" },
