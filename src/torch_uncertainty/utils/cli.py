@@ -194,8 +194,8 @@ class TULightningCLI(LightningCLI):
     def add_arguments_to_parser(self, parser: LightningArgumentParser) -> None:
         super().add_arguments_to_parser(parser)
         with contextlib.suppress(ValueError):
-            parser.link_arguments("data.eval_ood", "model.eval_ood")
+            parser.link_arguments("data.eval_ood", "routine.eval_ood")
         with contextlib.suppress(ValueError):
-            parser.link_arguments("data.eval_shift", "model.eval_shift")
+            parser.link_arguments("data.eval_shift", "routine.eval_shift")
         with contextlib.suppress(ValueError):
-            parser.link_arguments("data.num_tta", "model.num_tta")
+            parser.link_arguments("data.num_tta", "routine.num_tta")
