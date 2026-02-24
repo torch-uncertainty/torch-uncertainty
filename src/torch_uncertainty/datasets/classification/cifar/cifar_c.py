@@ -216,7 +216,15 @@ class CIFAR100C(CIFAR10C):
     url = "https://zenodo.org/record/3555552/files/CIFAR-100-C.tar"
     filename = "CIFAR-100-C.tar"
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        root: Path | str,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
+        subset: str = "all",
+        shift_severity: int = 1,
+        download: bool = False,
+    ) -> None:
         """The corrupted CIFAR-100-C Dataset.
 
         Args:
@@ -234,4 +242,11 @@ class CIFAR100C(CIFAR10C):
         References:
             [1] `Benchmarking neural network robustness to common corruptions and perturbations. Dan Hendrycks and Thomas Dietterich. In ICLR, 2019 <https://arxiv.org/abs/1903.12261>`_.
         """
-        super().__init__(**kwargs)
+        super().__init__(
+            root=root,
+            transform=transform,
+            target_transform=target_transform,
+            subset=subset,
+            shift_severity=shift_severity,
+            download=download,
+        )
