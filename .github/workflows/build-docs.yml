@@ -31,14 +31,14 @@ jobs:
         run: |
           echo "PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")"
 
-      - name: Cache folder for TorchUncertainty
-        uses: actions/cache@v4
-        id: cache-folder
-        with:
-          path: |
-            auto_tutorial_source
-            docs
-          key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
+      # - name: Cache folder for TorchUncertainty
+      #   uses: actions/cache@v4
+      #   id: cache-folder
+      #   with:
+      #     path: |
+      #       auto_tutorial_source
+      #       docs
+      #     key: torch-uncertainty-${{ runner.os }}-${{ env.BRANCH_NAME }}
 
       - name: Install dependencies
         run: |

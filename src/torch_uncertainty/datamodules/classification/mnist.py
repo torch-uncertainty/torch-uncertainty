@@ -118,7 +118,7 @@ class MNISTDataModule(TUDataModule):
             )
 
         if num_tta != 1:
-            self.test_transform = train_transform
+            self.test_transform = self.train_transform
         elif test_transform is not None:
             self.test_transform = test_transform
         else:

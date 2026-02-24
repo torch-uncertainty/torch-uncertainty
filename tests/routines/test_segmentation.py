@@ -99,10 +99,10 @@ class TestSegmentation:
                 metric_subsampling_rate=-1,
             )
 
-        with pytest.raises(ValueError, match=r"num_bins_cal_err must be at least 2, got"):
+        with pytest.raises(ValueError, match=r"num_bins_calibration_error must be at least 2, got"):
             SegmentationRoutine(
                 model=nn.Identity(),
                 num_classes=2,
                 loss=nn.CrossEntropyLoss(),
-                num_bins_cal_err=0,
+                num_bins_calibration_error=0,
             )

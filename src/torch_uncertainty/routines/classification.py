@@ -68,7 +68,7 @@ class ClassificationRoutine(LightningModule):
         eval_grouping_loss: bool = False,
         ood_criterion: TUOODCriterion | str = "msp",
         post_processing: PostProcessing | None = None,
-        num_bins_cal_err: int = 15,
+        num_bins_calibration_error: int = 15,
         log_plots: bool = False,
         save_in_csv: bool = False,
         csv_filename: str = "results.csv",
@@ -103,7 +103,7 @@ class ClassificationRoutine(LightningModule):
             post_processing (PostProcessing, optional): Post-processing method
                 to train on the calibration set. No post-processing if None.
                 Defaults to ``None``.
-            num_bins_cal_err (int, optional): Number of bins to compute calibration
+            num_bins_calibration_error (int, optional): Number of bins to compute calibration
                 error metrics. Defaults to ``15``.
             log_plots (bool, optional): Indicates whether to log plots from
                 metrics. Defaults to ``False``.
@@ -143,7 +143,7 @@ class ClassificationRoutine(LightningModule):
             is_ensemble=is_ensemble,
             ood_criterion=ood_criterion,
             eval_grouping_loss=eval_grouping_loss,
-            num_bins_cal_err=num_bins_cal_err,
+            num_bins_calibration_error=num_bins_calibration_error,
             mixup_params=mixup_params,
             post_processing=post_processing,
             format_batch_fn=format_batch_fn,
@@ -164,7 +164,7 @@ class ClassificationRoutine(LightningModule):
         self.binary_cls = num_classes == 1
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
-        self.num_bins_cal_err = num_bins_cal_err
+        self.num_bins_calibration_error = num_bins_calibration_error
         self.model = model
         self.loss = loss
         self.format_batch_fn = format_batch_fn
@@ -196,13 +196,13 @@ class ClassificationRoutine(LightningModule):
             "cls/NLL": CategoricalNLL(),
             "cal/ECE": CalibrationError(
                 task=task,
-                num_bins=self.num_bins_cal_err,
+                num_bins=self.num_bins_calibration_error,
                 num_classes=self.num_classes,
             ),
             "cal/aECE": CalibrationError(
                 task=task,
                 adaptive=True,
-                num_bins=self.num_bins_cal_err,
+                num_bins=self.num_bins_calibration_error,
                 num_classes=self.num_classes,
             ),
             "sc/AURC": AURC(),
@@ -642,7 +642,7 @@ def _classification_routine_checks(
     is_ensemble: bool,
     ood_criterion: TUOODCriterion | str,
     eval_grouping_loss: bool,
-    num_bins_cal_err: int,
+    num_bins_calibration_error: int,
     mixup_params: dict | None,
     post_processing: PostProcessing | None,
     format_batch_fn: nn.Module | None,
@@ -655,7 +655,7 @@ def _classification_routine_checks(
         is_ensemble (bool): whether the model is an ensemble or a single model.
         ood_criterion (TUOODCriterion, optional): OOD criterion for the binary OOD detection task.
         eval_grouping_loss (bool): whether to evaluate the grouping loss.
-        num_bins_cal_err (int): the number of bins for the evaluation of the calibration.
+        num_bins_calibration_error (int): the number of bins for the evaluation of the calibration.
         mixup_params (dict | None): the dictionary to setup the mixup augmentation.
         post_processing (PostProcessing | None): the post-processing module.
         format_batch_fn (nn.Module | None): the function for formatting the batch for ensembles.
@@ -699,8 +699,10 @@ def _classification_routine_checks(
             "attribute to compute the grouping loss."
         )
 
-    if num_bins_cal_err < 2:
-        raise ValueError(f"num_bins_cal_err must be at least 2, got {num_bins_cal_err}.")
+    if num_bins_calibration_error < 2:
+        raise ValueError(
+            f"num_bins_calibration_error must be at least 2, got {num_bins_calibration_error}."
+        )
 
     if mixup_params is not None and isinstance(format_batch_fn, RepeatTarget):
         raise ValueError(

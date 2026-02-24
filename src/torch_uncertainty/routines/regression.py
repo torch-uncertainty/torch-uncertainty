@@ -47,7 +47,7 @@ class RegressionRoutine(LightningModule):
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         log_plots: bool = False,
-        num_bins_cal_err: int = 15,
+        num_bins_calibration_error: int = 15,
         save_in_csv: bool = False,
         csv_filename: str = "results.csv",
     ) -> None:
@@ -66,7 +66,7 @@ class RegressionRoutine(LightningModule):
             format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
             log_plots (bool, optional): Indicates whether to log figures in the logger.
                 Defaults to ``False``.
-            num_bins_cal_err (int, optional): Number of bins to compute calibration
+            num_bins_calibration_error (int, optional): Number of bins to compute calibration
                 error metrics. Defaults to ``15``.
             save_in_csv (bool, optional): Save the results in csv. Defaults to ``False``.
             csv_filename (str, optional): Name of the csv file. Defaults to ``"results.csv"``. Note that this is only used if
@@ -104,7 +104,7 @@ class RegressionRoutine(LightningModule):
         self.csv_filename = csv_filename
         self.needs_epoch_update = isinstance(model, EPOCH_UPDATE_MODEL)
         self.needs_step_update = isinstance(model, STEP_UPDATE_MODEL)
-        self.num_bins_cal_err = num_bins_cal_err
+        self.num_bins_calibration_error = num_bins_calibration_error
 
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
@@ -137,7 +137,7 @@ class RegressionRoutine(LightningModule):
                 {
                     "reg/NLL": DistributionNLL(reduction="mean"),
                     "cal/QCE": QuantileCalibrationError(
-                        num_bins=self.num_bins_cal_err,
+                        num_bins=self.num_bins_calibration_error,
                     ),
                 }
             )
