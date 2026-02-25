@@ -666,7 +666,12 @@ class PackedConvTranspose2d(nn.Module):
         )
 
     def forward(self, inputs: Tensor) -> Tensor:
-        return self.conv_transpose(inputs)
+        out = self.conv_transpose(inputs)
+        return (
+            out
+            if not self.last
+            else rearrange(out, "b (m c) ... -> (m b) c ...", m=self.num_estimators)
+        )
 
     @property
     def weight(self) -> Tensor:
