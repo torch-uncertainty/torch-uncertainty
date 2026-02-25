@@ -1305,7 +1305,7 @@ class PackedTransformerDecoderLayer(nn.Module):
         self,
         d_model: int,
         nhead: int,
-        alpha: int,
+        alpha: float,
         num_estimators: int,
         gamma: int = 1,
         dim_feedforward: int = 2048,
