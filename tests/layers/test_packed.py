@@ -208,27 +208,14 @@ class TestPackedLinear:
         out = layer(feat_multi_dim)
         assert out.shape == torch.Size([2, 2, 3, 4, 2])
 
-    def test_linear_extend(self) -> None:
-        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full")
-        assert layer.weight.shape == torch.Size([2, 2, 3])
-        assert layer.bias.shape == torch.Size([4])
-        # with first=True
-        layer = PackedLinear(
-            5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True
-        )
-        assert layer.weight.shape == torch.Size([1, 4, 5])
-        assert layer.bias.shape == torch.Size([4])
-
-    def test_linear_out_features_divisibility(self) -> None:
-        """Regression: out_features divisibility must use (num_estimators * gamma)."""
-        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="einsum")
-        assert layer.weight.shape[0] == layer.groups
-        assert layer.bias.shape[0] == layer.groups * layer.out_features
-
-        # out_features=6 is divisible by num_estimators=2 but not by num_estimators*gamma=4
-        layer = PackedLinear(5, 6, alpha=1, num_estimators=2, gamma=2, implementation="einsum")
-        assert layer.weight.shape[0] == layer.groups
-        assert layer.bias.shape[0] == layer.groups * layer.out_features
+    def test_linear_divisibility(self) -> None:
+        """Regression: in_features/out_features must be exactly divisible, ValueError otherwise."""
+        with pytest.raises(ValueError):  # in_features=5 not divisible by actual_groups=2
+            PackedLinear(5, 4, alpha=1, num_estimators=2, gamma=1, implementation="full")
+        with pytest.raises(ValueError):  # out_features=6 divisible by num_estimators=2 but not by num_estimators*gamma=4
+            PackedLinear(4, 6, alpha=1, num_estimators=2, gamma=2, implementation="einsum")
+        with pytest.raises(ValueError):  # first=True: out_features=3 not divisible by num_estimators*gamma=2
+            PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True)
 
     def test_linear_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -295,8 +282,12 @@ class TestPackedConv1d:
         assert out.shape == torch.Size([5, 2, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self) -> None:
-        _ = PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+    def test_conv_divisibility(self) -> None:
+        """Regression: ValueError when channels not divisible by actual_groups."""
+        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+            PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
+        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+            PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv1_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -334,8 +325,12 @@ class TestPackedConv2d:
         assert out.shape == torch.Size([5, 2, 3, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self) -> None:
-        _ = PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+    def test_conv_divisibility(self) -> None:
+        """Regression: ValueError when channels not divisible by actual_groups."""
+        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+            PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
+        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+            PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv2_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -375,8 +370,12 @@ class TestPackedConv3d:
         assert out.shape == torch.Size([5, 2, 3, 3, 3])
         assert layer.conv.groups == 2  # and not 4
 
-    def test_conv_extend(self) -> None:
-        _ = PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+    def test_conv_divisibility(self) -> None:
+        """Regression: ValueError when channels not divisible by actual_groups."""
+        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+            PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
+        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+            PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv3_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -420,8 +419,12 @@ class TestPackedConvTranspose2d:
         out = layer(img_input)
         assert out.shape == torch.Size([10, 2, 3, 3])
 
-    def test_conv_extend(self) -> None:
-        _ = PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
+    def test_conv_divisibility(self) -> None:
+        """Regression: ValueError when channels not divisible by actual_groups."""
+        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+            PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
+        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+            PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv2_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -907,9 +910,11 @@ class TestPackedTransformerDecoderLayer:
         )
         assert out.shape == torch.Size([2, 3, 12])
 
-    def test_norm3_alpha_correctness(self) -> None:
-        """Regression: norm3 must use alpha=alpha, not alpha=num_estimators."""
+    def test_norm2_norm3_alpha_correctness(self) -> None:
+        """Regression: norm3 uses alpha=num_estimators only when norm_first=False and last=True."""
         d_model, alpha, num_estimators = 6, 1, 2
+
+        # norm_first=False (default), last=True: norm3 is the final op -> alpha=num_estimators
         layer = PackedTransformerDecoderLayer(
             d_model=d_model,
             dim_feedforward=12,
@@ -918,7 +923,19 @@ class TestPackedTransformerDecoderLayer:
             num_estimators=num_estimators,
             last=True,
         )
-        assert layer.norm3.num_channels == int(d_model * alpha)
+        assert layer.norm3.num_channels == int(d_model * num_estimators)
+
+        # norm_first=True, last=True: norm3 feeds into ff_block, not the final op -> alpha=alpha
+        layer_norm_first = PackedTransformerDecoderLayer(
+            d_model=d_model,
+            dim_feedforward=12,
+            nhead=3,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            last=True,
+            norm_first=True,
+        )
+        assert layer_norm_first.norm3.num_channels == int(d_model * alpha)
 
 
 class TestPackedFunctional:

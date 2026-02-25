@@ -131,12 +131,17 @@ class PackedLinear(nn.Module):
         # Define the number of groups of the underlying convolution
         actual_groups = num_estimators * gamma if not first else 1
 
-        # fix if not divisible by groups
         if extended_in_features % actual_groups:
-            extended_in_features += actual_groups - extended_in_features % actual_groups
+            raise ValueError(
+                f"PackedLinear: `in_features` ({in_features}) is not divisible by "
+                f"`actual_groups` ({actual_groups}). Please make `in_features` divisible "
+                f"by `num_estimators * gamma` ({num_estimators * gamma})."
+            )
         if extended_out_features % (num_estimators * gamma):
-            extended_out_features += (num_estimators * gamma) - extended_out_features % (
-                num_estimators * gamma
+            raise ValueError(
+                f"PackedLinear: `out_features` ({out_features}) is not divisible by "
+                f"`num_estimators * gamma` ({num_estimators * gamma}). Please make "
+                f"`out_features` divisible by `num_estimators * gamma` ({num_estimators * gamma})."
             )
 
         self.weight = nn.Parameter(
@@ -279,11 +284,19 @@ class PackedConv1d(nn.Module):
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
-        # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += num_estimators - extended_in_channels % actual_groups
-        if extended_out_channels % actual_groups:
-            extended_out_channels += num_estimators - extended_out_channels % actual_groups
+            raise ValueError(
+                f"PackedConv1d: `in_channels` ({in_channels}) is not divisible by "
+                f"`actual_groups` ({actual_groups}). Please make `in_channels` divisible "
+                f"by `gamma * groups * num_estimators` ({gamma * groups * num_estimators})."
+            )
+        if extended_out_channels % (gamma * groups * num_estimators):
+            raise ValueError(
+                f"PackedConv1d: `out_channels` ({out_channels}) is not divisible by "
+                f"`gamma * groups * num_estimators` ({gamma * groups * num_estimators}). "
+                f"Please make `out_channels` divisible by `gamma * groups * num_estimators` "
+                f"({gamma * groups * num_estimators})."
+            )
 
         self.conv = nn.Conv1d(
             in_channels=extended_in_channels,
@@ -409,11 +422,19 @@ class PackedConv2d(nn.Module):
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
-        # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += num_estimators - extended_in_channels % actual_groups
-        if extended_out_channels % actual_groups:
-            extended_out_channels += num_estimators - extended_out_channels % actual_groups
+            raise ValueError(
+                f"PackedConv2d: `in_channels` ({in_channels}) is not divisible by "
+                f"`actual_groups` ({actual_groups}). Please make `in_channels` divisible "
+                f"by `gamma * groups * num_estimators` ({gamma * groups * num_estimators})."
+            )
+        if extended_out_channels % (gamma * groups * num_estimators):
+            raise ValueError(
+                f"PackedConv2d: `out_channels` ({out_channels}) is not divisible by "
+                f"`gamma * groups * num_estimators` ({gamma * groups * num_estimators}). "
+                f"Please make `out_channels` divisible by `gamma * groups * num_estimators` "
+                f"({gamma * groups * num_estimators})."
+            )
 
         self.conv = nn.Conv2d(
             in_channels=extended_in_channels,
@@ -539,11 +560,19 @@ class PackedConv3d(nn.Module):
             gamma -= 1
             actual_groups = gamma * groups * num_estimators
 
-        # fix if not divisible by groups
         if extended_in_channels % actual_groups:
-            extended_in_channels += num_estimators - extended_in_channels % actual_groups
-        if extended_out_channels % actual_groups:
-            extended_out_channels += num_estimators - extended_out_channels % actual_groups
+            raise ValueError(
+                f"PackedConv3d: `in_channels` ({in_channels}) is not divisible by "
+                f"`actual_groups` ({actual_groups}). Please make `in_channels` divisible "
+                f"by `gamma * groups * num_estimators` ({gamma * groups * num_estimators})."
+            )
+        if extended_out_channels % (gamma * groups * num_estimators):
+            raise ValueError(
+                f"PackedConv3d: `out_channels` ({out_channels}) is not divisible by "
+                f"`gamma * groups * num_estimators` ({gamma * groups * num_estimators}). "
+                f"Please make `out_channels` divisible by `gamma * groups * num_estimators` "
+                f"({gamma * groups * num_estimators})."
+            )
 
         self.conv = nn.Conv3d(
             in_channels=extended_in_channels,
@@ -641,14 +670,18 @@ class PackedConvTranspose2d(nn.Module):
             gamma -= 1
             self.actual_groups = gamma * groups * num_estimators
 
-        # Fix dimensions to be divisible by groups
         if self.extended_in_channels % self.actual_groups:
-            self.extended_in_channels += (
-                num_estimators - self.extended_in_channels % self.actual_groups
+            raise ValueError(
+                f"PackedConvTranspose2d: `in_channels` ({in_channels}) is not divisible by "
+                f"`actual_groups` ({self.actual_groups}). Please make `in_channels` divisible "
+                f"by `gamma * groups * num_estimators` ({gamma * groups * num_estimators})."
             )
-        if self.extended_out_channels % self.actual_groups:
-            self.extended_out_channels += (
-                num_estimators - self.extended_out_channels % self.actual_groups
+        if self.extended_out_channels % (gamma * groups * num_estimators):
+            raise ValueError(
+                f"PackedConvTranspose2d: `out_channels` ({out_channels}) is not divisible by "
+                f"`gamma * groups * num_estimators` ({gamma * groups * num_estimators}). "
+                f"Please make `out_channels` divisible by `gamma * groups * num_estimators` "
+                f"({gamma * groups * num_estimators})."
             )
 
         # Initialize the transposed convolutional layer
