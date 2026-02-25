@@ -220,10 +220,13 @@ class TestPackedLinear:
         assert layer.bias.shape == torch.Size([4])
 
     def test_linear_out_features_divisibility(self) -> None:
-        """Regression: extended_out_features check requires (num_estimators * gamma),
-        not num_estimators * gamma (operator precedence).
-        """
+        """Regression: out_features divisibility must use (num_estimators * gamma)."""
         layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="einsum")
+        assert layer.weight.shape[0] == layer.groups
+        assert layer.bias.shape[0] == layer.groups * layer.out_features
+
+        # out_features=6 is divisible by num_estimators=2 but not by num_estimators*gamma=4
+        layer = PackedLinear(5, 6, alpha=1, num_estimators=2, gamma=2, implementation="einsum")
         assert layer.weight.shape[0] == layer.groups
         assert layer.bias.shape[0] == layer.groups * layer.out_features
 
