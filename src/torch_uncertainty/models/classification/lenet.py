@@ -26,9 +26,16 @@ class _LeNet(nn.Module):
         norm: type[nn.Module],
         groups: int,
         dropout_rate: float,
+        first_layer_args: dict | None = None,
+        last_layer_args: dict | None = None,
     ) -> None:
         super().__init__()
         self.activation = activation
+
+        if first_layer_args is None:
+            first_layer_args = layer_args
+        if last_layer_args is None:
+            last_layer_args = layer_args
 
         batchnorm = False
         if norm == nn.Identity:
@@ -41,7 +48,7 @@ class _LeNet(nn.Module):
 
         self.dropout_rate = dropout_rate
 
-        self.conv1 = conv2d_layer(in_channels, 6, (5, 5), groups=groups, **layer_args)
+        self.conv1 = conv2d_layer(in_channels, 6, (5, 5), groups=groups, **first_layer_args)
         if batchnorm:
             self.norm1 = norm(6)
         self.conv_dropout = nn.Dropout2d(p=dropout_rate)
@@ -53,7 +60,7 @@ class _LeNet(nn.Module):
         self.fc_dropout = nn.Dropout(p=dropout_rate)
         self.fc2 = linear_layer(120, 84, **layer_args)
         self.last_fc_dropout = nn.Dropout(p=dropout_rate)
-        self.fc3 = linear_layer(84, num_classes, **layer_args)
+        self.fc3 = linear_layer(84, num_classes, **last_layer_args)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.conv_dropout(self.activation(self.norm1(self.conv1(x))))
@@ -81,6 +88,8 @@ def _lenet(
     norm: type[nn.Module] = nn.Identity,
     groups: int = 1,
     dropout_rate: float = 0.0,
+    first_layer_args: dict | None = None,
+    last_layer_args: dict | None = None,
 ) -> _LeNet | StochasticModel:
     model = _LeNet(
         in_channels=in_channels,
@@ -92,6 +101,8 @@ def _lenet(
         groups=groups,
         layer_args=layer_args,
         dropout_rate=dropout_rate,
+        first_layer_args=first_layer_args,
+        last_layer_args=last_layer_args,
     )
     if stochastic:
         return StochasticModel(model, num_samples)
@@ -157,6 +168,11 @@ def packed_lenet(
     groups: int = 1,
     dropout_rate: float = 0.0,
 ) -> _LeNet:
+    layer_args = {
+        "num_estimators": num_estimators,
+        "alpha": alpha,
+        "gamma": gamma,
+    }
     return _lenet(
         stochastic=False,
         in_channels=in_channels,
@@ -164,11 +180,9 @@ def packed_lenet(
         linear_layer=PackedLinear,
         conv2d_layer=PackedConv2d,
         norm=norm,
-        layer_args={
-            "num_estimators": num_estimators,
-            "alpha": alpha,
-            "gamma": gamma,
-        },
+        layer_args=layer_args,
+        first_layer_args={**layer_args, "first": True},
+        last_layer_args={**layer_args, "last": True},
         activation=activation,
         groups=groups,
         dropout_rate=dropout_rate,
