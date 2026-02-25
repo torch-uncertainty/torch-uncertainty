@@ -219,6 +219,14 @@ class TestPackedLinear:
         assert layer.weight.shape == torch.Size([1, 4, 5])
         assert layer.bias.shape == torch.Size([4])
 
+    def test_linear_out_features_divisibility(self) -> None:
+        """Regression: extended_out_features check requires (num_estimators * gamma),
+        not num_estimators * gamma (operator precedence).
+        """
+        layer = PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="einsum")
+        assert layer.weight.shape[0] == layer.groups
+        assert layer.bias.shape[0] == layer.groups * layer.out_features
+
     def test_linear_failures(self) -> None:
         with pytest.raises(ValueError):
             _ = PackedLinear(5, 2, alpha=None, num_estimators=1)
@@ -402,6 +410,12 @@ class TestPackedConvTranspose2d:
         out = layer(img_input)
         assert out.shape == torch.Size([5, 2, 3, 3])
         assert layer.conv_transpose.groups == 2  # and not 4
+
+    def test_conv_last_parameter(self, img_input: torch.Tensor) -> None:
+        """Regression: last=True must rearrange (B, M*C, H, W) -> (M*B, C, H, W)."""
+        layer = PackedConvTranspose2d(6, 2, alpha=1, num_estimators=2, kernel_size=1, last=True)
+        out = layer(img_input)
+        assert out.shape == torch.Size([10, 2, 3, 3])
 
     def test_conv_extend(self) -> None:
         _ = PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, gamma=1)
@@ -889,6 +903,19 @@ class TestPackedTransformerDecoderLayer:
             memory=extended_batched_tgt_memory[1],
         )
         assert out.shape == torch.Size([2, 3, 12])
+
+    def test_norm3_alpha_correctness(self) -> None:
+        """Regression: norm3 must use alpha=alpha, not alpha=num_estimators."""
+        d_model, alpha, num_estimators = 6, 1, 2
+        layer = PackedTransformerDecoderLayer(
+            d_model=d_model,
+            dim_feedforward=12,
+            nhead=3,
+            alpha=alpha,
+            num_estimators=num_estimators,
+            last=True,
+        )
+        assert layer.norm3.num_channels == int(d_model * alpha)
 
 
 class TestPackedFunctional:
