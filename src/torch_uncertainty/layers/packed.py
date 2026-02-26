@@ -725,10 +725,12 @@ class PackedLayerNorm(nn.GroupNorm):
         alpha: float,
         eps: float = 1e-5,
         affine: bool = True,
+        first: bool = False,
+        last: bool = False,
         device=None,
         dtype=None,
     ) -> None:
-        """Packed-Ensembles-style LayerNorm layer.
+        r"""Packed-Ensembles-style LayerNorm layer.
 
         Args:
             embed_dim (int): the number of features in the input tensor.
@@ -736,6 +738,8 @@ class PackedLayerNorm(nn.GroupNorm):
             alpha (float): the width multiplier of the layer.
             eps (float, optional): a value added to the denominator for numerical stability. Defaults to 1e-5.
             affine (bool, optional): a boolean value that when set to ``True``, this module has learnable per_channel affine parameters initialized to ones (for weights) and zeros (for biases). Defaults to ``True``.
+            first (bool, optional): Whether this layer processes the raw inputs of the model. Defaults to ``False``.
+            last (bool, optional): Whether this layer processes the final outputs of the model. Defaults to ``False``.
             device (torch.device, optional): The device to use for the layer's parameters. Defaults to ``None``.
             dtype (torch.dtype, optional): The dtype to use for the layer's parameters. Defaults to ``None``.
 
@@ -746,20 +750,23 @@ class PackedLayerNorm(nn.GroupNorm):
         Warnings:
             This layer is only suitable to replace ``nn.LayerNorm`` when only the last dimension is normalized.
         """
+        expansion_factor = num_estimators if last else alpha
+        num_groups = num_estimators if first else 1
+
         super().__init__(
-            num_groups=num_estimators,
-            num_channels=int(embed_dim * alpha),
+            num_groups=num_groups,
+            num_channels=int(embed_dim * expansion_factor),
             eps=eps,
             affine=affine,
             device=device,
             dtype=dtype,
         )
 
-    def forward(self, inputs: Tensor) -> Tensor:
-        shapes = {f"d{i}": size for i, size in enumerate(inputs.shape[1:-1])}
+    def forward(self, input: Tensor) -> Tensor:  # noqa: A002
+        shapes = {f"d{i}": size for i, size in enumerate(input.shape[1:-1])}
         shape_str = " ".join(shapes.keys())
 
-        x = rearrange(inputs, "b ... h -> (b ...) h")
+        x = rearrange(input, "b ... h -> (b ...) h")
         x = F.group_norm(
             x,
             self.num_groups,
@@ -1217,33 +1224,24 @@ class PackedTransformerEncoderLayer(nn.Module):
         )
 
         self.norm_first = norm_first
-        if self.norm_first and first:
-            self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
-        else:
-            self.norm1 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=alpha,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
 
-        if not self.norm_first and last:
-            self.norm2 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=num_estimators,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
-        else:
-            self.norm2 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=alpha,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
+        self.norm1 = PackedLayerNorm(
+            embed_dim=d_model,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            eps=layer_norm_eps,
+            first=first and self.norm_first,
+            **factory_kwargs,
+        )
+
+        self.norm2 = PackedLayerNorm(
+            embed_dim=d_model,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            eps=layer_norm_eps,
+            last=last and not self.norm_first,
+            **factory_kwargs,
+        )
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
@@ -1449,16 +1447,15 @@ class PackedTransformerDecoderLayer(nn.Module):
         )
 
         self.norm_first = norm_first
-        if self.norm_first and first:
-            self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
-        else:
-            self.norm1 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=alpha,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
+
+        self.norm1 = PackedLayerNorm(
+            embed_dim=d_model,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            eps=layer_norm_eps,
+            first=first and self.norm_first,
+            **factory_kwargs,
+        )
 
         self.norm2 = PackedLayerNorm(
             embed_dim=d_model,
@@ -1468,22 +1465,14 @@ class PackedTransformerDecoderLayer(nn.Module):
             **factory_kwargs,
         )
 
-        if not self.norm_first and last:
-            self.norm3 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=num_estimators,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
-        else:
-            self.norm3 = PackedLayerNorm(
-                embed_dim=d_model,
-                num_estimators=num_estimators,
-                alpha=alpha,
-                eps=layer_norm_eps,
-                **factory_kwargs,
-            )
+        self.norm3 = PackedLayerNorm(
+            embed_dim=d_model,
+            num_estimators=num_estimators,
+            alpha=alpha,
+            eps=layer_norm_eps,
+            last=last and not self.norm_first,
+            **factory_kwargs,
+        )
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
