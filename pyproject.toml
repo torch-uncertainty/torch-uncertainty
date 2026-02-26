@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "torch_uncertainty"
-version = "0.10.1.post0"
+version = "0.10.2"
 authors = [
   { name = "ENSTA U2IS AI", email = "olivier.laurent@ensta.fr" },
   { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },

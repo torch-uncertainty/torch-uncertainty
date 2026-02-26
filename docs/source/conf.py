@@ -20,7 +20,7 @@ copyright = (  # noqa: A001
     f"{datetime.now().year!s}, Adrien Lafage and Olivier Laurent"
 )
 author = "Adrien Lafage and Olivier Laurent"
-release = "0.10.1.post0"
+release = "0.10.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
