@@ -212,10 +212,16 @@ class TestPackedLinear:
         """Regression: in_features/out_features must be exactly divisible, ValueError otherwise."""
         with pytest.raises(ValueError):  # in_features=5 not divisible by actual_groups=2
             PackedLinear(5, 4, alpha=1, num_estimators=2, gamma=1, implementation="full")
-        with pytest.raises(ValueError):  # out_features=6 divisible by num_estimators=2 but not by num_estimators*gamma=4
+        with pytest.raises(
+            ValueError
+        ):  # out_features=6 divisible by num_estimators=2 but not by num_estimators*gamma=4
             PackedLinear(4, 6, alpha=1, num_estimators=2, gamma=2, implementation="einsum")
-        with pytest.raises(ValueError):  # first=True: out_features=3 not divisible by num_estimators*gamma=2
-            PackedLinear(5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True)
+        with pytest.raises(
+            ValueError
+        ):  # first=True: out_features=3 not divisible by num_estimators*gamma=2
+            PackedLinear(
+                5, 3, alpha=1, num_estimators=2, gamma=1, implementation="full", first=True
+            )
 
     def test_linear_failures(self) -> None:
         with pytest.raises(ValueError):
@@ -284,9 +290,13 @@ class TestPackedConv1d:
 
     def test_conv_divisibility(self) -> None:
         """Regression: ValueError when channels not divisible by actual_groups."""
-        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+        with pytest.raises(
+            ValueError
+        ):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
             PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
-        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+        with pytest.raises(
+            ValueError
+        ):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
             PackedConv1d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv1_failures(self) -> None:
@@ -327,9 +337,13 @@ class TestPackedConv2d:
 
     def test_conv_divisibility(self) -> None:
         """Regression: ValueError when channels not divisible by actual_groups."""
-        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+        with pytest.raises(
+            ValueError
+        ):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
             PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
-        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+        with pytest.raises(
+            ValueError
+        ):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
             PackedConv2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv2_failures(self) -> None:
@@ -372,9 +386,13 @@ class TestPackedConv3d:
 
     def test_conv_divisibility(self) -> None:
         """Regression: ValueError when channels not divisible by actual_groups."""
-        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+        with pytest.raises(
+            ValueError
+        ):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
             PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
-        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+        with pytest.raises(
+            ValueError
+        ):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
             PackedConv3d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
 
     def test_conv3_failures(self) -> None:
@@ -421,10 +439,16 @@ class TestPackedConvTranspose2d:
 
     def test_conv_divisibility(self) -> None:
         """Regression: ValueError when channels not divisible by actual_groups."""
-        with pytest.raises(ValueError):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
+        with pytest.raises(
+            ValueError
+        ):  # in_channels=5 not divisible by actual_groups=4 (gamma*groups*num_estimators)
             PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2)
-        with pytest.raises(ValueError):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
-            PackedConvTranspose2d(5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True)
+        with pytest.raises(
+            ValueError
+        ):  # first=True: out_channels=3 not divisible by gamma*groups*num_estimators=4
+            PackedConvTranspose2d(
+                5, 3, kernel_size=1, alpha=1, num_estimators=2, groups=2, first=True
+            )
 
     def test_conv2_failures(self) -> None:
         with pytest.raises(ValueError):

@@ -126,7 +126,7 @@ class TUDataModule(LightningDataModule, ABC):
         Return:
             DataLoader: training dataloader.
         """
-        return self._data_loader(self.get_train_set(), training=False, shuffle=True)
+        return self._data_loader(self.get_train_set(), training=True, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         r"""Get the validation dataloader.
