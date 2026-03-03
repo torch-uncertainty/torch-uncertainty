@@ -111,6 +111,8 @@ class CategoricalNLL(Metric):
         if self.reduction is None or self.reduction == "none":
             self.values.append(F.nll_loss(torch.log(probs), target, reduction="none"))
         else:
+            if probs.ndim == 1:
+                probs = probs.unsqueeze(-1)
             self.values += F.nll_loss(torch.log(probs), target, reduction="sum")
             self.total += target.size(0)
 
