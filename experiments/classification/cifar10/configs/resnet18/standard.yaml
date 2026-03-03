@@ -35,6 +35,7 @@ routine:
 data:
   root: ./data
   batch_size: 128
+  num_workers: 12
 optimizer:
   class_path: torch.optim.SGD
   init_args:
