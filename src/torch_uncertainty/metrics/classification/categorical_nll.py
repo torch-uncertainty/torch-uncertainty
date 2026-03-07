@@ -108,11 +108,12 @@ class CategoricalNLL(Metric):
 
         where :math:`p_{i, y_i}` is the predicted probability for the true class :math:`y_i`.
         """
+        if probs.ndim == 1:
+            probs = torch.stack([1 - probs, probs], dim=-1)
+
         if self.reduction is None or self.reduction == "none":
             self.values.append(F.nll_loss(torch.log(probs), target, reduction="none"))
         else:
-            if probs.ndim == 1:
-                probs = probs.unsqueeze(-1)
             self.values += F.nll_loss(torch.log(probs), target, reduction="sum")
             self.total += target.size(0)
 
