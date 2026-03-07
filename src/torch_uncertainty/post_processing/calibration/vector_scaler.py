@@ -31,6 +31,10 @@ class VectorScaler(Scaler):
         References:
             [1] `On calibration of modern neural networks. In ICML 2017
             <https://arxiv.org/abs/1706.04599>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
@@ -64,6 +68,7 @@ class VectorScaler(Scaler):
             )
         else:
             raise ValueError(f"val should be a float or a Tensor. Got {val}.")
+        self.trained = False
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
         return self.temp_w * logits

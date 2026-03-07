@@ -45,6 +45,10 @@ class DirichletScaler(MatrixScaler):
         References:
             [1] `Beyond temperature scaling: Obtaining well-calibrated multiclass
             probabilities with Dirichlet calibration <https://arxiv.org/abs/1910.12656>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(
             num_classes=num_classes,

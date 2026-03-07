@@ -34,6 +34,10 @@ class MatrixScaler(Scaler):
         References:
             [1] `On calibration of modern neural networks. In ICML 2017
             <https://arxiv.org/abs/1706.04599>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
@@ -61,6 +65,7 @@ class MatrixScaler(Scaler):
             torch.ones(self.num_classes, device=self.device) * val_b,
             requires_grad=True,
         )
+        self.trained = False
 
     def _scale(self, logits: Tensor) -> Tensor:
         return linear(logits, self.temp_w, self.temp_b)
