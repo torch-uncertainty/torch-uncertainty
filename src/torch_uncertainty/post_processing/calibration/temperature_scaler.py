@@ -29,6 +29,10 @@ class TemperatureScaler(Scaler):
         References:
             [1] `On calibration of modern neural networks. In ICML 2017
             <https://arxiv.org/abs/1706.04599>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
@@ -44,9 +48,10 @@ class TemperatureScaler(Scaler):
             val (float): Temperature value.
         """
         if val <= 0:
-            raise ValueError(f"Temperature value must be positive. Got {val}")
+            raise ValueError(f"Temperature value must be strictly positive. Got {val}")
 
         self.temp = nn.Parameter(torch.ones(1, device=self.device) * val, requires_grad=True)
+        self.trained = False
 
     def _scale(self, logits: Tensor) -> Tensor:
         return logits / self.temperature[0]

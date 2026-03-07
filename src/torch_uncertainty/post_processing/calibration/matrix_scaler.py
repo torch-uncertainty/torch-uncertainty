@@ -2,6 +2,7 @@ from typing import Literal
 
 import torch
 from torch import Tensor, device, nn
+from torch.nn.functional import linear
 
 from .scaler import Scaler
 
@@ -21,8 +22,8 @@ class MatrixScaler(Scaler):
         """Matrix scaling post-processing for calibrated probabilities.
 
         Args:
-            model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
+            model (nn.Module | None): Model to calibrate. Defaults to ``None``.
             init_w (float, optional): Initial value for the weights. Defaults to ``1``.
             init_b (float, optional): Initial value for the bias. Defaults to ``0``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
@@ -33,6 +34,10 @@ class MatrixScaler(Scaler):
         References:
             [1] `On calibration of modern neural networks. In ICML 2017
             <https://arxiv.org/abs/1706.04599>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
@@ -44,26 +49,26 @@ class MatrixScaler(Scaler):
 
         self.set_temperature(init_w, init_b)
 
-    def set_temperature(self, val_w: float, val_b: float) -> None:
-        """Set the temperature to a fixed value.
+    def set_temperature(self, val_w: float | Tensor, val_b: float | Tensor) -> None:
+        """Set the temperature matrix to a given value.
 
         Args:
-            val_w (float): Weight temperature value.
-            val_b (float): Bias temperature value.
+            val_w (float | Tensor): Weight temperature value.
+            val_b (float | Tensor): Bias temperature value.
         """
-        diag = torch.ones(self.num_classes, device=self.device)
-
+        eye = torch.eye(self.num_classes, device=self.device)
         self.temp_w = nn.Parameter(
-            diag * val_w,
+            eye * val_w,
             requires_grad=True,
         )
         self.temp_b = nn.Parameter(
             torch.ones(self.num_classes, device=self.device) * val_b,
             requires_grad=True,
         )
+        self.trained = False
 
     def _scale(self, logits: Tensor) -> Tensor:
-        return self.temp_w @ logits + self.temp_b
+        return linear(logits, self.temp_w, self.temp_b)
 
     @property
     def temperature(self) -> list:
