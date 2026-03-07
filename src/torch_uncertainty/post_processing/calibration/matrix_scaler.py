@@ -21,8 +21,8 @@ class MatrixScaler(Scaler):
         """Matrix scaling post-processing for calibrated probabilities.
 
         Args:
-            model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
+            model (nn.Module | None): Model to calibrate. Defaults to ``None``.
             init_w (float, optional): Initial value for the weights. Defaults to ``1``.
             init_b (float, optional): Initial value for the bias. Defaults to ``0``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
@@ -44,12 +44,12 @@ class MatrixScaler(Scaler):
 
         self.set_temperature(init_w, init_b)
 
-    def set_temperature(self, val_w: Tensor, val_b: Tensor) -> None:
+    def set_temperature(self, val_w: float | Tensor, val_b: float | Tensor) -> None:
         """Set the temperature matrix to a given value.
 
         Args:
-            val_w (Tensor): Weight temperature value.
-            val_b (Tensor): Bias temperature value.
+            val_w (float | Tensor): Weight temperature value.
+            val_b (float | Tensor): Bias temperature value.
         """
         eye = torch.eye(self.num_classes, device=self.device)
         self.temp_w = nn.Parameter(
