@@ -121,7 +121,7 @@ visualize_prediction_sets(inputs, labels, confidence_scores[:5].cpu(), classes)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 print("[Phase 3]: ConformalClsAPS calibration")
-conformal_model = ConformalClsAPS(alpha=0.01, device="cuda", enable_ts=False)
+conformal_model = ConformalClsAPS(alpha=0.01, device="cuda", enable_ts=True)
 
 routine_aps = ClassificationRoutine(
     num_classes=10,
@@ -142,7 +142,7 @@ visualize_prediction_sets(inputs, labels, confidence_scores[:5].cpu(), classes)
 
 print("[Phase 4]: ConformalClsRAPS calibration")
 conformal_model = ConformalClsRAPS(
-    alpha=0.01, regularization_rank=3, penalty=0.002, model=model, device="cuda", enable_ts=False
+    alpha=0.01, regularization_rank=3, penalty=0.002, model=model, device="cuda", enable_ts=True
 )
 
 routine_raps = ClassificationRoutine(
