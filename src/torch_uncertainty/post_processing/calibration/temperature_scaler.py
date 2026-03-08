@@ -10,7 +10,7 @@ class TemperatureScaler(Scaler):
     def __init__(
         self,
         model: nn.Module | None = None,
-        init_val: float = 1,
+        init_temperature: float = 1,
         lr: float = 0.1,
         max_iter: int = 100,
         eps: float = 1e-8,
@@ -20,7 +20,7 @@ class TemperatureScaler(Scaler):
 
         Args:
             model (nn.Module): Model to calibrate.
-            init_val (float, optional): Initial value for the temperature. Defaults to ``1``.
+            init_temperature (float, optional): Initial value for the temperature. Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
             eps (float): Small value for stability. Defaults to ``1e-8``.
@@ -36,10 +36,10 @@ class TemperatureScaler(Scaler):
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
-        if init_val <= 0:
-            raise ValueError(f"Initial temperature value must be positive. Got {init_val}")
+        if init_temperature <= 0:
+            raise ValueError(f"Initial temperature value must be positive. Got {init_temperature}")
 
-        self.set_temperature(init_val)
+        self.set_temperature(init_temperature)
 
     def set_temperature(self, val: float) -> None:
         """Set the temperature to a fixed value.
@@ -50,12 +50,16 @@ class TemperatureScaler(Scaler):
         if val <= 0:
             raise ValueError(f"Temperature value must be strictly positive. Got {val}")
 
-        self.temp = nn.Parameter(torch.ones(1, device=self.device) * val, requires_grad=True)
+        self.inv_temp = nn.Parameter(torch.ones(1, device=self.device) / val, requires_grad=True)
         self.trained = False
 
     def _scale(self, logits: Tensor) -> Tensor:
-        return logits / self.temperature[0]
+        return self.inv_temp * logits
+
+    @property
+    def inv_temperature(self) -> list:
+        return [self.inv_temp]
 
     @property
     def temperature(self) -> list:
-        return [self.temp]
+        return [1 / self.inv_temp]

@@ -80,12 +80,13 @@ class Scaler(PostProcessing):
             self.model = nn.Identity()
 
         all_logits, all_labels = self._extract_data(dataloader, progress)
-        optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
+        optimizer = LBFGS(self.inv_temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
             optimizer.zero_grad()
             loss = self.criterion(self._scale(all_logits), all_labels)
             loss.backward()
+            logging.debug("scaler loss: %f", loss.item())
             return loss
 
         optimizer.step(calib_eval)
@@ -146,6 +147,11 @@ class Scaler(PostProcessing):
     ) -> Tensor:
         self.fit(dataloader, save_logits=True, progress=progress)
         return self(self.logits)
+
+    @property
+    @abstractmethod
+    def inv_temperature(self) -> list[Tensor]:
+        """Get the inverse temperature parameters."""
 
     @property
     @abstractmethod

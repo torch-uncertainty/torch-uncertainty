@@ -11,7 +11,7 @@ class VectorScaler(Scaler):
         self,
         num_classes: int,
         model: nn.Module | None = None,
-        init_val: float = 1,
+        init_temperature: float = 1,
         lr: float = 0.1,
         max_iter: int = 200,
         eps: float = 1e-8,
@@ -22,7 +22,7 @@ class VectorScaler(Scaler):
         Args:
             model (nn.Module): Model to calibrate.
             num_classes (int): Number of classes.
-            init_val (float, optional): Initial value for the weights. Defaults to ``1``.
+            init_temperature (float, optional): Initial value for the weights. Defaults to ``1``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
             eps (float): Small value for stability. Defaults to ``1e-8``.
@@ -44,7 +44,7 @@ class VectorScaler(Scaler):
             raise ValueError(f"The number of classes must be positive. Got {num_classes}.")
         self.num_classes = num_classes
 
-        self.set_temperature(init_val)
+        self.set_temperature(init_temperature)
 
     def set_temperature(self, val: float | Tensor) -> None:
         """Set the temperature vector to a given value.
@@ -55,14 +55,14 @@ class VectorScaler(Scaler):
         if isinstance(val, float | int) or (isinstance(val, Tensor) and val.size == 1):
             if val <= 0:
                 raise ValueError(f"Temperature value must be strictly positive. Got {val}")
-            self.temp_w = nn.Parameter(
-                torch.ones(self.num_classes, device=self.device) * val,
+            self.inv_temp = nn.Parameter(
+                torch.ones(self.num_classes, device=self.device) / val,
                 requires_grad=True,
             )
         elif isinstance(val, Tensor):
             if torch.any(val <= 0):
                 raise ValueError(f"Temperature value must be strictly positive. Got {val}")
-            self.temp_w = nn.Parameter(
+            self.inv_temp = nn.Parameter(
                 val.to(device=self.device),
                 requires_grad=True,
             )
@@ -71,8 +71,12 @@ class VectorScaler(Scaler):
         self.trained = False
 
     def _scale(self, logits: torch.Tensor) -> torch.Tensor:
-        return self.temp_w * logits
+        return self.inv_temp * logits
+
+    @property
+    def inv_temperature(self) -> list:
+        return [self.inv_temp]
 
     @property
     def temperature(self) -> list:
-        return [self.temp_w]
+        return [1 / self.inv_temp]
