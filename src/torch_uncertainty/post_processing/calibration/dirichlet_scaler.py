@@ -15,8 +15,8 @@ class DirichletScaler(MatrixScaler):
         self,
         num_classes: int,
         model: nn.Module | None = None,
-        init_temperature_weight: float = 1,
-        init_temperature_bias: float | None = None,
+        init_weight_temperature: float = 1,
+        init_bias_temperature: float | None = None,
         lr: float = 0.1,
         max_iter: int = 200,
         lambda_reg: float | None = None,
@@ -29,8 +29,8 @@ class DirichletScaler(MatrixScaler):
         Args:
             num_classes (int): Number of classes.
             model (nn.Module | None): Model to calibrate. Defaults to ``None``.
-            init_temperature_weight (float, optional): Initial value for the weight matrix. Defaults to ``1``.
-            init_temperature_bias (float | None, optional): Initial value for the bias. The inverse bias will be
+            init_weight_temperature (float, optional): Initial value for the weight matrix. Defaults to ``1``.
+            init_bias_temperature (float | None, optional): Initial value for the bias. The inverse bias will be
                 set to the ``0`` vector if set to ``None``. Defaults to ``None``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``200``.
@@ -54,13 +54,17 @@ class DirichletScaler(MatrixScaler):
         super().__init__(
             num_classes=num_classes,
             model=model,
-            init_temperature_weight=init_temperature_weight,
-            init_temperature_bias=init_temperature_bias,
+            init_weight_temperature=init_weight_temperature,
+            init_bias_temperature=init_bias_temperature,
             lr=lr,
             max_iter=max_iter,
             eps=eps,
             device=device,
         )
+        if lambda_reg is not None and lambda_reg < 0:
+            raise ValueError(f"lambda_reg must be None or positive. Got {lambda_reg}.")
+        if mu_reg is not None and mu_reg < 0:
+            raise ValueError(f"mu_reg must be None or positive. Got {mu_reg}.")
         self.lambda_reg = lambda_reg
         self.mu_reg = mu_reg
 

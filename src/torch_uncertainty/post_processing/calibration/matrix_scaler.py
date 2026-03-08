@@ -5,6 +5,7 @@ from torch import Tensor, device, nn
 from torch.nn.functional import linear
 
 from .scaler import Scaler
+from .utils import _check_classes
 
 
 class MatrixScaler(Scaler):
@@ -12,8 +13,8 @@ class MatrixScaler(Scaler):
         self,
         num_classes: int,
         model: nn.Module | None = None,
-        init_temperature_weight: float = 1,
-        init_temperature_bias: float | None = None,
+        init_weight_temperature: float = 1,
+        init_bias_temperature: float | None = None,
         lr: float = 0.1,
         max_iter: int = 200,
         eps: float = 1e-8,
@@ -24,8 +25,8 @@ class MatrixScaler(Scaler):
         Args:
             num_classes (int): Number of classes.
             model (nn.Module | None): Model to calibrate. Defaults to ``None``.
-            init_temperature_weight (float, optional): Initial value for the weights. Defaults to ``1``.
-            init_temperature_bias (float | None, optional): Initial value for the bias. The inverse bias will be
+            init_weight_temperature (float, optional): Initial value for the weights. Defaults to ``1``.
+            init_bias_temperature (float | None, optional): Initial value for the bias. The inverse bias will be
                 set to the ``0`` vector if set to ``None``. Defaults to ``None``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
@@ -42,13 +43,9 @@ class MatrixScaler(Scaler):
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 
-        if not isinstance(num_classes, int):
-            raise TypeError(f"num_classes must be an integer. Got {num_classes}.")
-        if num_classes <= 0:
-            raise ValueError(f"The number of classes must be positive. Got {num_classes}.")
+        _check_classes(num_classes)
         self.num_classes = num_classes
-
-        self.set_temperature(init_temperature_weight, init_temperature_bias)
+        self.set_temperature(init_weight_temperature, init_bias_temperature)
 
     def set_temperature(self, val_weight: float | Tensor, val_bias: float | Tensor | None) -> None:
         """Set the temperature matrix to a given value.

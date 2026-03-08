@@ -98,7 +98,7 @@ class Scaler(PostProcessing):
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
         if self.model is None or not self.trained:
-            logging.error(
+            logging.warning(
                 "TemperatureScaler has not been trained yet. Returning manually tempered inputs."
             )
         return self._scale(self.model(inputs))
