@@ -15,8 +15,8 @@ class DirichletScaler(MatrixScaler):
         self,
         num_classes: int,
         model: nn.Module | None = None,
-        init_w: float = 1,
-        init_b: float = 0,
+        init_temperature_weight: float = 1,
+        init_temperature_bias: float | None = None,
         lr: float = 0.1,
         max_iter: int = 200,
         lambda_reg: float | None = None,
@@ -29,8 +29,9 @@ class DirichletScaler(MatrixScaler):
         Args:
             num_classes (int): Number of classes.
             model (nn.Module | None): Model to calibrate. Defaults to ``None``.
-            init_w (float, optional): Initial value for the weight matrix. Defaults to ``1``.
-            init_b (float, optional): Initial value for the bias vector. Defaults to ``0``.
+            init_temperature_weight (float, optional): Initial value for the weight matrix. Defaults to ``1``.
+            init_temperature_bias (float | None, optional): Initial value for the bias. The inverse bias will be
+                set to the ``0`` vector if set to ``None``. Defaults to ``None``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``200``.
             lambda_reg (float | None, optional): Regularization coefficient applied to the
@@ -53,8 +54,8 @@ class DirichletScaler(MatrixScaler):
         super().__init__(
             num_classes=num_classes,
             model=model,
-            init_w=init_w,
-            init_b=init_b,
+            init_temperature_weight=init_temperature_weight,
+            init_temperature_bias=init_temperature_bias,
             lr=lr,
             max_iter=max_iter,
             eps=eps,
@@ -86,17 +87,20 @@ class DirichletScaler(MatrixScaler):
             self.model = nn.Identity()
 
         all_logits, all_labels = self._extract_data(dataloader, progress)
-        optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
+        optimizer = LBFGS(self.inv_temperature, lr=self.lr, max_iter=self.max_iter)
 
         def calib_eval() -> float:
             optimizer.zero_grad()
             loss = self.criterion(self._scale(all_logits), all_labels)
             if self.lambda_reg is not None:
-                off_diag_sq = (self.temp_w**2).sum() - (self.temp_w.diagonal() ** 2).sum()
+                off_diag_sq = (self.inv_temperature_weight**2).sum() - (
+                    self.inv_temperature_weight.diagonal() ** 2
+                ).sum()
                 loss += self.lambda_reg * off_diag_sq / (self.num_classes * (self.num_classes - 1))
             if self.mu_reg is not None:
-                loss += self.mu_reg * (self.temp_b**2).mean()
+                loss += self.mu_reg * (self.inv_temperature_bias**2).mean()
             loss.backward()
+            logging.debug("scaler loss: %f", loss.item())
             return loss
 
         optimizer.step(calib_eval)
@@ -107,8 +111,14 @@ class DirichletScaler(MatrixScaler):
 
     # Compute the product with the logprobs instead of the logits
     def _scale(self, logits: Tensor) -> Tensor:
-        return linear(torch.log_softmax(logits, dim=1), self.temp_w, self.temp_b)
+        return linear(
+            torch.log_softmax(logits, dim=1), self.inv_temperature_weight, self.inv_temperature_bias
+        )
+
+    @property
+    def inv_temperature(self) -> list:
+        return [self.inv_temperature_weight, self.inv_temperature_bias]
 
     @property
     def temperature(self) -> list:
-        return [self.temp_w, self.temp_b]
+        return [torch.inverse(self.inv_temperature_weight), 1 / self.inv_temperature_bias]
