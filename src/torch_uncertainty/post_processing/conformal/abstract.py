@@ -9,9 +9,13 @@ from torch_uncertainty.post_processing.abstract import PostProcessing
 
 
 class Conformal(PostProcessing):
-    """Conformal base class."""
+    """Conformal base class.
 
-    q_hat: float = None
+    Warning:
+        This implementation only works in the multiclasss setting.
+    """
+
+    q_hat: Tensor | None = None
 
     def __init__(
         self,
@@ -29,7 +33,7 @@ class Conformal(PostProcessing):
         if enable_ts:
             self.model = TemperatureScaler(
                 model=model,
-                init_val=ts_init_val,
+                init_temperature=ts_init_val,
                 lr=ts_lr,
                 max_iter=ts_max_iter,
                 device=device,
