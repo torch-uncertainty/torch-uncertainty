@@ -86,7 +86,7 @@ The following data augmentation methods have been implemented:
 
 To date, the following post-processing methods have been implemented:
 
-- [Temperature](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_scaler.html), Vector, & Matrix scaling
+- [Temperature](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_scaler.html), Vector, Matrix scaling, & Dirichlet calibration
 - [Conformal Predictions](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_conformal.html) with APS and RAPS
 - [Monte Carlo Batch Normalization](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_mc_batch_norm.html)
 - Laplace approximation through the [Laplace library](https://github.com/aleximmer/Laplace)

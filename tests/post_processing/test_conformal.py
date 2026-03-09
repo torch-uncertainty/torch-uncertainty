@@ -38,7 +38,7 @@ class TestConformalClsAPS:
     """Testing the ConformalClsRAPS class."""
 
     def test_fit(self) -> None:
-        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
+        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10).log()
         labels = torch.tensor([0, 2] + [1] * 8)
 
         calibration_set = list(zip(inputs, labels, strict=True))
@@ -52,7 +52,9 @@ class TestConformalClsAPS:
             out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
-        conformal = ConformalClsAPS(alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=True)
+        conformal = ConformalClsAPS(
+            alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=False
+        )
         conformal.fit(dl)
         out = conformal.conformal(inputs)
         assert out.shape == (10, 3)
@@ -84,7 +86,7 @@ class TestConformalClsRAPS:
         ).all()
 
         conformal = ConformalClsRAPS(
-            alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=True
+            alpha=0.1, model=nn.Identity(), randomized=True, enable_ts=False
         )
         conformal.fit(dl)
         out = conformal.conformal(inputs)
@@ -128,14 +130,14 @@ class TestConformalClsTHR:
         assert isinstance(conformal.model.model, nn.Identity)
 
     def test_fit(self) -> None:
-        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10)
+        inputs = repeat(torch.tensor([0.6, 0.3, 0.1]), "c -> b c", b=10).log()
         labels = torch.tensor([0, 2] + [1] * 8)
 
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
         conformal = ConformalClsTHR(
-            alpha=0.1, model=nn.Identity(), ts_init_val=2, ts_lr=1, ts_max_iter=10
+            alpha=0.1, model=nn.Identity(), ts_init_val=1, ts_lr=1, ts_max_iter=10, enable_ts=True
         )
         conformal.fit(dl)
         out = conformal.conformal(inputs)
@@ -144,9 +146,7 @@ class TestConformalClsTHR:
             out == repeat(torch.tensor([True, True, False]), "c -> b c", b=10).float() / 2
         ).all()
 
-        conformal = ConformalClsTHR(
-            alpha=0.1, model=nn.Identity(), ts_init_val=2, ts_lr=1, ts_max_iter=10, enable_ts=False
-        )
+        conformal = ConformalClsTHR(alpha=0.1, model=nn.Identity(), enable_ts=False)
         conformal.fit(dl)
 
     def test_failures(self) -> None:

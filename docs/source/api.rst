@@ -412,9 +412,10 @@ Scaling Methods
     :nosignatures:
     :template: class_inherited.rst
 
-    MatrixScaler
     TemperatureScaler
     VectorScaler
+    MatrixScaler
+    DirichletScaler
 
 
 Conformal Methods

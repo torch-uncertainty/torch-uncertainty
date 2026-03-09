@@ -7,8 +7,8 @@ In this tutorial, we use *TorchUncertainty* to improve the calibration
 of the top-label predictions and the reliability of the underlying neural network.
 
 This tutorial provides extensive details on how to use the TemperatureScaler
-class, however, this is done automatically in the datamodule when setting
-the `postprocess_set` to val or test.
+class and its derivative, VectorScaler and MatrixScaler. However, please note that this is usually done
+automatically in the datamodule when setting the `postprocess_set` to val or test.
 
 Through this tutorial, we also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
@@ -58,12 +58,9 @@ model.load_state_dict(weights)
 # element if eval_ood is True: the dataloader of in-distribution data and the dataloader
 # of out-of-distribution data. Otherwise, it is a list of 1 element.
 
-dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32, postprocess_set="test")
+dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
-
-# Get the full post-processing dataloader (unused in this tutorial)
-dataloader = dm.postprocess_dataloader()
 
 # %%
 # 4. Iterating on the Dataloader and Computing the ECE
@@ -74,14 +71,14 @@ dataloader = dm.postprocess_dataloader()
 # When computing the ECE, you need to provide the likelihoods associated with the inputs.
 # To do this, just call PyTorch's softmax.
 #
-# To avoid lengthy computations (without GPU), we restrict the calibration computation to a subset
+# To avoid lengthy computations, we restrict the calibration computation to a subset
 # of the test set.
 
 from torch.utils.data import DataLoader, random_split
 
 # Split datasets
 dataset = dm.test
-cal_dataset, test_dataset = random_split(dataset, [2000, len(dataset) - 2000])
+cal_dataset, test_dataset = random_split(dataset, [4000, len(dataset) - 4000])
 test_dataloader = DataLoader(test_dataset, batch_size=128)
 calibration_dataloader = DataLoader(cal_dataset, batch_size=128)
 
@@ -149,6 +146,110 @@ fig.show()
 
 # %%
 # The top-label calibration should be improved.
+#
+# 7. What about Vector Scaling?
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The VectorScaler has as many parameters as the number of classes to temper the softmax.
+# Instead of a single parameter for all classes, vector scaling fits one temperature for each
+# output class.
+# It can be used just like the TemperatureScaler but we need to specify the number of classes.
+# Can it continue improving the calibration of our model?
+
+from torch_uncertainty.post_processing import VectorScaler
+
+# Fit the scaler on the calibration dataset
+scaled_model = VectorScaler(num_classes=100, model=model)
+scaled_model.fit(dataloader=calibration_dataloader)
+
+# Reset the ECE
+ece.reset()
+
+# Iterate on the test dataloader
+for sample, target in test_dataloader:
+    logits = scaled_model(sample)
+    probs = logits.softmax(-1)
+    ece.update(probs, target)
+
+print(
+    f"ECE after vector scaling - {ece.compute():.3%} with average temperature {scaled_model.temperature[0].mean():.3}."
+)
+
+fig, ax = ece.plot()
+fig.tight_layout()
+fig.show()
+
+# %%
+# It is most likely not the case: we don't have much data to fit more parameters, and might
+# therefore overfit the calibration set to some extent.
+# Note that the VectorScaler can also change the predictions of the model.
+#
+# 8. What about Matrix Scaling?
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The MatrixScaler has as a number of parameters equal to the square of the number of classes
+# to temper the softmax.
+# It can be used just like the TemperatureScaler but we need to specify the number of classes.
+# Can it continue improving the calibration of our model?
+
+from torch_uncertainty.post_processing import MatrixScaler
+
+# Fit the scaler on the calibration dataset
+scaled_model = MatrixScaler(num_classes=100, model=model)
+scaled_model.fit(dataloader=calibration_dataloader)
+
+# Reset the ECE
+ece.reset()
+
+# Iterate on the test dataloader
+for sample, target in test_dataloader:
+    logits = scaled_model(sample)
+    probs = logits.softmax(-1)
+    ece.update(probs, target)
+
+print(
+    f"ECE after matrix scaling - {ece.compute():.3%} with average diagonal temperature {scaled_model.temperature[0].diagonal().mean():.3}."
+)
+
+fig, ax = ece.plot()
+fig.tight_layout()
+fig.show()
+
+# %%
+# Here it is a definitive no, we don't have enough data to fit a MatrixScaler in this case.
+# Note that the MatrixScaler can also change the predictions of the model.
+#
+# 9. Can Dirichlet Calibration help?
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Dirichlet calibration is somewhat similar to matrix scaling, but performs the matrix multiplication
+# directly on the softmax values. Moreover, it includes a regularization mecanism to minimize the L2 norm of the
+# off-diagonal matrix coefficients (lambda_reg) and bias vector (mu_reg).
+
+from torch_uncertainty.post_processing import DirichletScaler
+
+# Fit the scaler on the calibration dataset
+scaled_model = DirichletScaler(num_classes=100, model=model, lambda_reg=1, mu_reg=1)
+scaled_model.fit(dataloader=calibration_dataloader)
+
+# Reset the ECE
+ece.reset()
+
+# Iterate on the test dataloader
+for sample, target in test_dataloader:
+    logits = scaled_model(sample)
+    probs = logits.softmax(-1)
+    ece.update(probs, target)
+
+print(f"ECE after Dirichlet calibration - {ece.compute():.3%}.")
+
+fig, ax = ece.plot()
+fig.tight_layout()
+fig.show()
+
+# %%
+# The results are somewhat better than MatrixScaling, but we again do not have enough data to
+# tune the parameters of Dirichlet scaling.
 #
 # Notes
 # ~~~~~

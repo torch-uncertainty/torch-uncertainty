@@ -19,24 +19,28 @@ class Scaler(PostProcessing):
 
     def __init__(
         self,
-        model: nn.Module | None = None,
+        model: nn.Module | None,
         lr: float = 0.1,
         max_iter: int = 100,
-        eps: float = 1e-8,
+        eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
         """Virtual class for scaling post-processing for calibrated probabilities.
 
         Args:
-            model (nn.Module): Model to calibrate.
+            model (nn.Module): Model to calibrate. Defaults to ``None``.
             lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter (int, optional): Maximum number of iterations for the optimizer. Defaults to ``100``.
-            eps (float): Small value for stability. Defaults to ``1e-8``.
+            eps (float): Small value for stability. Defaults to ``1e-6``.
             device (Optional[Literal["cpu", "cuda"]], optional): Device to use for optimization. Defaults to ``None``.
 
         References:
             [1] `On calibration of modern neural networks. In ICML 2017
             <https://arxiv.org/abs/1706.04599>`_.
+
+        Warning:
+            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
+            2-class case.
         """
         super().__init__(model)
         self.device = device
@@ -62,12 +66,15 @@ class Scaler(PostProcessing):
         """Fit the temperature parameters to the calibration data.
 
         Args:
-            dataloader (DataLoader): Dataloader with the calibration data. If there is no model,
-                the dataloader should include the confidence score directly and not the logits.
+            dataloader (DataLoader): Dataloader with the logits and target of the calibration data.
             save_logits (bool, optional): Whether to save the logits and
                 labels in memory. Defaults to ``False``.
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to ``True``.
+
+        Warning:
+            Please provide logits and not probabilities/likelihoods within the dataloader, otherwise
+            the Scaler might converge to negative temperatures.
         """
         if self.model is None or isinstance(self.model, nn.Identity):
             logging.warning(
@@ -75,6 +82,31 @@ class Scaler(PostProcessing):
             )
             self.model = nn.Identity()
 
+        all_logits, all_labels = self._extract_data(dataloader, progress)
+        optimizer = LBFGS(self.inv_temperature, lr=self.lr, max_iter=self.max_iter)
+
+        def calib_eval() -> float:
+            optimizer.zero_grad()
+            loss = self.criterion(self._scale(all_logits), all_labels)
+            loss.backward()
+            logging.debug("scaler loss: %f", loss.item())
+            return loss
+
+        optimizer.step(calib_eval)
+        self.trained = True
+        if save_logits:
+            self.logits = all_logits
+            self.labels = all_labels
+
+    @torch.no_grad()
+    def forward(self, inputs: Tensor) -> Tensor:
+        if self.model is None or not self.trained:
+            logging.warning(
+                "TemperatureScaler has not been trained yet. Returning manually tempered inputs."
+            )
+        return self._scale(self.model(inputs))
+
+    def _extract_data(self, dataloader: DataLoader, progress: bool) -> tuple[Tensor, Tensor]:
         all_logits = []
         all_labels = []
         with torch.no_grad():
@@ -88,37 +120,17 @@ class Scaler(PostProcessing):
         # Handle binary classification case
         if all_logits.dim() == 2 and all_logits.shape[1] == 1:
             all_logits = all_logits.squeeze(1)
-            # Stabilize optimization
+        # Stabilize optimization
         if all_logits.dim() == 1:
-            all_logits = all_logits.clamp(self.eps, 1 - self.eps)
+            all_logits = all_logits.sigmoid().clamp(self.eps, 1 - self.eps)
             # allow labels as probabilities
             if ((all_labels != 0) * (all_labels != 1)).sum(dtype=torch.int) != 0:
                 all_labels = torch.stack([1 - all_labels, all_labels], dim=1)
-            all_logits = torch.stack([torch.log(1 - all_logits), torch.log(all_logits)], dim=1)
+            all_logits = torch.log(torch.stack([1 - all_logits, all_logits], dim=-1)).detach()
 
         if all_labels.ndim == 1:
             all_labels = all_labels.long()
-        optimizer = LBFGS(self.temperature, lr=self.lr, max_iter=self.max_iter)
-
-        def calib_eval() -> float:
-            optimizer.zero_grad()
-            loss = self.criterion(self._scale(all_logits), all_labels)
-            loss.backward()
-            return loss
-
-        optimizer.step(calib_eval)
-        self.trained = True
-        if save_logits:
-            self.logits = all_logits
-            self.labels = all_labels
-
-    @torch.no_grad()
-    def forward(self, inputs: Tensor) -> Tensor:
-        if self.model is None or not self.trained:
-            logging.error(
-                "TemperatureScaler has not been trained yet. Returning manually tempered inputs."
-            )
-        return self._scale(self.model(inputs))
+        return all_logits, all_labels
 
     @abstractmethod
     def _scale(self, logits: Tensor) -> Tensor:
@@ -130,7 +142,6 @@ class Scaler(PostProcessing):
         Returns:
             Tensor: Scaled logits.
         """
-        ...
 
     def fit_predict(
         self,
@@ -142,4 +153,10 @@ class Scaler(PostProcessing):
 
     @property
     @abstractmethod
-    def temperature(self) -> list: ...
+    def inv_temperature(self) -> list[Tensor]:
+        """Get the inverse temperature parameters."""
+
+    @property
+    @abstractmethod
+    def temperature(self) -> list[Tensor]:
+        """Get the temperature parameters."""

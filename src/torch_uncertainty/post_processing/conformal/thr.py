@@ -22,15 +22,18 @@ class ConformalClsTHR(Conformal):
 
         Args:
             alpha (float): The confidence level, meaning we allow :math:`1-\alpha` error.
-            model (nn.Module, optional): Model to be calibrated. Defaults to ``None``.
+            model (nn.Module | None, optional): Model to be calibrated. Defaults to ``None``.
             ts_init_val (float, optional): Initial value for the temperature.
                 Defaults to ``1.0``.
-            ts_lr (float, optional): Learning rate for the optimizer. Defaults to ``0.1``.
-            ts_max_iter (int, optional): Maximum number of iterations for the
+            ts_lr (float, optional): Learning rate for the temperature scaling optimizer. Defaults to ``0.1``.
+            ts_max_iter (int, optional): Maximum number of iterations for the temperature scaling
                 optimizer. Defaults to ``100``.
             enable_ts (bool): Whether to scale the logits. Defaults to ``True``.
             device (Literal["cpu", "cuda"] | torch.device | None, optional): device.
                 Defaults to ``None``.
+
+        Warning:
+            This implementation only works in the multiclass setting. Raise an issue if binary is needed.
 
         Reference:
             - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
@@ -54,9 +57,9 @@ class ConformalClsTHR(Conformal):
         logit_list = []
         label_list = []
         with torch.no_grad():
-            for images, labels in dataloader:
-                images, labels = images.to(self.device), labels.to(self.device)
-                logit_list.append(self.model_forward(images))
+            for inputs, labels in dataloader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                logit_list.append(self.model_forward(inputs))
                 label_list.append(labels)
 
         probs = torch.cat(logit_list)

@@ -286,6 +286,16 @@ For temperature, vector, & matrix scaling, consider citing:
 * Authors: *Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger*
 * Paper: `ICML 2017 <https://arxiv.org/pdf/1706.04599.pdf>`__.
 
+Dirichlet Calibration
+^^^^^^^^^^^^^^^^^^^^^
+
+For Dirichlet calibration, consider citing:
+
+**Beyond Temperature Scaling: Obtaining Well-Calibrated Multiclass Probabilities with Dirichlet Calibration**
+
+* Authors: *Meelis Kull, Miquel Perello-Nieto, Markus Kängsepp, Telmo Silva Filho, Hao Song, and Peter Flach*
+* Paper: `NeurIPS 2019 <https://arxiv.org/abs/1910.12656>`__.
+
 Monte-Carlo Batch Normalization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
