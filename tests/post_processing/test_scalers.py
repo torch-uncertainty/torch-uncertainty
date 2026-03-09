@@ -164,9 +164,7 @@ class TestDirichletScaler:
         calibration_set = list(zip(inputs, labels, strict=True))
         dl = DataLoader(calibration_set, batch_size=10)
 
-        scaler = DirichletScaler(
-            num_classes=4, init_weight_temperature=1, lr=1, max_iter=10
-        )
+        scaler = DirichletScaler(num_classes=4, init_weight_temperature=1, lr=1, max_iter=10)
         scaler.fit(dl, save_logits=True)
 
         scaler = DirichletScaler(
