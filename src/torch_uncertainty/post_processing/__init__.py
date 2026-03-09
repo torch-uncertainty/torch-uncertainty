@@ -1,6 +1,7 @@
 # ruff: noqa: F401
 from .abstract import PostProcessing
 from .calibration import (
+    BBQScaler,
     DirichletScaler,
     HistogramBinningScaler,
     IsotonicRegressionScaler,
