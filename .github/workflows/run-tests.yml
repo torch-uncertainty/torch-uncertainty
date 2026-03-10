@@ -61,6 +61,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Last result
+        run: |
+          echo $GITHUB_OUTPUT
+
       - name: Fail if previous tests failed and nothing important changed
         if: |
           steps.prev.outputs.result == 'failure' &&
