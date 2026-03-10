@@ -5,7 +5,6 @@ Torch-Uncertainty proposes various benchmarks to evaluate uncertainty quantifica
 ## Classification
 
 ### Images
-bip boup
 
 * CIFAR-10
 * CIFAR-100
