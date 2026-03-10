@@ -65,7 +65,8 @@ jobs:
         if: |
           steps.prev.outputs.result == 'failure' &&
           steps.changed-files-specific.outputs.only_changed != 'true' &&
-          github.event_name != 'workflow_dispatch'
+          github.event_name != 'workflow_dispatch' &&
+          github.event.before != ''
         run: |
           echo "Previous tests failed and no important files changed."
           exit 1
@@ -118,7 +119,7 @@ jobs:
           env_vars: PYTHON_VERSION
 
       - name: Upload test results to Codecov
-        if: steps.changed-files-specific.outputs.only_changed != 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+        if: steps.mode.outputs.mode == 'full' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
         uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
