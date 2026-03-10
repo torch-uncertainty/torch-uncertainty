@@ -61,9 +61,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Last result
-        run: |
-          echo "$GITHUB_CONTEXT"
+      - name: Debug GitHub context
+        run: echo '${{ toJson(github) }}'
 
       - name: Fail if previous tests failed and nothing important changed
         if: |
