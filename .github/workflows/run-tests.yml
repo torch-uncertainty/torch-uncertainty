@@ -61,8 +61,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Debug GitHub context
-        run: echo '${{ toJson(github) }}'
+      - name: Debug workflow state
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "before=${{ github.event.before }}"
+          echo "prev_result=${{ steps.prev.outputs.result }}"
+          echo "only_changed=${{ steps.changed-files-specific.outputs.only_changed }}"
+          echo "Event payload:"
+          cat "$GITHUB_EVENT_PATH"
 
       - name: Fail if previous tests failed and nothing important changed
         if: |
