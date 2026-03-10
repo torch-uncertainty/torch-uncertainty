@@ -38,14 +38,15 @@ jobs:
         id: changed-files-specific
         uses: tj-actions/changed-files@v47
         with:
+          since_last_remote_commit: 'true'
           files: |
             auto_tutorials_source/**
             data/**
             experiments/**
             docs/**
-            *.md
-            *.yaml
-            *.yml
+            **.md
+            **.yaml
+            **.yml
             LICENSE
             .gitignore
       
@@ -64,7 +65,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
 
-      - name: Fail if previous tests failed and nothing important changed blblblbl
+      - name: Fail if previous tests failed and nothing important changed
         if: |
           github.event.before != '' &&
           steps.prev.outputs.result == 'failure' &&
