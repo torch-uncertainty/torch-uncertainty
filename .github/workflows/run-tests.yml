@@ -63,7 +63,7 @@ jobs:
 
       - name: Last result
         run: |
-          echo $GITHUB_OUTPUT
+          echo "$GITHUB_CONTEXT"
 
       - name: Fail if previous tests failed and nothing important changed
         if: |
