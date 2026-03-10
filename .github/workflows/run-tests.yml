@@ -53,20 +53,13 @@ jobs:
         id: prev
         run: |
           result=$(gh api \
-            repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs)
-          echo "$result"
+            repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs \
+            --jq '.check_runs[] | select(.name=="build 3.10") | .conclusion' \
+            | head -n1)
+
           echo "result=$result" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
-
-      - name: Debug workflow state
-        run: |
-          echo "event_name=${{ github.event_name }}"
-          echo "before=${{ github.event.before }}"
-          echo "prev_result=${{ steps.prev.outputs.result }}"
-          echo "only_changed=${{ steps.changed-files-specific.outputs.only_changed }}"
-          echo "Event payload:"
-          cat "$GITHUB_EVENT_PATH"
 
       - name: Fail if previous tests failed and nothing important changed
         if: |
