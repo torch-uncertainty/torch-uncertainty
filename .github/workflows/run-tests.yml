@@ -49,7 +49,7 @@ jobs:
             LICENSE
             .gitignore
       
-      - name: Check previous commit workflow result blblblbl
+      - name: Check previous commit workflow result
         id: prev
         run: |
           result=$(gh api \
