@@ -63,7 +63,7 @@ class HistogramBinningScaler(PostProcessing):
             progress (bool, optional): Whether to show a progress bar.
                 Defaults to ``True``.
         """
-        if self.model is None or isinstance(self.model, nn.Identity): # coverage: ignore
+        if self.model is None or isinstance(self.model, nn.Identity):  # coverage: ignore
             logging.warning(
                 "model is None. Fitting post_processing method on the dataloader's data directly."
             )
