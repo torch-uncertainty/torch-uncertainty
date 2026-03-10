@@ -66,10 +66,11 @@ jobs:
 
       - name: Fail if previous tests failed and nothing important changed blblblbl
         if: |
+          github.event.before != '' &&
           steps.prev.outputs.result == 'failure' &&
           steps.changed-files-specific.outputs.only_changed == 'true' &&
-          github.event_name != 'workflow_dispatch' &&
-          github.event.before != ''
+          github.event_name != 'workflow_dispatch'
+          
         run: |
           echo "Previous tests failed and no important files changed."
           exit 1
