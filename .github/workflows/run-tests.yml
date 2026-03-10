@@ -61,7 +61,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Fail if previous tests failed and nothing important changed
+      - name: Fail if previous tests failed and nothing important changed blblblbl
         if: |
           steps.prev.outputs.result == 'failure' &&
           steps.changed-files-specific.outputs.only_changed != 'true' &&
