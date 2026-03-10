@@ -1,8 +1,9 @@
 name: Docs
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+    branches: [main]
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
     branches:
@@ -15,7 +16,11 @@ env:
 
 jobs:
   documentation:
-    if: "!contains(github.ref, 'dependabot')"
+    permissions:
+      contents: read
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_branch, 'dependabot')) ||
+      (github.event_name != 'workflow_run' && !contains(github.ref, 'dependabot'))
     runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +50,7 @@ jobs:
           uv sync --locked --dev --extra gpu
 
       - name: Sphinx build
-        if: github.event.pull_request.draft == false
+        if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
         run: |
           cd docs && make html
 
