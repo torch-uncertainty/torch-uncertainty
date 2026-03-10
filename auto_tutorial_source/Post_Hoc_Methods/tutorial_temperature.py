@@ -14,6 +14,11 @@ automatically in the datamodule when setting the `postprocess_set` to val or tes
 Through this tutorial, we also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
 
+Note:
+~~~~
+
+The Expected Calibration Error (ECE) is not sufficient to properly assess the calibration properties of a model.
+
 1. Loading the Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -251,36 +256,6 @@ fig.show()
 # %%
 # The results are somewhat better than MatrixScaling, but we again likely do not have enough data to
 # correclty tune the parameters of Dirichlet scaling.
-#
-# 10. Isotonic Calibration
-# ~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# Isotonic calibration
-
-from torch_uncertainty.post_processing import IsotonicRegressionScaler
-
-# Fit the scaler on the calibration dataset
-scaled_model = IsotonicRegressionScaler(model=model)
-scaled_model.fit(dataloader=calibration_dataloader)
-
-# Reset the ECE
-ece.reset()
-
-# Iterate on the test dataloader
-for sample, target in test_dataloader:
-    logits = scaled_model(sample)
-    probs = logits.softmax(-1)
-    ece.update(probs, target)
-
-print(f"ECE after Isotonic calibration - {ece.compute():.3%}.")
-
-fig, ax = ece.plot()
-fig.tight_layout()
-fig.show()
-
-# %%
-# In this specific case, the results are better than MatrixScaling and Dirichlet scaling but
-# not as good as those obtained with Temperature scaling.
 #
 # Remark
 # ~~~~~~
