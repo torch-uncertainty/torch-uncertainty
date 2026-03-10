@@ -54,7 +54,7 @@ jobs:
         run: |
           result=$(gh api \
             repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs \
-            --jq '.check_runs[] | select(.name=="build") | .conclusion')
+            --jq '.check_runs[] | select(.name=="build")')
 
           echo "result=$result" >> $GITHUB_OUTPUT
           echo "$result"
