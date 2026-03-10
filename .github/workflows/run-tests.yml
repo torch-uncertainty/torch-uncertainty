@@ -50,6 +50,18 @@ jobs:
             .gitignore
       
       - name: Check previous commit workflow result
+        id: prev1
+        run: |
+          result=$(gh api \
+            repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs \
+            --jq '.check_runs[] | select(.name=="build 3.10") | .conclusion')
+
+          echo "result=$result" >> $GITHUB_OUTPUT
+          echo "$result"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Check previous commit workflow result
         id: prev
         run: |
           result=$(gh api \
