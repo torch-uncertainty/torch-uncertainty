@@ -5,12 +5,15 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from torch_uncertainty.post_processing import PostProcessing
 
+from .utils import _determine_dimensionality, _extract_data
+
 
 class BBQScaler(PostProcessing):
+    num_classes: int | None = None
+
     def __init__(
         self,
         model: nn.Module | None = None,
@@ -58,7 +61,6 @@ class BBQScaler(PostProcessing):
         self.eps = eps
         self.device = device
 
-        self.num_classes: int | None = None
         self.models: list[tuple[list[dict], Tensor]] = []
 
     def fit(
@@ -79,17 +81,10 @@ class BBQScaler(PostProcessing):
             )
             self.model = nn.Identity()
 
-        all_logits, all_labels = self._extract_data(dataloader, progress)
-
-        # Determine dimensionality
-        if all_logits.dim() == 1 or (all_logits.dim() == 2 and all_logits.shape[1] == 1):
-            probs = torch.sigmoid(all_logits).flatten()
-            labels = all_labels.float().flatten()
-            self.num_classes = 1
-        else:
-            probs = torch.softmax(all_logits, dim=-1)
-            labels = all_labels
-            self.num_classes = probs.shape[1]
+        all_logits, all_labels = _extract_data(
+            dataloader=dataloader, model=self.model, device=self.device, progress=progress
+        )
+        self.num_classes, probs, labels = _determine_dimensionality(all_logits, all_labels)
 
         self.models = []
         labels_one_hot = (
@@ -99,7 +94,9 @@ class BBQScaler(PostProcessing):
         # OvR Fitting process
         for c in range(self.num_classes):
             c_probs = probs[:, c] if self.num_classes > 1 else probs
-            c_labels = labels_one_hot[:, c] if self.num_classes > 1 else labels
+            c_labels = (
+                labels_one_hot[:, c] if labels_one_hot is not None else labels
+            )  # if self.num_classes > 1
 
             class_models = []
             log_scores = []
@@ -183,7 +180,7 @@ class BBQScaler(PostProcessing):
         logits = self.model(inputs)
         calib_probs_list = []
 
-        # Vectorized inference per class
+        # Vectorized evaluation per class
         for c in range(self.num_classes):
             c_probs = (
                 torch.sigmoid(logits).flatten()
@@ -217,19 +214,3 @@ class BBQScaler(PostProcessing):
         if self.num_classes == 1:
             return torch.logit(calib_probs, eps=self.eps)
         return torch.log(calib_probs)
-
-    def _extract_data(self, dataloader: DataLoader, progress: bool) -> tuple[Tensor, Tensor]:
-        all_logits, all_labels = [], []
-        with torch.no_grad():
-            for inputs, labels in tqdm(dataloader, disable=not progress):
-                logits = self.model(inputs.to(self.device))
-                all_logits.append(logits)
-                all_labels.append(labels)
-
-        all_logits = torch.cat(all_logits).to(self.device)
-        all_labels = torch.cat(all_labels).to(self.device)
-
-        if all_labels.ndim == 1:
-            all_labels = all_labels.long()
-
-        return all_logits, all_labels

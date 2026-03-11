@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from torch_uncertainty.post_processing import PostProcessing
 
-from .utils import _extract_data
+from .utils import _determine_dimensionality, _extract_data
 
 
 class HistogramBinningScaler(PostProcessing):
@@ -72,16 +72,7 @@ class HistogramBinningScaler(PostProcessing):
         all_logits, all_labels = _extract_data(
             dataloader=dataloader, model=self.model, device=self.device, progress=progress
         )
-
-        # Determine dimensionality
-        if all_logits.dim() == 1 or (all_logits.dim() == 2 and all_logits.shape[1] == 1):
-            probs = torch.sigmoid(all_logits).flatten()
-            labels = all_labels.float().flatten()
-            self.num_classes = 1
-        else:
-            probs = torch.softmax(all_logits, dim=-1)
-            labels = all_labels
-            self.num_classes = probs.shape[1]
+        self.num_classes, probs, labels = _determine_dimensionality(all_logits, all_labels)
 
         # Define equal-width bin edges and centers
         self.bin_edges = torch.linspace(0.0, 1.0, self.num_bins + 1, device=self.device)

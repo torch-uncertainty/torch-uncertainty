@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from torch_uncertainty.post_processing import PostProcessing
 
-from .utils import _extract_data
+from .utils import _determine_dimensionality, _extract_data
 
 if util.find_spec("sklearn"):
     from sklearn.isotonic import IsotonicRegression
@@ -21,7 +21,6 @@ else:  # coverage: ignore
 
 
 class IsotonicRegressionScaler(PostProcessing):
-    ir_models: list[IsotonicRegression] | None = None
     num_classes: int | None = None
 
     def __init__(
@@ -66,6 +65,7 @@ class IsotonicRegressionScaler(PostProcessing):
         super().__init__(model)
         self.eps = eps
         self.device = device
+        self.ir_models: list[IsotonicRegression] = []
 
     def fit(
         self,
@@ -94,16 +94,8 @@ class IsotonicRegressionScaler(PostProcessing):
         all_logits, all_labels = _extract_data(
             dataloader=dataloader, model=self.model, device=self.device, progress=progress
         )
-
-        # Convert logits to probabilities
-        if all_logits.dim() == 1 or (all_logits.dim() == 2 and all_logits.shape[1] == 1):
-            probs = torch.sigmoid(all_logits).cpu().flatten().numpy()
-            self.num_classes = 1
-        else:
-            probs = torch.softmax(all_logits, dim=-1).cpu().numpy()
-            self.num_classes = probs.shape[1]
-
-        labels = all_labels.cpu().numpy()
+        self.num_classes, probs, labels = _determine_dimensionality(all_logits, all_labels)
+        probs, labels = probs.numpy(), labels.numpy()
         self.ir_models = []
 
         # Fit Isotonic Regression

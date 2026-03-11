@@ -289,6 +289,7 @@ class TestHistogramBinningScaler:
         calib_probs = torch.softmax(calib_logits, dim=-1)
         torch.testing.assert_close(calib_probs.sum(dim=-1), torch.ones(len(inputs)))
 
+
 class TestBBQScaler:
     """Testing the BBQScaler class."""
 
@@ -324,7 +325,6 @@ class TestBBQScaler:
 
         assert scaler.trained
         assert scaler.num_classes == 3
-        assert scaler.bin_values.shape == (3, 5)  # (num_classes, num_bins)
 
         inputs, _ = next(iter(multiclass_dataloader))
         calib_logits = scaler(inputs)

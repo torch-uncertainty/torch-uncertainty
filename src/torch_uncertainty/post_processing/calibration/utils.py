@@ -48,3 +48,15 @@ def _extract_data(
         all_labels = all_labels.long()
 
     return all_logits, all_labels
+
+
+def _determine_dimensionality(all_logits, all_labels):
+    if all_logits.dim() == 1 or (all_logits.dim() == 2 and all_logits.shape[1] == 1):
+        probs = torch.sigmoid(all_logits).flatten()
+        labels = all_labels.float().flatten()
+        num_classes = 1
+    else:
+        probs = torch.softmax(all_logits, dim=-1)
+        labels = all_labels
+        num_classes = probs.shape[1]
+    return num_classes, probs, labels
