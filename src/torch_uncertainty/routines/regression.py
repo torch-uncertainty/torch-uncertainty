@@ -25,6 +25,7 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (
+    DistEstimate,
     get_dist_class,
     get_dist_estimate,
 )
@@ -40,7 +41,7 @@ class RegressionRoutine(LightningModule):
         output_dim: int,
         loss: nn.Module | None = None,
         dist_family: str | None = None,
-        dist_estimate: str = "mean",
+        dist_estimate: str | DistEstimate = "mean",
         *,
         is_ensemble: bool = False,
         optim_recipe: dict | Optimizer | None = None,
@@ -59,7 +60,7 @@ class RegressionRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
                 Defaults to ``None``.
             dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
-            dist_estimate (str, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
+            dist_estimate (str | DistEstimate, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
             optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
@@ -94,7 +95,7 @@ class RegressionRoutine(LightningModule):
 
         self.model = model
         self.dist_family = dist_family
-        self.dist_estimate = dist_estimate
+        self.dist_estimate = DistEstimate(dist_estimate)
         self.probabilistic = dist_family is not None
         self.output_dim = output_dim
         self.loss = loss
