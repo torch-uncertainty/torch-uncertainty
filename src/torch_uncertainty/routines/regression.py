@@ -61,7 +61,7 @@ class RegressionRoutine(LightningModule):
             dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
             dist_estimate (str | DistEstimate, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
-            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (OptimizerLRScheduler, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
             log_plots (bool, optional): Indicates whether to log figures in the logger.

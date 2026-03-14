@@ -70,7 +70,7 @@ class SegmentationRoutine(LightningModule):
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
                 Defaults to ``None``.
-            optim_recipe (dict or Optimizer, optional): The optimizer and
+            optim_recipe (OptimizerLRScheduler, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.

@@ -80,7 +80,7 @@ class PixelRegressionRoutine(LightningModule):
                 point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
                 Defaults to ``False``.
-            optim_recipe (dict or Optimizer, optional): The optimizer and
+            optim_recipe (OptimizerLRScheduler, optional): The optimizer and
                 optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
