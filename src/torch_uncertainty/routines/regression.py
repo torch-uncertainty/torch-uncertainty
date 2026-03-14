@@ -10,7 +10,6 @@ from torch.distributions import (
     Distribution,
     Independent,
 )
-from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
@@ -44,7 +43,7 @@ class RegressionRoutine(LightningModule):
         dist_estimate: str | DistEstimate = "mean",
         *,
         is_ensemble: bool = False,
-        optim_recipe: dict | Optimizer | None = None,
+        optim_recipe: OptimizerLRScheduler | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         log_plots: bool = False,
@@ -110,8 +109,7 @@ class RegressionRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        self.is_elbo = isinstance(self.loss, ELBOLoss)
-        if self.is_elbo:
+        if isinstance(self.loss, ELBOLoss):
             self.loss.set_model(self.model)
 
         self.optim_recipe = optim_recipe
@@ -221,6 +219,11 @@ class RegressionRoutine(LightningModule):
         Returns:
             Tensor: the loss corresponding to this training step.
         """
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+
         inputs, targets = self.format_batch_fn(batch)
 
         if self.one_dim_regression:

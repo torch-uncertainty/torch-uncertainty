@@ -14,7 +14,6 @@ from torch.distributions import (
     Independent,
     MixtureSameFamily,
 )
-from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanSquaredError, MetricCollection
 from torchvision.transforms.v2 import functional as F
@@ -60,7 +59,7 @@ class PixelRegressionRoutine(LightningModule):
         *,
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
-        optim_recipe: dict | Optimizer | None = None,
+        optim_recipe: OptimizerLRScheduler | None = None,
         eval_shift: bool = False,
         num_image_plot: int = 4,
         log_plots: bool = False,
@@ -218,6 +217,11 @@ class PixelRegressionRoutine(LightningModule):
         Returns:
             Tensor: the loss corresponding to this training step.
         """
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+
         inputs, target = self.format_batch_fn(batch)
         if self.one_dim_depth:
             target = target.unsqueeze(1)

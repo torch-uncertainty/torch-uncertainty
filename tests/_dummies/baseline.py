@@ -32,7 +32,7 @@ class DummyClassificationBaseline:
         eval_grouping_loss: bool = False,
         calibrate: bool = False,
         save_in_csv: bool = False,
-        mixtype: str = "mixup",
+        mixtype: str | None = "mixup",
         isobatch: bool = False,
         kw_on_embeddings: bool = True,
         kernel_tau_max: float = 1,

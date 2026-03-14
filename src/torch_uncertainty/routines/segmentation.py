@@ -7,7 +7,6 @@ from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
-from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import Accuracy, MetricCollection
 from torchvision.transforms.v2 import ToDtype
@@ -51,7 +50,7 @@ class SegmentationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module | None = None,
         *,
-        optim_recipe: dict | Optimizer | None = None,
+        optim_recipe: OptimizerLRScheduler | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
@@ -253,6 +252,11 @@ class SegmentationRoutine(LightningModule):
         Returns:
             Tensor: the loss corresponding to this training step.
         """
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+
         img, targets = self.format_batch_fn(batch)
         logits = self.forward(img)
         targets = F.resize(targets, logits.shape[-2:], interpolation=F.InterpolationMode.NEAREST)
