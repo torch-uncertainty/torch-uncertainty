@@ -416,6 +416,7 @@ Scaling Methods
     VectorScaler
     MatrixScaler
     DirichletScaler
+    IsotonicRegressionScaler
 
 
 Conformal Methods

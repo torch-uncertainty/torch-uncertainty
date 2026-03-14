@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 
 from torch_uncertainty.post_processing import (
     DirichletScaler,
+    HistogramBinningScaler,
+    IsotonicRegressionScaler,
     MatrixScaler,
     TemperatureScaler,
     VectorScaler,
@@ -183,3 +185,105 @@ class TestDirichletScaler:
             DirichletScaler(model=nn.Identity(), num_classes=2, lambda_reg=-1e8)
         with pytest.raises(ValueError, match=r"mu_reg must be None or positive. Got "):
             DirichletScaler(model=nn.Identity(), num_classes=2, mu_reg=-1e8)
+
+
+@pytest.fixture
+def binary_dataloader():
+    """Returns a DataLoader for binary classification (1D logits)."""
+    inputs = torch.tensor([1.5, -1.0, 2.0, -2.5]).repeat(10)
+    labels = torch.tensor([1, 0, 1, 0]).repeat(10)
+    dataset = list(zip(inputs, labels, strict=False))
+    return DataLoader(dataset, batch_size=10)
+
+
+@pytest.fixture
+def multiclass_dataloader():
+    """Returns a DataLoader for multiclass classification (2D logits)."""
+    # 3 classes: Class 0, 1, and 2 dominant respectively
+    inputs = torch.tensor([[2.0, 0.5, 0.1], [0.1, 2.0, 0.5], [0.5, 0.1, 2.0]]).repeat(10, 1)
+    labels = torch.tensor([0, 1, 2]).repeat(10)
+    dataset = list(zip(inputs, labels, strict=False))
+    return DataLoader(dataset, batch_size=10)
+
+
+class TestIsotonicRegressionScaler:
+    """Testing the IsotonicRegressionScaler class."""
+
+    def test_main(self) -> None:
+        scaler = IsotonicRegressionScaler(model=nn.Identity())
+        logits = torch.tensor([[1.0, 2.0, 3.0]], dtype=torch.float32)
+        # Untrained check
+        assert not scaler.trained
+        assert torch.all(scaler(logits) == logits)
+
+    def test_fit_binary(self, binary_dataloader) -> None:
+        scaler = IsotonicRegressionScaler(model=nn.Identity())
+        scaler.fit(binary_dataloader, progress=False)
+
+        assert scaler.trained
+        assert scaler.num_classes == 1
+
+        # Test inference on a single batch from the fixture
+        inputs, _ = next(iter(binary_dataloader))
+        calib_logits = scaler(inputs)
+        assert calib_logits.shape == inputs.shape
+        assert not torch.isnan(calib_logits).any()
+
+    def test_fit_multiclass(self, multiclass_dataloader) -> None:
+        scaler = IsotonicRegressionScaler(model=nn.Identity())
+        scaler.fit(multiclass_dataloader, progress=False)
+
+        assert scaler.trained
+        assert scaler.num_classes == 3
+
+        inputs, _ = next(iter(multiclass_dataloader))
+        calib_logits = scaler(inputs)
+
+        # Ensure probabilities sum to 1
+        calib_probs = torch.softmax(calib_logits, dim=-1)
+        torch.testing.assert_close(calib_probs.sum(dim=-1), torch.ones(calib_probs.shape[0]))
+
+
+class TestHistogramBinningScaler:
+    """Testing the HistogramBinningScaler class."""
+
+    def test_main(self) -> None:
+        scaler = HistogramBinningScaler(model=nn.Identity(), num_bins=10)
+        logits = torch.tensor([[1.0, 2.0, 3.0]])
+
+        assert not scaler.trained
+        assert scaler.num_bins == 10
+        assert torch.all(scaler(logits) == logits)
+
+    def test_invalid_bins(self) -> None:
+        with pytest.raises(ValueError, match="Number of bins must be strictly positive"):
+            HistogramBinningScaler(model=nn.Identity(), num_bins=0)
+
+    def test_fit_binary(self, binary_dataloader) -> None:
+        scaler = HistogramBinningScaler(model=nn.Identity(), num_bins=5)
+        scaler.fit(binary_dataloader, progress=False)
+
+        assert scaler.trained
+        assert scaler.num_classes == 1
+        assert scaler.bin_values.shape == (5,)
+
+        # Test inference
+        inputs, _ = next(iter(binary_dataloader))
+        calib_logits = scaler(inputs)
+        assert calib_logits.shape == inputs.shape
+        assert not torch.isnan(calib_logits).any()
+
+    def test_fit_multiclass(self, multiclass_dataloader) -> None:
+        scaler = HistogramBinningScaler(model=nn.Identity(), num_bins=5)
+        scaler.fit(multiclass_dataloader, progress=False)
+
+        assert scaler.trained
+        assert scaler.num_classes == 3
+        assert scaler.bin_values.shape == (3, 5)  # (num_classes, num_bins)
+
+        inputs, _ = next(iter(multiclass_dataloader))
+        calib_logits = scaler(inputs)
+
+        # Output should be stable and normalized probabilities
+        calib_probs = torch.softmax(calib_logits, dim=-1)
+        torch.testing.assert_close(calib_probs.sum(dim=-1), torch.ones(len(inputs)))

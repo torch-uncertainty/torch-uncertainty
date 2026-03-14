@@ -296,6 +296,16 @@ For Dirichlet calibration, consider citing:
 * Authors: *Meelis Kull, Miquel Perello-Nieto, Markus Kängsepp, Telmo Silva Filho, Hao Song, and Peter Flach*
 * Paper: `NeurIPS 2019 <https://arxiv.org/abs/1910.12656>`__.
 
+Isotonic Regression
+^^^^^^^^^^^^^^^^^^^
+
+For isotonic regression calibration, consider citing:
+
+**Transforming Classifier Scores into Accurate Multiclass Probability Estimates**
+
+* Authors: *Bianca Zadrozny and Charles Elkan*
+* Paper: `KDD 2002 <https://dl.acm.org/doi/10.1145/775047.775151>`__
+
 Monte-Carlo Batch Normalization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

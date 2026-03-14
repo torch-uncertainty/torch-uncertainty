@@ -1,24 +1,49 @@
 name: Docs
+
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
   workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.13"
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  # Fetch the branch name from the workflow that triggered this one, fallback to ref_name
+  BRANCH_NAME: ${{ github.event.workflow_run.head_branch || github.ref_name }}
 
 jobs:
   documentation:
-    if: "!contains(github.ref, 'dependabot')"
+    # Run if triggered manually OR if the "Tests" workflow succeeded, wasn't dependabot, 
+    # and targeted the main branch (either via push or PR).
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        !contains(github.event.workflow_run.head_branch, 'dependabot') &&
+        (
+          github.event.workflow_run.event == 'push' || 
+          (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].base.ref == 'main')
+        )
+      )
     runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Check if PR is draft
+        id: check_draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
+            PR_NUMBER=${{ github.event.workflow_run.pull_requests[0].number }}
+            IS_DRAFT=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json isDraft --jq '.isDraft')
+            echo "is_draft=$IS_DRAFT" >> $GITHUB_OUTPUT
+          else
+            echo "is_draft=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@v6
@@ -45,13 +70,15 @@ jobs:
           uv sync --locked --dev --extra gpu
 
       - name: Sphinx build
-        if: github.event.pull_request.draft == false
+        if: steps.check_draft.outputs.is_draft != 'true'
         run: |
           cd docs && make html
 
       - name: Deploy on GitHub pages
         uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.event_name != 'pull_request' }}
+        if: >
+          github.event_name == 'workflow_dispatch' || 
+          (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
         with:
           deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           external_repository: torch-uncertainty/torch-uncertainty.github.io

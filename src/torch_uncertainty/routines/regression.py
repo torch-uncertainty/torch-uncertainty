@@ -10,7 +10,6 @@ from torch.distributions import (
     Distribution,
     Independent,
 )
-from torch.optim import Optimizer
 from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
@@ -25,6 +24,7 @@ from torch_uncertainty.models import (
 )
 from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (
+    DistEstimate,
     get_dist_class,
     get_dist_estimate,
 )
@@ -40,10 +40,10 @@ class RegressionRoutine(LightningModule):
         output_dim: int,
         loss: nn.Module | None = None,
         dist_family: str | None = None,
-        dist_estimate: str = "mean",
+        dist_estimate: str | DistEstimate = "mean",
         *,
         is_ensemble: bool = False,
-        optim_recipe: dict | Optimizer | None = None,
+        optim_recipe: OptimizerLRScheduler | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         log_plots: bool = False,
@@ -59,9 +59,9 @@ class RegressionRoutine(LightningModule):
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
                 Defaults to ``None``.
             dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
-            dist_estimate (str, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
+            dist_estimate (str | DistEstimate, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
-            optim_recipe (dict or torch.optim.Optimizer, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (OptimizerLRScheduler, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
             log_plots (bool, optional): Indicates whether to log figures in the logger.
@@ -94,7 +94,7 @@ class RegressionRoutine(LightningModule):
 
         self.model = model
         self.dist_family = dist_family
-        self.dist_estimate = dist_estimate
+        self.dist_estimate = DistEstimate(dist_estimate)
         self.probabilistic = dist_family is not None
         self.output_dim = output_dim
         self.loss = loss
@@ -109,8 +109,7 @@ class RegressionRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        self.is_elbo = isinstance(self.loss, ELBOLoss)
-        if self.is_elbo:
+        if isinstance(self.loss, ELBOLoss):
             self.loss.set_model(self.model)
 
         self.optim_recipe = optim_recipe
@@ -220,6 +219,11 @@ class RegressionRoutine(LightningModule):
         Returns:
             Tensor: the loss corresponding to this training step.
         """
+        if self.loss is None:
+            raise ValueError(
+                "To train a model, you must specify the `loss` argument in the routine. Got None."
+            )
+
         inputs, targets = self.format_batch_fn(batch)
 
         if self.one_dim_regression:
