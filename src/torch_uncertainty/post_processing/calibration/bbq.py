@@ -72,8 +72,6 @@ class BBQScaler(PostProcessing):
         self.device = device
         self.model_pruning = model_pruning
 
-        self.models = []
-
     def fit(
         self,
         dataloader: DataLoader,
@@ -215,8 +213,7 @@ class BBQScaler(PostProcessing):
         )
         # Vectorized evaluation per class
         for c in range(self.num_classes):
-            if self.num_classes != 1:
-                class_probs = probs[:, c]
+            class_probs = probs[:, c] if self.num_classes != 1 else probs
             class_calib = torch.zeros_like(class_probs)
 
             class_models, weights = self.bbq_models[c]

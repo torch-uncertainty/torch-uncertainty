@@ -311,7 +311,7 @@ class TestBBQScaler:
 
         assert scaler.trained
         assert scaler.num_classes == 1
-        assert len(scaler.models) == 1
+        assert len(scaler.bbq_models) == 1
 
         # Test inference
         inputs, _ = next(iter(binary_dataloader))
@@ -332,11 +332,11 @@ class TestBBQScaler:
         # Output should be stable and normalized probabilities
         calib_probs = torch.softmax(calib_logits, dim=-1)
         torch.testing.assert_close(calib_probs.sum(dim=-1), torch.ones(len(inputs)))
-        assert len(scaler.models) == 3  # OvR structure: one ensemble per class
+        assert len(scaler.bbq_models) == 3  # OvR structure: one ensemble per class
 
         # Validate weights sum to ~1 for each class
         for c in range(scaler.num_classes):
-            _, weights = scaler.models[c]
+            _, weights = scaler.bbq_models[c]
             torch.testing.assert_close(weights.sum(), torch.tensor(1.0, device=scaler.device))
 
         # Test valid normalized output
