@@ -13,12 +13,14 @@ from .utils import _determine_dimensionality, _extract_data
 
 class BBQScaler(PostProcessing):
     num_classes: int | None = None
+    bbq_models: list[tuple[list[dict], Tensor]]
 
     def __init__(
         self,
         model: nn.Module | None = None,
         max_bins: int = 15,
         prior_weight: float = 2.0,
+        model_pruning: float | None = 1e-9,
         eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
@@ -34,22 +36,30 @@ class BBQScaler(PostProcessing):
         strategy, fitting independent Bayesian ensembles per class.
 
         Args:
-            model (nn.Module): Model to calibrate. Defaults to ``None``.
+            model (nn.Module | None): Model to calibrate. Defaults to ``None``.
             max_bins (int): The maximum number of bins to consider. The scaler
                 will evaluate all binning schemes from 2 up to ``max_bins``.
                 Defaults to ``15``.
             prior_weight (float): The equivalent sample size ($N'$) for the
                 uniform prior distributed across bins to penalize models with
-                too many bins. Defaults to ``2.0``.
+                too many bins. Defaults to ``2.0``(the value used in the original)
+                paper.
+            model_pruning (float | None): Prune a model if its weight is below :attr:`model_pruning`.
+                Do not prune if ``None``. Defaults to ``1e-9``.
             eps (float): Small value for stability when converting probs back
                 to logits. Defaults to ``1e-6``.
-            device (Optional[Literal["cpu", "cuda"]], optional): Device to use
+            device (Literal["cpu", "cuda"]]= | torch.device | None): Device to use
                 for tensor operations. Defaults to ``None``.
 
         References:
             [1] Obtaining Well Calibrated Probabilities Using Bayesian Binning.
             In AAAI 2015.
             <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`_.
+
+        Remark:
+            This implementation will work better with a limited number of classes.
+            Otherwise, the equal-frequency bins will be imprecise for high-confidence
+            values.
         """
         super().__init__(model)
 
@@ -60,8 +70,9 @@ class BBQScaler(PostProcessing):
         self.prior_weight = prior_weight
         self.eps = eps
         self.device = device
+        self.model_pruning = model_pruning
 
-        self.models: list[tuple[list[dict], Tensor]] = []
+        self.models = []
 
     def fit(
         self,
@@ -86,26 +97,20 @@ class BBQScaler(PostProcessing):
         )
         self.num_classes, probs, labels = _determine_dimensionality(all_logits, all_labels)
 
-        self.models = []
+        self.bbq_models = []
         labels_one_hot = (
             F.one_hot(labels.long(), self.num_classes).float() if self.num_classes > 1 else None
         )
 
-        # OvR Fitting process
         for c in range(self.num_classes):
-            c_probs = probs[:, c] if self.num_classes > 1 else probs
-            c_labels = (
-                labels_one_hot[:, c] if labels_one_hot is not None else labels
-            )  # if self.num_classes > 1
+            class_probs = probs[:, c] if self.num_classes > 1 else probs
+            class_labels = labels_one_hot[:, c] if labels_one_hot is not None else labels
 
-            class_models = []
-            log_scores = []
-            seen_edges = set()
-
+            class_models, log_scores, seen_edges = [], [], set()
             for b in range(2, self.max_bins + 1):
-                # 1. Define equal-frequency quantiles
+                # Define equal-frequency quantiles
                 quantiles = torch.linspace(0.0, 1.0, b + 1, device=self.device)
-                edges = torch.quantile(c_probs, quantiles)
+                edges = torch.quantile(class_probs, quantiles)
 
                 # Use unique to handle degenerate distributions with many identical probabilities
                 edges = torch.unique(edges)
@@ -117,58 +122,81 @@ class BBQScaler(PostProcessing):
                 edges[-1] = 1.0 + 1e-5
 
                 # Skip duplicate binning models that arise from `unique` collapsing quantiles
-                edges_tuple = tuple(edges.cpu().numpy().round(5))
+                edges_tuple = tuple(edges.cpu().numpy().round(9))
                 if edges_tuple in seen_edges:
                     continue
                 seen_edges.add(edges_tuple)
 
-                # 2. Bucketize and count
-                indices = torch.bucketize(c_probs, edges) - 1
+                # Bucketize and count
+                indices = torch.bucketize(class_probs, edges) - 1
                 indices = torch.clamp(indices, 0, len(edges) - 2)
 
-                actual_bins = len(edges) - 1
-                N_b = torch.bincount(indices, minlength=actual_bins).float()  # noqa: N806
-                m_b = torch.bincount(indices, weights=c_labels, minlength=actual_bins).float()
-                n_b = N_b - m_b
-
-                # 3. Compute log-marginal likelihood P(D|M)
-                alpha = self.prior_weight / (2 * actual_bins)
-                beta = self.prior_weight / (2 * actual_bins)
-                alpha_t = torch.tensor(alpha, device=self.device)
-                beta_t = torch.tensor(beta, device=self.device)
-                prior_term = torch.tensor(self.prior_weight / actual_bins, device=self.device)
-
-                log_marg = (
-                    torch.lgamma(prior_term)
-                    - torch.lgamma(N_b + prior_term)
-                    + torch.lgamma(m_b + alpha_t)
-                    + torch.lgamma(n_b + beta_t)
-                    - torch.lgamma(alpha_t)
-                    - torch.lgamma(beta_t)
+                # Compute log-marginal likelihood P(D|M)
+                bin_pos_freq, log_score = self.compute_log_score(
+                    indices=indices, edges=edges, class_labels=class_labels
                 )
-                log_score = log_marg.sum()
 
-                # 4. Save model expectations
-                theta = (m_b + alpha_t) / (N_b + alpha_t + beta_t)
-
-                class_models.append({"edges": edges, "theta": theta})
+                class_models.append({"edges": edges, "bin_pos_freq": bin_pos_freq})
                 log_scores.append(log_score)
 
             # Fallback for entirely degenerate inputs
             if not class_models:
+                logging.warning("BBQScaler: entirely degenerate inputs")
                 class_models.append(
                     {
-                        "edges": torch.tensor([-1e-5, 1.0 + 1e-5], device=self.device),
-                        "theta": torch.tensor([c_labels.mean()], device=self.device),
+                        "edges": torch.tensor([-1e-5, 1.0 - 1e-5], device=self.device),
+                        "bin_pos_freq": torch.tensor([class_labels.mean()], device=self.device),
                     }
                 )
                 log_scores.append(torch.tensor(0.0, device=self.device))
 
             # Compute posterior weights P(M|D) using Softmax
             weights = F.softmax(torch.stack(log_scores), dim=0)
-            self.models.append((class_models, weights))
+            if self.model_pruning is None:
+                pruned_models = class_models
+                pruned_weights = weights
+            else:
+                kept_indices = weights >= self.model_pruning
+                if kept_indices.sum() == 0:  # coverage: ignore
+                    raise ValueError(
+                        "BBQScaler: Error while pruning models. Lower the value of the pruning argument."
+                    )
+                pruned_weights = weights[kept_indices]
+                pruned_models = [
+                    m for m, keep in zip(class_models, kept_indices.cpu(), strict=True) if keep
+                ]
+
+            self.bbq_models.append((pruned_models, pruned_weights))
 
         self.trained = True
+
+    def compute_log_score(self, indices: Tensor, edges: Tensor, class_labels: Tensor):
+        actual_bins = len(edges) - 1
+        num_samples_per_bin = torch.bincount(indices, minlength=actual_bins).float()
+        num_positive_samples_per_bin = torch.bincount(
+            indices, weights=class_labels, minlength=actual_bins
+        ).float()
+        num_negative_samples_per_bin = num_samples_per_bin - num_positive_samples_per_bin
+
+        prior_base_term = torch.tensor(self.prior_weight / actual_bins, device=self.device)
+        pb = (edges[:-1] + edges[1:]) / 2
+        alpha = prior_base_term * pb
+        beta = prior_base_term * (1 - pb)
+
+        # Following the formula from page 2
+        log_marg = (
+            torch.lgamma(prior_base_term)
+            - torch.lgamma(num_samples_per_bin + prior_base_term)
+            + torch.lgamma(num_positive_samples_per_bin + alpha)
+            - torch.lgamma(alpha)
+            + torch.lgamma(num_negative_samples_per_bin + beta)
+            - torch.lgamma(beta)
+        )
+        log_score = log_marg.sum()
+
+        # Save model expectations
+        bin_pos_freq = num_positive_samples_per_bin / num_samples_per_bin
+        return bin_pos_freq, log_score
 
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
@@ -180,34 +208,36 @@ class BBQScaler(PostProcessing):
         logits = self.model(inputs)
         calib_probs_list = []
 
+        probs = (
+            torch.sigmoid(logits).flatten()
+            if self.num_classes == 1
+            else torch.softmax(logits, dim=-1)
+        )
         # Vectorized evaluation per class
         for c in range(self.num_classes):
-            c_probs = (
-                torch.sigmoid(logits).flatten()
-                if self.num_classes == 1
-                else torch.softmax(logits, dim=-1)[:, c]
-            )
-            c_calib = torch.zeros_like(c_probs)
+            if self.num_classes != 1:
+                class_probs = probs[:, c]
+            class_calib = torch.zeros_like(class_probs)
 
-            class_models, weights = self.models[c]
+            class_models, weights = self.bbq_models[c]
 
-            for weight, model in zip(weights, class_models, strict=True):
-                edges = model["edges"]
-                theta = model["theta"]
+            for weight, class_model in zip(weights, class_models, strict=True):
+                edges = class_model["edges"]
+                bin_pos_freq = class_model["bin_pos_freq"]
 
-                indices = torch.bucketize(c_probs, edges) - 1
-                indices = torch.clamp(indices, 0, len(theta) - 1)
+                indices = torch.bucketize(class_probs, edges) - 1
+                indices = torch.clamp(indices, 0, len(bin_pos_freq) - 1)
 
-                c_calib += weight * theta[indices]
+                class_calib += weight * bin_pos_freq[indices]
 
-            calib_probs_list.append(c_calib)
+            calib_probs_list.append(class_calib)
 
         if self.num_classes == 1:
             calib_probs = calib_probs_list[0]
         else:
             calib_probs = torch.stack(calib_probs_list, dim=-1)
             # Normalize to ensure multiclass probabilities sum to 1
-            calib_probs /= calib_probs.sum(dim=-1, keepdim=True) + 1e-12
+            calib_probs /= calib_probs.sum(dim=-1, keepdim=True)
 
         # Convert back to pseudo-logit space
         calib_probs = calib_probs.clamp(self.eps, 1 - self.eps)

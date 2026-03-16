@@ -1,7 +1,7 @@
 # ruff: noqa: E402, E703, D212, D415, T201
 """
-Histogram Binning, Isotonic Regression tutorial, and BBQ tutorial
-=================================================================
+Histogram Binning, Isotonic Regression, and BBQ tutorial
+========================================================
 
 This notebook-style script demonstrates how to *use* existing post-processing
 scalers from the package to calibrate a pretrained ResNet-18 on CIFAR-100.
@@ -84,15 +84,15 @@ fig.show()
 # 5. Bayesian Binning into Quantiles (BBQ): fit and evaluate
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-hist_scaler = BBQScaler(model=model, device=None)
-hist_scaler.fit(dataloader=calibration_dataloader)
+bbq_scaler = BBQScaler(model=model, device=None)
+bbq_scaler.fit(dataloader=calibration_dataloader)
 
-# Evaluate histogram-binned model on the held-out test set
+# Evaluate bbq model on the held-out test set
 ece.reset()
 with torch.no_grad():
     for sample, target in test_dataloader:
         # For multiclass this scaler is expected to return log-probabilities; apply softmax.
-        calibrated_out = hist_scaler(sample)
+        calibrated_out = bbq_scaler(sample)
         probs = calibrated_out.softmax(-1)
         ece.update(probs, target)
 
@@ -103,6 +103,10 @@ fig.tight_layout()
 fig.show()
 
 # %%
+# If you look closely at the predictions of the BBQScaler in this case,
+# you will see that its prediction is based on equal-frequency bins. Since the
+# number of classes is high, the bins mostly represent low-confidence values.
+#
 # 6. Histogram Binning: fit and evaluate
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
