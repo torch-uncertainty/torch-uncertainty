@@ -31,6 +31,7 @@ from torch_uncertainty.metrics import (
     MutualInformation,
     RiskAt80Cov,
     SetSize,
+    SmoothCalibrationError,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
@@ -210,6 +211,7 @@ class ClassificationRoutine(LightningModule):
                 num_bins=self.num_bins_calibration_error,
                 num_classes=self.num_classes,
             ),
+            "cal/SmECE": SmoothCalibrationError(),
             "sc/AURC": AURC(),
             "sc/AUGRC": AUGRC(),
             "sc/Cov@5Risk": CovAt5Risk(),
@@ -219,7 +221,7 @@ class ClassificationRoutine(LightningModule):
             ["cls/Acc"],
             ["cls/Brier"],
             ["cls/NLL"],
-            ["cal/ECE", "cal/aECE"],
+            ["cal/ECE", "cal/SmECE", "cal/MCE", "cal/aECE"],
             ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
         ]
 

@@ -24,6 +24,7 @@ PERCENTAGE_METRICS = [
     "ECE",
     "MCE",
     "aECE",
+    "SmECE",
 ]
 
 INT_METRICS = [
