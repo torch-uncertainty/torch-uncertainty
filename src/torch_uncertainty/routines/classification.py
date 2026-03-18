@@ -198,6 +198,12 @@ class ClassificationRoutine(LightningModule):
                 num_bins=self.num_bins_calibration_error,
                 num_classes=self.num_classes,
             ),
+            "cal/MCE": CalibrationError(
+                task=task,
+                num_bins=self.num_bins_calibration_error,
+                num_classes=self.num_classes,
+                norm="max",
+            ),
             "cal/aECE": CalibrationError(
                 task=task,
                 adaptive=True,

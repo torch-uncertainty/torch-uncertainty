@@ -166,6 +166,12 @@ class SegmentationRoutine(LightningModule):
                     num_classes=self.num_classes,
                     num_bins=self.num_bins_calibration_error,
                 ),
+                "cal/MCE": CalibrationError(
+                    task="multiclass",
+                    num_classes=self.num_classes,
+                    num_bins=self.num_bins_calibration_error,
+                    norm="max",
+                ),
                 "cal/aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
