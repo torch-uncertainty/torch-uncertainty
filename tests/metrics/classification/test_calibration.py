@@ -14,7 +14,6 @@ class TestCalibrationError:
     """Testing the CalibrationError metric class."""
 
     def test_plot_binary(self) -> None:
-
         metric = CalibrationError(task="binary", num_bins=2, norm="l1")
         metric.update(
             torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75]),
