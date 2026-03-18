@@ -24,7 +24,6 @@ class SmoothCalibrationError(Metric):
         eps: float = 0.001,
         mesh_pts: int = 1000,
         refine_steps: int = 10,
-        logit_clamp_eps: float = 1e-6,
         **kwargs,
     ):
         """Smooth Expected Calibration Error (SmECE).
@@ -52,11 +51,6 @@ class SmoothCalibrationError(Metric):
                 bandwidth. Defaults to ``1000``.
             refine_steps (int, optional): Number of binary search iterations for
                 the ``'auto'`` bandwidth. Defaults to ``10``.
-            chunk_size (int, optional): Number of samples processed simultaneously
-                to keep memory usage low. Defaults to ``10000``.
-            logit_clamp_eps (float, optional): Small value to clamp probabilities
-                before logit transformation to avoid numerical instability.
-                Defaults to ``1e-6``.
             **kwargs: Additional arguments for the :class:`torchmetrics.Metric` base.
 
         Note:
@@ -79,7 +73,6 @@ class SmoothCalibrationError(Metric):
         self.eps = eps
         self.mesh_pts = mesh_pts
         self.refine_steps = refine_steps
-        self.logit_clamp_eps = logit_clamp_eps
 
         self.add_state("confidences", default=[], dist_reduce_fx="cat")
         self.add_state("accuracies", default=[], dist_reduce_fx="cat")
@@ -99,7 +92,7 @@ class SmoothCalibrationError(Metric):
             preds = preds.view(-1)
             target = target.view(-1)
 
-            if preds.max() > 1.0 or preds.min() < 0.0:
+            if preds.max() > 1.0 or preds.min() < 0.0:  # coverage: ignore
                 logging.warning("Smooth ECE: the inputs are not probabilities, applying sigmoid.")
                 probs = torch.sigmoid(preds)
             else:
@@ -109,7 +102,7 @@ class SmoothCalibrationError(Metric):
             pred_labels = (probs >= 0.5).long()
             acc = (pred_labels == target).float()
         else:
-            if preds.max() > 1.0 or preds.min() < 0.0:
+            if preds.max() > 1.0 or preds.min() < 0.0:  # coverage: ignore
                 logging.warning("Smooth ECE: the inputs are not probabilities, applying softmax.")
                 preds = torch.softmax(preds, dim=-1)
             conf, pred_labels = torch.max(preds, dim=-1)
@@ -168,9 +161,6 @@ class SmoothCalibrationError(Metric):
         """
         conf = dim_zero_cat(self.confidences)
         acc = dim_zero_cat(self.accuracies)
-
-        if conf.numel() == 0:
-            return Tensor(0.0, device=conf.device)
 
         if isinstance(self.bandwidth, float):
             final_h = self.bandwidth

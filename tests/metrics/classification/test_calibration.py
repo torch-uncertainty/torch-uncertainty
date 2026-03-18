@@ -14,6 +14,7 @@ class TestCalibrationError:
     """Testing the CalibrationError metric class."""
 
     def test_plot_binary(self) -> None:
+
         metric = CalibrationError(task="binary", num_bins=2, norm="l1")
         metric.update(
             torch.as_tensor([0.25, 0.25, 0.55, 0.75, 0.75]),
@@ -144,9 +145,9 @@ def sce_reflected() -> SmoothCalibrationError:
 
 
 class TestSmoothCalibrationError:
-    """Testing the AdaptiveCalibrationError metric class."""
+    """Testing the SmoothCalibrationError metric class."""
 
-    def test_perfect_calibration(self, sce_logit: SmoothCalibrationError):
+    def test_perfect_calibration(self, sce_logit: SmoothCalibrationError) -> None:
         """If accuracy perfectly matches confidence, SmECE should be near zero."""
         # 100 samples where confidence is 0.8 and they are all 'correct'
         # (Note: In a perfectly calibrated model, 80% should be correct,
@@ -158,7 +159,7 @@ class TestSmoothCalibrationError:
         val = sce_logit._compute_smooth_ece(conf, acc, h=0.1)
         assert val < 1e-4
 
-    def test_total_miscalibration(self, sce_logit: SmoothCalibrationError):
+    def test_total_miscalibration(self, sce_logit: SmoothCalibrationError) -> None:
         """If model is 100% confident but 0% accurate, SmECE should be high."""
         conf = torch.full((100,), 1.0)
         acc = torch.full((100,), 0.0)
@@ -167,7 +168,7 @@ class TestSmoothCalibrationError:
         # The error |1.0 - 0.0| = 1.0
         assert torch.isclose(val, torch.tensor(1.0), atol=1e-2)
 
-    def test_binary_input_shapes(self):
+    def test_binary_input_shapes(self) -> None:
         """Test that (N,) and (N, 1) inputs yield the same result."""
         metric = SmoothCalibrationError(kernel_type="reflected", bandwidth=0.1)
 
@@ -183,7 +184,7 @@ class TestSmoothCalibrationError:
 
         assert torch.isclose(res1, res2)
 
-    def test_multiclass_input(self):
+    def test_multiclass_input(self) -> None:
         """Test standard multiclass (N, C) logits."""
         metric = SmoothCalibrationError(kernel_type="logit", bandwidth="auto")
 
@@ -197,7 +198,7 @@ class TestSmoothCalibrationError:
         assert ece > 0.5  # Should be very high error
         assert isinstance(ece, Tensor)
 
-    def test_auto_bandwidth_search(self):
+    def test_auto_bandwidth_search(self) -> None:
         """Ensure 'auto' bandwidth selection doesn't crash and returns a valid value."""
         metric = SmoothCalibrationError(kernel_type="logit", bandwidth="auto")
 
@@ -210,7 +211,7 @@ class TestSmoothCalibrationError:
         assert 0.0 <= ece <= 1.0
 
     @pytest.mark.parametrize("kernel", ["logit", "reflected"])
-    def test_different_kernels(self, kernel: str):
+    def test_different_kernels(self, kernel: str) -> None:
         metric = SmoothCalibrationError(kernel_type=kernel, bandwidth=0.1)
         preds = torch.tensor([0.7, 0.8])
         target = torch.tensor([1, 1])
