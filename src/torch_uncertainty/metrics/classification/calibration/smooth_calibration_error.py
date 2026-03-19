@@ -42,6 +42,7 @@ class SmoothCalibrationError(Metric):
                     making it ideal for modern overconfident models. (Default)
                 - ``'reflected'``: Applies a Gaussian kernel in probability space
                     with reflections at 0 and 1 to prevent boundary bias.
+                Note that relplot's original implementation has ``'reflected'`` as default.
             bandwidth (Literal[auto] | float, optional): The kernel bandwidth $h$. If set to
                 ``'auto'``, it uses a fixed-point binary search to find a bandwidth
                 consistent with the error level. Defaults to ``'auto'``.
@@ -58,6 +59,10 @@ class SmoothCalibrationError(Metric):
             In the multiclass case, this metric evaluates the calibration of the
             maximum probability (top-label calibration). In the binary case, it
             evaluates the calibration of the predicted class (i.e., using $max(p, 1-p)$).
+
+        Note:
+            This implementation has been tested on a use case and provided the same values
+            (with 6 equal significant figures) as relplot's original implementation.
 
         References:
             - Błasiok, J. & Nakkiran, P. Smooth ECE: Principled Reliability
