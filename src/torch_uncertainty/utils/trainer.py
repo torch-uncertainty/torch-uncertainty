@@ -23,7 +23,7 @@ class TUTrainer(Trainer):
         strategy: str | Strategy = "auto",
         devices: list[int] | str | int = "auto",
         num_nodes: int = 1,
-        precision: None | int | str = None,
+        precision: Literal["16", "16-mixed", "16-true", "32", "32-true", "64", "64-true", "bf16", "bf16-mixed", "bf16-true", "transformer-engine", "transformer-engine-float16", 16, 32, 64] | None = None,
         logger: Logger | Iterable[Logger] | bool | None = None,
         callbacks: list[Callback] | Callback | None = None,
         fast_dev_run: int | bool = False,

@@ -1,3 +1,4 @@
+from typing import Literal
 import warnings
 
 import torch
@@ -14,12 +15,12 @@ from torch_uncertainty.metrics.classification.calibration.calibration_error impo
 
 
 class QuantileCalibrationError(BinaryCalibrationError):
-    is_differentiable = False
-    higher_is_better = False
-    full_state_update = False
-    not_implemented_error = False
+    is_differentiable: bool = False
+    higher_is_better: bool = False
+    full_state_update: bool = False
+    not_implemented_error: bool = False
 
-    def __init__(self, num_bins=15, norm="l1", ignore_index=None, validate_args=True, **kwargs):
+    def __init__(self, num_bins:int=15, norm: Literal['l1', 'l2', 'max']="l1", ignore_index=None, validate_args=True, **kwargs):
         """Quantile Calibration Error for regression tasks.
 
         This metric computes the calibration error of quantile predictions

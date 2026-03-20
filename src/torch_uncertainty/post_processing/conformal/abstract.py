@@ -42,7 +42,7 @@ class Conformal(PostProcessing):
             self.model = model
         self.device = device or "cpu"
 
-    def set_model(self, model: nn.Module | None) -> None:
+    def set_model(self, model: nn.Module) -> None:
         if self.enable_ts:
             self.model.set_model(model=model.eval())
         else:

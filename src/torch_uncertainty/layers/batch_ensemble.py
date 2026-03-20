@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 import torch
 from einops import repeat
@@ -660,7 +661,7 @@ class BatchConvTranspose2d(nn.Module):
         groups: int = 1,
         bias: bool = True,
         dilation: _size_2_t = 1,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device=None,
         dtype=None,
     ) -> None:

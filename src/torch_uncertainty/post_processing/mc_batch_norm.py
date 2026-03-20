@@ -122,7 +122,10 @@ class MCBatchNorm(PostProcessing):
 
     def _convert(self) -> None:
         """Convert all BatchNorm2d layers to MCBatchNorm2d layers."""
-        self.replace_layers(self.model)
+        if self.model is not None:
+            self.replace_layers(self.model)
+        else: # coverage: ignore
+            raise ValueError("Model should not be None when calling ._convert")
 
     def reset_counters(self) -> None:
         """Reset all counters to 0."""
