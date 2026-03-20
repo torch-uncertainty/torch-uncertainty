@@ -27,7 +27,6 @@ This package provides a multi-level API, including:
 
 - easy-to-use :zap: lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, and segmentation.
 - fully automated evaluation of the performance of models with proper scores, selective classification, out-of-distribution detection and distribution shift performance metrics!
-- ready-to-train baselines on research datasets, such as ImageNet and CIFAR
 - **layers**, **models**, **metrics**, & **losses** available for your networks
 - scikit-learn style post-processing methods such as Temperature Scaling.
 - transformations and augmentations, including corruptions resulting in additional "corrupted datasets" available on [HuggingFace](https://huggingface.co/torch-uncertainty)
@@ -91,6 +90,19 @@ To date, the following post-processing methods have been implemented:
 - [Conformal Predictions](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_conformal.html) with APS and RAPS
 - [Monte Carlo Batch Normalization](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_mc_batch_norm.html)
 - Laplace approximation through the [Laplace library](https://github.com/aleximmer/Laplace)
+
+### Metrics
+
+The following metrics have been implemented:
+
+- proper scores: Brier score, Categorical NLL
+- out-of-distribution detection: FPR95%
+- calibration: ECE with improved reliability diagrams, SmoothECE, Adaptive ECE, Classwise ECE, and QuantileCalibration for regression
+- selective classification: AURC, AUGRC, CovAt5%Risk, RiskAt80%Cov
+- conformal predictions: CoverageRate, SetSize
+- prediction diversity: Disagreement, Entropy, MutualInformation
+- multiple pixel regression and segmentation metrics 
+
 
 ### Official Implementations
 

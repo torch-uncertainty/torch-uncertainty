@@ -12,6 +12,8 @@ class VariationRatio(Metric):
     is_differentiable = True
     higher_is_better = False
 
+    probs: list[Tensor]
+
     def __init__(
         self,
         probabilistic: bool = True,

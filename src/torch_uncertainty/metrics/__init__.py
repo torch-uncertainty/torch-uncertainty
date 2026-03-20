@@ -7,6 +7,7 @@ from .classification import (
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    ClasswiseCalibrationError,
     CovAt5Risk,
     CovAtxRisk,
     CoverageRate,
@@ -17,6 +18,7 @@ from .classification import (
     RiskAt80Cov,
     RiskAtxCov,
     SetSize,
+    SmoothCalibrationError,
     VariationRatio,
 )
 from .regression import (

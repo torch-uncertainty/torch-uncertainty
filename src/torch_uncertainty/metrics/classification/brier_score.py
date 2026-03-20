@@ -12,6 +12,9 @@ class BrierScore(Metric):
     higher_is_better = False
     full_state_update = False
 
+    values: list[Tensor]
+    total: Tensor
+
     def __init__(
         self,
         num_classes: int,

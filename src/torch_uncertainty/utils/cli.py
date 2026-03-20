@@ -178,7 +178,6 @@ class TULightningCLI(LightningCLI):
         self._add_configure_optimizers_method_to_model(self.subcommand)
         self.trainer = self.instantiate_trainer()
 
-    @property
     def model(self):
         return self.routine
 

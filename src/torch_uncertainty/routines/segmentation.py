@@ -25,6 +25,7 @@ from torch_uncertainty.metrics import (
     SegmentationBinaryAUROC,
     SegmentationBinaryAveragePrecision,
     SegmentationFPR95,
+    SmoothCalibrationError,
 )
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
@@ -166,12 +167,19 @@ class SegmentationRoutine(LightningModule):
                     num_classes=self.num_classes,
                     num_bins=self.num_bins_calibration_error,
                 ),
+                "cal/MCE": CalibrationError(
+                    task="multiclass",
+                    num_classes=self.num_classes,
+                    num_bins=self.num_bins_calibration_error,
+                    norm="max",
+                ),
                 "cal/aECE": CalibrationError(
                     task="multiclass",
                     adaptive=True,
                     num_classes=self.num_classes,
                     num_bins=self.num_bins_calibration_error,
                 ),
+                "cal/SmECE": SmoothCalibrationError(),
                 "sc/AURC": AURC(),
                 "sc/AUGRC": AUGRC(),
                 "sc/Cov@5Risk": CovAt5Risk(),
@@ -180,7 +188,7 @@ class SegmentationRoutine(LightningModule):
             compute_groups=[
                 ["seg/Brier"],
                 ["seg/NLL"],
-                ["cal/ECE", "cal/aECE"],
+                ["cal/ECE", "cal/SmECE", "cal/MCE", "cal/aECE"],
                 ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
             ],
         )

@@ -276,6 +276,8 @@ Calibration
     
     AdaptiveCalibrationError
     CalibrationError
+    SmoothCalibrationError
+    ClasswiseCalibrationError
 
 Conformal Predictions
 """""""""""""""""""""

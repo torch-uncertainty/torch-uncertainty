@@ -10,7 +10,7 @@ class FPRx(Metric):
     higher_is_better = False
     full_state_update = False
 
-    conf: list[Tensor]
+    confidences: list[Tensor]
     targets: list[Tensor]
 
     def __init__(self, recall_level: float, pos_label: int, **kwargs) -> None:
@@ -35,11 +35,11 @@ class FPRx(Metric):
                 metric = FPRx(recall_level=0.95, pos_label=1)
 
                 # Simulated model predictions (confidence scores) and ground-truth labels
-                conf = torch.tensor([0.9, 0.8, 0.7, 0.6, 0.4, 0.2, 0.1])
+                confidences = torch.tensor([0.9, 0.8, 0.7, 0.6, 0.4, 0.2, 0.1])
                 targets = torch.tensor([1, 0, 1, 0, 0, 1, 0])  # 1: OOD, 0: In-Distribution
 
                 # Update the metric with predictions and labels
-                metric.update(conf, targets)
+                metric.update(confidences, targets)
 
                 # Compute FPR at 95% recall
                 result = metric.compute()
@@ -52,7 +52,7 @@ class FPRx(Metric):
             raise ValueError(f"Recall level must be between 0 and 1. Got {recall_level}.")
         self.recall_level = recall_level
         self.pos_label = pos_label
-        self.add_state("conf", [], dist_reduce_fx="cat")
+        self.add_state("confidences", [], dist_reduce_fx="cat")
         self.add_state("targets", [], dist_reduce_fx="cat")
 
         rank_zero_warn(
@@ -61,14 +61,14 @@ class FPRx(Metric):
             " footprint."
         )
 
-    def update(self, conf: Tensor, target: Tensor) -> None:
+    def update(self, confidences: Tensor, target: Tensor) -> None:
         """Update the metric state.
 
         Args:
-            conf (Tensor): The confidence scores.
+            confidences (Tensor): The confidence scores.
             target (Tensor): The target labels, 0 if ID, 1 if OOD.
         """
-        self.conf.append(conf)
+        self.confidences.append(confidences)
         self.targets.append(target)
 
     def compute(self) -> Tensor:
@@ -77,12 +77,12 @@ class FPRx(Metric):
         Returns:
             Tensor: The value of the FPRx.
         """
-        conf = dim_zero_cat(self.conf)
+        confidences = dim_zero_cat(self.confidences)
         targets = dim_zero_cat(self.targets)
 
         # map examples and labels to OOD first
         indx = torch.argsort(targets, descending=True)
-        examples = conf[indx]
+        examples = confidences[indx]
         labels = torch.zeros_like(targets, dtype=torch.bool, device=self.device)
         labels[: torch.count_nonzero(targets)] = True
 

@@ -17,7 +17,7 @@ def _check_classes(num_classes):
 def _extract_data(
     dataloader: DataLoader,
     model: nn.Module,
-    device: Literal["cpu", "cuda"] | torch.device,
+    device: Literal["cpu", "cuda"] | torch.device | None,
     progress: bool,
 ) -> tuple[Tensor, Tensor]:
     """Extract logits and labels from the dataloader.

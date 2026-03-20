@@ -22,7 +22,9 @@ PERCENTAGE_METRICS = [
     "AUGRC",
     "mAcc",
     "ECE",
+    "MCE",
     "aECE",
+    "SmECE",
 ]
 
 INT_METRICS = [

@@ -1,6 +1,6 @@
 """Modified from https://github.com/nikitadurasov/masksembles/."""
 
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import torch
@@ -293,7 +293,7 @@ class MaskedConvTranspose2d(nn.Module):
         groups: int = 1,
         bias: bool = True,
         dilation: _size_2_t = 1,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device: Any | None = None,
         dtype: Any | None = None,
     ) -> None:

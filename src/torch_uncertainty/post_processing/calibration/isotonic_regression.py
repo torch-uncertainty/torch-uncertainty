@@ -21,8 +21,8 @@ else:  # coverage: ignore
 
 
 class IsotonicRegressionScaler(PostProcessing):
-    ir_models: list[IsotonicRegression] | None = None
-    num_classes: int | None = None
+    ir_models: list[IsotonicRegression]
+    num_classes: int
 
     def __init__(
         self,
@@ -135,10 +135,10 @@ class IsotonicRegressionScaler(PostProcessing):
         Returns:
             Tensor: Calibrated logits.
         """
-        if self.model is None or not self.trained:
-            logging.warning(
-                "IsotonicRegressionScaler has not been trained yet. Returning raw inputs."
-            )
+        if self.model is None:  # coverage: ignore
+            raise ValueError("Provide a model before calling forward.")
+        if not self.trained:
+            logging.warning("Scaler not trained. Returning raw predictions.")
             return self.model(inputs)
 
         logits = self.model(inputs)

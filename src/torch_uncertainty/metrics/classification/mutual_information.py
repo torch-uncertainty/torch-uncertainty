@@ -1,6 +1,7 @@
 from typing import Any, Literal
 
 import torch
+from torch import Tensor
 from torchmetrics import Metric
 from torchmetrics.utilities.data import dim_zero_cat
 
@@ -9,6 +10,9 @@ class MutualInformation(Metric):
     is_differentiable = False
     higher_is_better = None
     full_state_update = False
+
+    values: list[Tensor]
+    total: Tensor
 
     def __init__(
         self,

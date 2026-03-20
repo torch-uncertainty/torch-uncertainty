@@ -60,7 +60,7 @@ class _MCBatchNorm(_BatchNorm):
         self.reset_mc_statistics()
 
     @torch.no_grad()
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         """Forward pass.
 
         There are three different operating modes:
@@ -73,17 +73,17 @@ class _MCBatchNorm(_BatchNorm):
             predictions.
 
         Args:
-            x (Tensor): Input tensor.
+            inputs (Tensor): Input tensor.
         """
         if not self.training:
             if self.accumulate:
-                mean = x.mean((0, -2, -1))
-                var = x.var((0, -2, -1), unbiased=True)
+                mean = inputs.mean((0, -2, -1))
+                var = inputs.var((0, -2, -1), unbiased=True)
                 self.means[self.counter] = mean
                 self.vars[self.counter] = var
             self.running_mean = self.means[self.counter]
             self.running_var = self.vars[self.counter]
-        return super().forward(x)
+        return super().forward(inputs)
 
     def set_counter(self, counter: int) -> None:
         """Set the counter.

@@ -12,9 +12,9 @@ from .utils import _extract_data
 
 
 class HistogramBinningScaler(PostProcessing):
-    num_classes: int | None = None
-    bin_edges: Tensor | None = None
-    bin_values: Tensor | None = None
+    num_classes: int
+    bin_edges: Tensor
+    bin_values: Tensor
 
     def __init__(
         self,
@@ -120,8 +120,10 @@ class HistogramBinningScaler(PostProcessing):
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply Histogram Binning and return calibrated logits."""
-        if self.model is None or not self.trained:
-            logging.warning("Scaler not trained. Returning raw inputs.")
+        if self.model is None:  # coverage: ignore
+            raise ValueError("Provide a model before calling forward.")
+        if not self.trained:
+            logging.warning("Scaler not trained. Returning raw predictions.")
             return self.model(inputs)
 
         logits = self.model(inputs)

@@ -12,6 +12,9 @@ class SetSize(Metric):
     higher_is_better = False
     full_state_update = False
 
+    sizes: list[Tensor] | Tensor
+    total: Tensor
+
     def __init__(
         self,
         reduction: Literal["mean", "sum", "none"] | None = "mean",
