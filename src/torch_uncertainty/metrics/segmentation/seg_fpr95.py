@@ -12,6 +12,7 @@ class SegmentationFPR95(Metric):
 
     fpr95: Tensor
     total: Tensor
+
     def __init__(self, pos_label: int, **kwargs) -> None:
         """FPR95 metric for segmentation tasks.
         Compute the mean FPR95 per batch across all batches.

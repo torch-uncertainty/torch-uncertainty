@@ -135,7 +135,7 @@ class IsotonicRegressionScaler(PostProcessing):
         Returns:
             Tensor: Calibrated logits.
         """
-        if self.model is None: # coverage: ignore
+        if self.model is None:  # coverage: ignore
             raise ValueError("Provide a model before calling forward.")
         if not self.trained:
             logging.warning("Scaler not trained. Returning raw predictions.")

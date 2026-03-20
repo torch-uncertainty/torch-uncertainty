@@ -7,6 +7,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 class ThresholdAccuracy(Metric):
     values: Tensor
     total: Tensor
+
     def __init__(self, power: int, lmbda: float = 1.25, **kwargs) -> None:
         r"""Computes the Threshold Accuracy metric, also referred to as d1, d2, or d3.
 

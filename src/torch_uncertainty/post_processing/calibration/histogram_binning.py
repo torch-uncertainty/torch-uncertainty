@@ -120,7 +120,7 @@ class HistogramBinningScaler(PostProcessing):
     @torch.no_grad()
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply Histogram Binning and return calibrated logits."""
-        if self.model is None: # coverage: ignore
+        if self.model is None:  # coverage: ignore
             raise ValueError("Provide a model before calling forward.")
         if not self.trained:
             logging.warning("Scaler not trained. Returning raw predictions.")

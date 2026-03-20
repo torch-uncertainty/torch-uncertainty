@@ -11,6 +11,7 @@ from .base import DepthDataModule
 
 class MUADDataModule(DepthDataModule):
     dataset: type[MUAD]
+
     def __init__(
         self,
         root: str | Path,

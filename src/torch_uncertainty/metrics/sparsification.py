@@ -1,7 +1,7 @@
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import torch
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.compute import _auc_compute

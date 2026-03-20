@@ -9,6 +9,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 class SILog(Metric):
     log_dists: Tensor
     sq_log_dists: Tensor
+
     def __init__(self, sqrt: bool = False, lmbda: float = 1.0, **kwargs: Any) -> None:
         r"""Computes The Scale-Invariant Logarithmic Loss metric.
 
