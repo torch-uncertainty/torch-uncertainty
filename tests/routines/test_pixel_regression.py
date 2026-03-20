@@ -125,3 +125,13 @@ class TestPixelRegression:
                 num_image_plot=0,
                 log_plots=True,
             )
+
+        with pytest.raises(
+            ValueError,
+            match=r"To train a model, you must specify the `loss` argument in the routine. Got None.",
+        ):
+            PixelRegressionRoutine(
+                model=nn.Identity(),
+                output_dim=1,
+                loss=None,
+            ).training_step((torch.tensor(float("nan")), torch.tensor(float("nan"))))

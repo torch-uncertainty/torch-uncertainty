@@ -40,7 +40,7 @@ dev = [
   { include-group = "docs" },
 ]
 
-lint = ["ruff==0.15.4", "pre-commit", "pre-commit-hooks"]
+lint = ["ruff==0.15.5", "pre-commit", "pre-commit-hooks"]
 test = ["torch_uncertainty[all]", "pytest-cov"]
 docs = [
   "sphinx==7.4.7",

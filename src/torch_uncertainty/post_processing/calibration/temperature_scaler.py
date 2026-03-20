@@ -53,7 +53,7 @@ class TemperatureScaler(Scaler):
         progress: bool = True,
     ) -> None:
         super().fit(dataloader=dataloader, save_logits=save_logits, progress=progress)
-        if self.inv_temp <= 0:  # coverage: ignore
+        if self.inv_temp.item() <= 0:  # coverage: ignore
             logging.error(
                 "TemperatureScaler converged to a negative temperature %.3f.", 1 / self.inv_temp
             )

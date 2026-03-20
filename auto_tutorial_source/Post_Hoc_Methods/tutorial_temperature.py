@@ -7,11 +7,17 @@ In this tutorial, we use *TorchUncertainty* to improve the calibration
 of the top-label predictions and the reliability of the underlying neural network.
 
 This tutorial provides extensive details on how to use the TemperatureScaler
-class and its derivative, VectorScaler and MatrixScaler. However, please note that this is usually done
+class and its derivatives, VectorScaler, MatrixScaler, and Dirichlet calibration, as well
+as IsotonicRegressionScaler. However, please note that this is usually done
 automatically in the datamodule when setting the `postprocess_set` to val or test.
 
 Through this tutorial, we also see how to use the datamodules outside any Lightning trainers,
 and how to use TorchUncertainty's models.
+
+Note:
+~~~~
+
+The Expected Calibration Error (ECE) is not sufficient to properly assess the calibration properties of a model.
 
 1. Loading the Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,11 +254,11 @@ fig.tight_layout()
 fig.show()
 
 # %%
-# The results are somewhat better than MatrixScaling, but we again do not have enough data to
-# tune the parameters of Dirichlet scaling.
+# The results are somewhat better than MatrixScaling, but we again likely do not have enough data to
+# correclty tune the parameters of Dirichlet scaling.
 #
-# Notes
-# ~~~~~
+# Remark
+# ~~~~~~
 #
 # Temperature scaling is very efficient when the calibration set is representative of the test set.
 # In this case, we say that the calibration and test set are drawn from the same distribution.

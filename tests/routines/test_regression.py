@@ -167,3 +167,14 @@ class TestRegression:
         )
         with pytest.raises(TypeError):
             routine(torch.randn(1, 1))
+
+        with pytest.raises(
+            ValueError,
+            match=r"To train a model, you must specify the `loss` argument in the routine. Got None.",
+        ):
+            RegressionRoutine(
+                dist_family="normal",
+                output_dim=1,
+                model=nn.Identity(),
+                loss=None,
+            ).training_step((torch.tensor(float("nan")), torch.tensor(float("nan"))))

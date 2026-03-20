@@ -1,3 +1,4 @@
+from enum import Enum
 from importlib import util
 from numbers import Number
 
@@ -20,6 +21,11 @@ if util.find_spec("scipy"):
     scipy_installed = True
 else:  # coverage: ignore
     scipy_installed = False
+
+
+class DistEstimate(str, Enum):
+    MEAN = "mean"
+    MODE = "mode"
 
 
 def get_dist_class(dist_family: str) -> type[Distribution]:
@@ -48,23 +54,19 @@ def get_dist_class(dist_family: str) -> type[Distribution]:
     )
 
 
-def get_dist_estimate(dist: Distribution, dist_estimate: str) -> Tensor:
+def get_dist_estimate(dist: Distribution, dist_estimate: DistEstimate) -> Tensor:
     """Get a point-wise prediction from a distribution.
 
     Args:
         dist (Distribution): The distribution.
-        dist_estimate (str): The estimate to use.
+        dist_estimate (DistEstimate): The estimate to use.
 
     Returns:
         Tensor: The estimated value.
     """
-    if dist_estimate == "mean":
+    if dist_estimate == DistEstimate.MEAN:
         return dist.mean
-    if dist_estimate == "mode":
-        return dist.mode
-    raise NotImplementedError(
-        f"{dist_estimate} estimate is not supported. Raise an issue if needed."
-    )
+    return dist.mode
 
 
 class TUStudentT(StudentT):

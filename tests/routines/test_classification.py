@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import torch
 from torch import nn
 
 from tests._dummies import (
@@ -536,3 +537,13 @@ class TestClassification:
                 post_processing=None,
                 ood_criterion=PostProcessingCriterion(),
             )
+
+        with pytest.raises(
+            ValueError,
+            match=r"To train a model, you must specify the `loss` argument in the routine. Got None.",
+        ):
+            ClassificationRoutine(
+                num_classes=10,
+                model=nn.Module(),
+                loss=None,
+            ).training_step((torch.tensor(float("nan")), torch.tensor(float("nan"))))

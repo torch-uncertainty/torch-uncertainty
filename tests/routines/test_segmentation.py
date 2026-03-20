@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import torch
 from torch import nn
 
 from tests._dummies import (
@@ -106,3 +107,13 @@ class TestSegmentation:
                 loss=nn.CrossEntropyLoss(),
                 num_bins_calibration_error=0,
             )
+
+        with pytest.raises(
+            ValueError,
+            match=r"To train a model, you must specify the `loss` argument in the routine. Got None.",
+        ):
+            SegmentationRoutine(
+                model=nn.Identity(),
+                num_classes=2,
+                loss=None,
+            ).training_step((torch.tensor(float("nan")), torch.tensor(float("nan"))))
