@@ -417,6 +417,16 @@ For the adaptive calibration error, consider citing:
 * Authors: *Jeremy Nixon, Mike Dusenberry, Ghassen Jerfel, Timothy Nguyen, Jeremiah Liu, Linchuan Zhang, and Dustin Tran*
 * Paper: `CVPRW 2019 <https://arxiv.org/pdf/1904.01685.pdf>`__.
 
+Smooth Expected Calibration Error
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the Smooth Expected Calibration Error, consider citing:
+
+**Smooth ECE: Principled Reliability Diagrams via Kernel Smoothing**
+
+* Authors: *Jarosław Błasiok and Preetum Nakkiran*
+* Paper: `ICLR 2024 <https://arxiv.org/pdf/2309.12236.pdf>`__.
+
 Area Under the Risk-Coverage curve
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -227,8 +227,28 @@ def custom_plot(
 
 
 # overwrite the plot method of the original metrics
-BinaryCalibrationError.plot = custom_plot
-MulticlassCalibrationError.plot = custom_plot
+class TUBinaryCalibrationError(BinaryCalibrationError):
+    def plot(
+        self,
+        title: str = "Reliability Diagram",
+        rd_xlabel: str = "Top-class Confidence (%)",
+        rd_ylabel: str = "Success Rate (%)",
+        ch_xlabel: str = "Top-class Confidence (%)",
+        ch_ylabel: str = "Density (%)",
+    ) -> tuple[object, object]:
+        return custom_plot(self, title, rd_xlabel, rd_ylabel, ch_xlabel, ch_ylabel)
+
+
+class TUMulticlassCalibrationError(MulticlassCalibrationError):
+    def plot(
+        self,
+        title: str = "Reliability Diagram",
+        rd_xlabel: str = "Top-class Confidence (%)",
+        rd_ylabel: str = "Success Rate (%)",
+        ch_xlabel: str = "Top-class Confidence (%)",
+        ch_ylabel: str = "Density (%)",
+    ) -> tuple[object, object]:
+        return custom_plot(self, title, rd_xlabel, rd_ylabel, ch_xlabel, ch_ylabel)
 
 
 class CalibrationError:
@@ -351,10 +371,10 @@ class CalibrationError:
             }
         )
         if task == ClassificationTaskNoMultilabel.BINARY:
-            return BinaryCalibrationError(**kwargs)
+            return TUBinaryCalibrationError(**kwargs)
         #  task is ClassificationTaskNoMultilabel.MULTICLASS
         if not isinstance(num_classes, int):
             raise TypeError(
                 f"`num_classes` is expected to be `int` but `{type(num_classes)} was passed.`"
             )
-        return MulticlassCalibrationError(num_classes, **kwargs)
+        return TUMulticlassCalibrationError(num_classes, **kwargs)

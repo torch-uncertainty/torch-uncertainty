@@ -10,7 +10,7 @@ from torchmetrics.functional.classification.calibration_error import (
 from torchmetrics.utilities.data import dim_zero_cat
 from torchmetrics.utilities.plot import _PLOT_OUT_TYPE
 
-from torch_uncertainty.metrics.classification.calibration_error import reliability_chart
+from torch_uncertainty.metrics.classification.calibration.calibration_error import reliability_chart
 
 
 class QuantileCalibrationError(BinaryCalibrationError):

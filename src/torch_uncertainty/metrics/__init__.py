@@ -17,6 +17,7 @@ from .classification import (
     RiskAt80Cov,
     RiskAtxCov,
     SetSize,
+    SmoothCalibrationError,
     VariationRatio,
 )
 from .regression import (
