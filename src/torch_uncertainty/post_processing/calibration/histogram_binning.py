@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from torch_uncertainty.post_processing import PostProcessing
 
-from .utils import _extract_data
+from .utils import _determine_dimensionality, _extract_data
 
 
 class HistogramBinningScaler(PostProcessing):
@@ -72,16 +72,7 @@ class HistogramBinningScaler(PostProcessing):
         all_logits, all_labels = _extract_data(
             dataloader=dataloader, model=self.model, device=self.device, progress=progress
         )
-
-        # Determine dimensionality
-        if all_logits.dim() == 1 or (all_logits.dim() == 2 and all_logits.shape[1] == 1):
-            probs = torch.sigmoid(all_logits).flatten()
-            labels = all_labels.float().flatten()
-            self.num_classes = 1
-        else:
-            probs = torch.softmax(all_logits, dim=-1)
-            labels = all_labels
-            self.num_classes = probs.shape[1]
+        self.num_classes, probs, labels = _determine_dimensionality(all_logits, all_labels)
 
         # Define equal-width bin edges and centers
         self.bin_edges = torch.linspace(0.0, 1.0, self.num_bins + 1, device=self.device)
@@ -100,18 +91,17 @@ class HistogramBinningScaler(PostProcessing):
                 else:
                     self.bin_values[b] = bin_centers[b]
         else:
-            # One-vs-Rest Multiclass
             self.bin_values = torch.zeros((self.num_classes, self.num_bins), device=self.device)
             labels_one_hot = F.one_hot(labels.long(), self.num_classes).float()
 
             for c in range(self.num_classes):
-                c_probs = probs[:, c]
-                c_labels = labels_one_hot[:, c]
-                indices = torch.bucketize(c_probs, boundaries)
+                class_probs = probs[:, c]
+                class_labels = labels_one_hot[:, c]
+                indices = torch.bucketize(class_probs, boundaries)
                 for b in range(self.num_bins):
                     mask = indices == b
                     if mask.any():
-                        self.bin_values[c, b] = c_labels[mask].mean()
+                        self.bin_values[c, b] = class_labels[mask].mean()
                     else:
                         self.bin_values[c, b] = bin_centers[b]
 

@@ -1,16 +1,10 @@
-# ruff: noqa: E402, D212, D415, T201
+# ruff: noqa: E402, E703, D212, D415, T201
 """
-Histogram Binning + Isotonic Regression tutorial (final version)
-================================================================
+Histogram Binning, Isotonic Regression, and BBQ tutorial
+========================================================
 
 This notebook-style script demonstrates how to *use* existing post-processing
 scalers from the package to calibrate a pretrained ResNet-18 on CIFAR-100.
-
-Structure:
-- Each meaningful block is separated by `# %%` (cell-style).
-- Each cell contains a short explanatory comment as in the original tutorial.
-- No scaler implementation is copied — we import and use the classes provided
-  by the package.
 """
 
 # %%
@@ -21,8 +15,8 @@ Structure:
 # - CIFAR100DataModule for data handling
 # - CalibrationError to compute ECE and plot reliability diagrams
 # - the resnet builder and load_hf to fetch pretrained weights
-# - HistogramBinningScaler and IsotonicRegressionScaler to calibrate predictions
-#
+# - BBQScaler, HistogramBinningScaler, and IsotonicRegressionScaler to calibrate predictions
+
 import torch
 from torch.utils.data import DataLoader, random_split
 
@@ -30,6 +24,7 @@ from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
 from torch_uncertainty.models.classification import resnet
 from torch_uncertainty.post_processing import (
+    BBQScaler,
     HistogramBinningScaler,
     IsotonicRegressionScaler,
 )
@@ -41,18 +36,19 @@ from torch_uncertainty.utils import load_hf
 #
 # Build a ResNet-18 (CIFAR style) and download pretrained weights from the hub.
 # The returned `config` isn't required for this demo but is shown for completeness.
+
 model = resnet(in_channels=3, num_classes=100, arch=18, style="cifar", conv_bias=False)
 
 weights, config = load_hf("resnet18_c100")
 model.load_state_dict(weights)
-model.eval();
-
+model = model.eval()
 # %%
 # 3. Setting up the Datamodule and Dataloaders
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Prepare CIFAR-100 test set and create DataLoaders. We split the test set
 # into a calibration subset and a held-out test subset for reliable ECE computation.
+
 dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
@@ -69,6 +65,7 @@ calibration_dataloader = DataLoader(cal_dataset, batch_size=128)
 #
 # Compute the top-label ECE for the uncalibrated model to have a baseline.
 # We feed probabilities (softmax over logits) to the metric.
+
 ece = CalibrationError(task="multiclass", num_classes=100)
 
 with torch.no_grad():
@@ -84,13 +81,40 @@ fig.tight_layout()
 fig.show()
 
 # %%
-# 5. Histogram Binning: fit and evaluate
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 5. Bayesian Binning into Quantiles (BBQ): fit and evaluate
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+bbq_scaler = BBQScaler(model=model, device=None)
+bbq_scaler.fit(dataloader=calibration_dataloader)
+
+# Evaluate bbq model on the held-out test set
+ece.reset()
+with torch.no_grad():
+    for sample, target in test_dataloader:
+        # For multiclass this scaler is expected to return log-probabilities; apply softmax.
+        calibrated_out = bbq_scaler(sample)
+        probs = calibrated_out.softmax(-1)
+        ece.update(probs, target)
+
+print(f"ECE after BBQ Binning - {ece.compute():.3%}.")
+
+fig, ax = ece.plot()
+fig.tight_layout()
+fig.show()
+
+# %%
+# If you look closely at the predictions of the BBQScaler in this case,
+# you will see that its prediction is based on equal-frequency bins. Since the
+# number of classes is high, the bins mostly represent low-confidence values.
+#
+# 6. Histogram Binning: fit and evaluate
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Fit Histogram Binning on the calibration dataloader. Typical choices for
 # num_bins are in [10, 20]; fewer bins -> smoother result, more bins -> more flexible.
 # If you run on GPU you can pass device=torch.device('cuda') or let the scaler
 # infer the device from calibration data by passing device=None.
+
 hist_scaler = HistogramBinningScaler(model=model, num_bins=10, device=None)
 hist_scaler.fit(dataloader=calibration_dataloader)
 
@@ -104,30 +128,6 @@ with torch.no_grad():
         ece.update(probs, target)
 
 print(f"ECE after Histogram Binning - {ece.compute():.3%}.")
-
-fig, ax = ece.plot()
-fig.tight_layout()
-fig.show()
-
-# %%
-# 6. Isotonic Regression: fit and evaluate
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# Fit an IsotonicRegressionScaler on the same calibration set to compare
-# a monotonic non-parametric method with histogram binning. Isotonic regression
-# fits a monotone mapping and tends to produce smoother calibration functions.
-iso_scaler = IsotonicRegressionScaler(model=model)
-iso_scaler.fit(dataloader=calibration_dataloader)
-
-# Evaluate isotonic-calibrated model
-ece.reset()
-with torch.no_grad():
-    for sample, target in test_dataloader:
-        calibrated_out = iso_scaler(sample)
-        probs = calibrated_out.softmax(-1)
-        ece.update(probs, target)
-
-print(f"ECE after Isotonic calibration - {ece.compute():.3%}.")
 
 fig, ax = ece.plot()
 fig.tight_layout()
@@ -151,21 +151,18 @@ fig.show()
 #  - If your scaler stores `bin_edges` and `bin_values` under different names,
 #    adjust accordingly.
 #
-# We'll pick 5 representative classes.
+# We'll pick 3 classes.
+
 import matplotlib.pyplot as plt
-import numpy as np
 
 bin_edges = hist_scaler.bin_edges.cpu().numpy()  # (B+1,)
 bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # (B,)
 
 bin_values_all = hist_scaler.bin_values.cpu().numpy()  # shape (C, B)
 C = bin_values_all.shape[0]
-
 B = bin_centers.shape[0]
 
-num_to_plot = min(5, C)
-classes_to_plot = list(np.round(np.linspace(0, C - 1, num_to_plot)).astype(int))
-
+classes_to_plot = [5, 32, 74]
 # Now plot one figure per selected class
 for c in classes_to_plot:
     vals = bin_values_all[c]  # shape (B,)
@@ -195,10 +192,39 @@ for c in classes_to_plot:
 # compared to the number of classes. If the scores were uniform, there would be in average
 # 5000 / 10 / 100 = 5 points per bin.
 #
-# 8. Practical guidance
+# 8. Isotonic Regression: fit and evaluate
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Fit an IsotonicRegressionScaler on the same calibration set to compare
+# a monotonic non-parametric method with histogram binning. Isotonic regression
+# fits a monotone mapping and tends to produce smoother calibration functions.
+
+iso_scaler = IsotonicRegressionScaler(model=model)
+iso_scaler.fit(dataloader=calibration_dataloader)
+
+# Evaluate isotonic-calibrated model
+ece.reset()
+with torch.no_grad():
+    for sample, target in test_dataloader:
+        calibrated_out = iso_scaler(sample)
+        probs = calibrated_out.softmax(-1)
+        ece.update(probs, target)
+
+print(f"ECE after Isotonic calibration - {ece.compute():.3%}.")
+
+fig, ax = ece.plot()
+fig.tight_layout()
+fig.show()
+
+# %%
+# 9. Practical guidance
 # ~~~~~~~~~~~~~~~~~~~~~
 #
 # - Takeaways:
+#   * BBQ averages multiple equal-frequency histograms weighted by the
+#     model posterior; it reduces overfitting relative to a single histogram.
+#     It still needs enough calibration data — in multiclass settings prefer
+#     simpler schemes or temperature-scaling when data is scarce.
 #   * Histogram binning is flexible and non-parametric; it replaces predicted
 #     probabilities with bin-wise empirical accuracies. It can correct complex
 #     miscalibration patterns but may produce discontinuities. It needs a lot of
