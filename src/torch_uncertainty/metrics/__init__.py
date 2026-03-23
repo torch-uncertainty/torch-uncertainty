@@ -7,6 +7,7 @@ from .classification import (
     BrierScore,
     CalibrationError,
     CategoricalNLL,
+    ClasswiseCalibrationError,
     CovAt5Risk,
     CovAtxRisk,
     CoverageRate,

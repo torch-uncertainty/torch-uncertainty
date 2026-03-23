@@ -8,11 +8,7 @@ from torch import Tensor
 
 
 def smooth_round_to_grid(f: Tensor, y: Tensor, eval_points: int) -> Tensor:
-    """Discretizes continuous positions into a fixed-size grid using linear weight distribution.
-
-    This function acts as a "soft" histogram. Each value in `y` at position `f` is
-    distributed between the two nearest integer bins in the grid based on its
-    fractional distance, ensuring the operation is differentiable with respect to `f`.
+    """Discretizes continuous positions into a fixed-size grid.
 
     Args:
         f: A 1D Tensor of positions, expected to be normalized in the range [0, 1].
@@ -55,15 +51,14 @@ def interpolate(t: Tensor, y: Tensor) -> Tensor:
 
 
 class GaussianKernel:
-    r"""Standard Gaussian (RBF) Kernel smoother using 1D convolution.
-
-    The kernel is defined as:
-    $$K(d) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \\exp\\left(-\\frac{d^2}{2\\sigma^2}\\right)$$
-    """
-
     def __init__(self, sigma: float) -> None:
-        """Args:
-        sigma: The standard deviation (bandwidth) of the Gaussian kernel.
+        r"""Standard Gaussian (RBF) Kernel smoother using 1D convolution.
+
+        The kernel is defined as:
+        $$K(d) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \\exp\\left(-\\frac{d^2}{2\\sigma^2}\\right)$$
+
+        Args:
+            sigma (float): The standard deviation (bandwidth) of the Gaussian kernel.
         """
         self.sigma = sigma
 
@@ -132,16 +127,15 @@ class ReflectedGaussianKernel(GaussianKernel):
 
 
 class LogitGaussianKernel:
-    r"""Kernel smoother that operates in logit space.
+    def __init__(self, sigma: float) -> None:
+        r"""Kernel smoother that operates in logit space.
 
-    Useful for data strictly bounded in [0, 1] (like probabilities). It transforms
-    data using the logit function $L(x) = \\ln(x / (1-x))$, performs Gaussian
-    smoothing in the unconstrained space, and maps back.
-    """
+        Useful for data strictly bounded in [0, 1] (like probabilities). It transforms
+        data using the logit function $L(x) = \\ln(x / (1-x))$, performs Gaussian
+        smoothing in the unconstrained space, and maps back.
 
-    def __init__(self, sigma: float):
-        """Args:
-        sigma: Bandwidth applied in the logit-transformed space.
+        Args:
+            sigma (float): Bandwidth applied in the logit-transformed space.
         """
         self.sigma = sigma
 

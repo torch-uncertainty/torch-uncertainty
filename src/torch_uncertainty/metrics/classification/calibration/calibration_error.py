@@ -347,7 +347,7 @@ class CalibrationError:
 
         .. seealso::
             See `CalibrationError <https://torchmetrics.readthedocs.io/en/stable/classification/calibration_error.html>`_
-            for details. Our version of the metric is a wrapper around the original metric providing a plotting functionality.
+            for details. Our version of the metric is a wrapper around the original metric providing an improved plotting functionality.
         """
         if kwargs.get("n_bins") is not None:
             raise ValueError("`n_bins` does not exist in TorchUncertainty, use `num_bins`.")

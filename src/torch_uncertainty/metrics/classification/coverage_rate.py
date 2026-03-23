@@ -10,6 +10,9 @@ class CoverageRate(Metric):
     higher_is_better = True
     full_state_update = False
 
+    correct: Tensor
+    total: Tensor
+
     def __init__(
         self,
         num_classes: int | None = None,

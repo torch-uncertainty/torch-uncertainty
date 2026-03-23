@@ -427,6 +427,16 @@ For the Smooth Expected Calibration Error, consider citing:
 * Authors: *Jarosław Błasiok and Preetum Nakkiran*
 * Paper: `ICLR 2024 <https://arxiv.org/pdf/2309.12236.pdf>`__.
 
+Classwise Calibration Error
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For the Classwise Calibration Error, consider citing:
+
+**Beyond Temperature Scaling: Obtaining Well-Calibrated Multiclass Probabilities with Dirichlet Calibration**
+
+* Authors: *Meelis Kull, Miquel Perello-Nieto, Markus Kängsepp, Telmo Silva Filho, Hao Song, and Peter Flach*
+* Paper: `NeurIPS 2019 <https://arxiv.org/abs/1910.12656>`__.
+
 Area Under the Risk-Coverage curve
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

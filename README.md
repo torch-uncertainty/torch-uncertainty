@@ -97,7 +97,7 @@ The following metrics have been implemented:
 
 - proper scores: Brier score, Categorical NLL
 - out-of-distribution detection: FPR95%
-- calibration: ECE with improved reliability diagrams, SmoothECE, Adaptive ECE, QuantileCalibration for regression
+- calibration: ECE with improved reliability diagrams, SmoothECE, Adaptive ECE, Classwise ECE, and QuantileCalibration for regression
 - selective classification: AURC, AUGRC, CovAt5%Risk, RiskAt80%Cov
 - conformal predictions: CoverageRate, SetSize
 - prediction diversity: Disagreement, Entropy, MutualInformation

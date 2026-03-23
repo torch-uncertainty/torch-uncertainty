@@ -12,6 +12,9 @@ class CategoricalNLL(Metric):
     higher_is_better = False
     full_state_update = False
 
+    values: list[Tensor]
+    total: Tensor
+
     def __init__(
         self,
         reduction: Literal["mean", "sum", "none"] | None = "mean",

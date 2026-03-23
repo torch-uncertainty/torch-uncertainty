@@ -1,6 +1,11 @@
 # ruff: noqa: F401
 from .brier_score import BrierScore
-from .calibration import AdaptiveCalibrationError, CalibrationError, SmoothCalibrationError
+from .calibration import (
+    AdaptiveCalibrationError,
+    CalibrationError,
+    ClasswiseCalibrationError,
+    SmoothCalibrationError,
+)
 from .categorical_nll import CategoricalNLL
 from .coverage_rate import CoverageRate
 from .disagreement import Disagreement

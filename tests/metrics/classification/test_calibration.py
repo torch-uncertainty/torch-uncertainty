@@ -8,6 +8,7 @@ from torch import Tensor
 from torch_uncertainty.metrics.classification import (
     AdaptiveCalibrationError,
     CalibrationError,
+    ClasswiseCalibrationError,
     SmoothCalibrationError,
 )
 
@@ -224,3 +225,98 @@ class TestSmoothCalibrationError:
             SmoothCalibrationError(kernel_type="gaussian")
         with pytest.raises(ValueError, match=r"Invalid bandwidth: "):
             SmoothCalibrationError(bandwidth="automatic")
+
+
+class TestClasswiseCalibrationError:
+    def test_init_valid(self):
+        """Test initialization with valid arguments."""
+        metric = ClasswiseCalibrationError(num_classes=3, num_bins=10, norm="l2", reduction="sum")
+        assert metric.num_classes == 3
+        assert metric.num_bins == 10
+        assert metric.norm == "l2"
+        assert metric.reduction == "sum"
+
+    def test_init_invalid_reduction(self):
+        """Test that invalid reduction raises ValueError."""
+        with pytest.raises(ValueError, match="Expected argument `reduction`"):
+            ClasswiseCalibrationError(num_classes=2, reduction="invalid")
+
+    def test_init_invalid_norm(self):
+        """Test that invalid norm raises ValueError."""
+        with pytest.raises(ValueError, match="Expected argument `norm`"):
+            ClasswiseCalibrationError(num_classes=2, norm="l3")
+
+    def test_update_invalid_shape(self):
+        """Test that non-2D probs raise ValueError."""
+        metric = ClasswiseCalibrationError(num_classes=3)
+        probs = torch.randn(2, 2, 3)  # 3D should fail now
+        target = torch.tensor([0, 1])
+        with pytest.raises(ValueError, match="Expected `probs` to be of shape"):
+            metric.update(probs, target)
+
+    def test_compute_none_reduction(self):
+        """Test compute with reduction=None returns per-class scores."""
+        num_classes = 3
+        metric = ClasswiseCalibrationError(num_classes=num_classes, reduction=None)
+
+        # Perfect calibration for class 0, poor for others
+        probs = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        target = torch.tensor([0, 1])
+
+        metric.update(probs, target)
+        res = metric.compute()
+
+        assert res.shape == (num_classes,)
+        assert isinstance(res, torch.Tensor)
+
+    def test_compute_mean_reduction(self):
+        """Test compute with reduction='mean'."""
+        metric = ClasswiseCalibrationError(num_classes=2, reduction="mean")
+        probs = torch.tensor([[0.8, 0.2], [0.1, 0.9]])
+        target = torch.tensor([0, 1])
+
+        metric.update(probs, target)
+        res = metric.compute()
+
+        assert res.ndim == 0  # Scalar
+        assert res >= 0
+
+    def test_compute_sum_reduction(self):
+        """Test compute with reduction='sum'."""
+        metric = ClasswiseCalibrationError(num_classes=2, reduction="sum")
+        probs = torch.tensor([[0.5, 0.5], [0.5, 0.5]])
+        target = torch.tensor([0, 1])
+
+        metric.update(probs, target)
+        res_sum = metric.compute()
+
+        # Compare with none reduction to ensure sum is correct
+        metric_none = ClasswiseCalibrationError(num_classes=2, reduction=None)
+        metric_none.update(probs, target)
+        res_none = metric_none.compute()
+
+        torch.testing.assert_close(res_sum, res_none.sum())
+
+    def test_update_one_hot_targets(self):
+        """Test update with one-hot encoded targets (2D)."""
+        num_classes = 3
+        metric = ClasswiseCalibrationError(num_classes=num_classes)
+        probs = torch.softmax(torch.randn(4, num_classes), dim=1)
+        target = torch.tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0]]).float()
+
+        # Should not raise error
+        metric.update(probs, target)
+        res = metric.compute()
+        assert not torch.isnan(res)
+
+    def test_multiple_updates(self):
+        """Test that states are correctly concatenated across updates."""
+        metric = ClasswiseCalibrationError(num_classes=2, reduction=None)
+
+        # Update 1
+        metric.update(torch.tensor([[0.9, 0.1]]), torch.tensor([0]))
+        # Update 2
+        metric.update(torch.tensor([[0.2, 0.8]]), torch.tensor([1]))
+
+        res = metric.compute()
+        assert res.shape == (2,)
