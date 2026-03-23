@@ -11,6 +11,9 @@ class SegmentationBinaryAUROC(Metric):
     higher_is_better = True
     full_state_update = False
 
+    binary_auroc: Tensor
+    total: Tensor
+
     def __init__(
         self,
         max_fpr: float | None = None,

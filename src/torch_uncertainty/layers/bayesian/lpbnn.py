@@ -1,6 +1,7 @@
 """These layers are still work in progress."""
 
 import math
+from typing import Literal
 
 import torch
 import torch.nn.functional as F
@@ -159,7 +160,7 @@ class LPBNNConv2d(nn.Module):
         std_factor: float = 1e-2,
         gamma: bool = True,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device=None,
         dtype=None,
     ) -> None:

@@ -11,6 +11,9 @@ class SegmentationBinaryAveragePrecision(Metric):
     higher_is_better = True
     full_state_update = False
 
+    binary_aupr: Tensor
+    total: Tensor
+
     def __init__(
         self,
         thresholds: int | list[float] | Tensor | None = None,

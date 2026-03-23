@@ -58,11 +58,11 @@ class TemperatureScaler(Scaler):
                 "TemperatureScaler converged to a negative temperature %.3f.", 1 / self.inv_temp
             )
 
-    def set_temperature(self, val: float) -> None:
+    def set_temperature(self, val: float | Tensor) -> None:
         """Set the temperature to a fixed value.
 
         Args:
-            val (float): Temperature value.
+            val (float | Tensor): Temperature value.
         """
         if val <= 0:
             raise ValueError(f"Temperature value must be strictly positive. Got {val}.")

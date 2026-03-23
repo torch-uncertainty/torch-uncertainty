@@ -1,3 +1,5 @@
+from typing import Literal
+
 import torch
 import torch.nn.functional as F
 from torch import Tensor
@@ -202,7 +204,7 @@ class BayesConv1d(_BayesConvNd):
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",  # TODO: refine this type
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device=None,
         dtype=None,
     ) -> None:
@@ -297,7 +299,7 @@ class BayesConv2d(_BayesConvNd):
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",  # TODO: refine this type
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device=None,
         dtype=None,
     ) -> None:
@@ -390,7 +392,7 @@ class BayesConv3d(_BayesConvNd):
         frozen: bool = False,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         device=None,
         dtype=None,
     ) -> None:

@@ -10,6 +10,8 @@ from .base import DepthDataModule
 
 
 class MUADDataModule(DepthDataModule):
+    dataset: type[MUAD]
+
     def __init__(
         self,
         root: str | Path,
@@ -100,7 +102,7 @@ class MUADDataModule(DepthDataModule):
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
-            full = self.dataset(
+            full: MUAD = self.dataset(
                 root=self.root,
                 split="train",
                 max_depth=self.max_depth,

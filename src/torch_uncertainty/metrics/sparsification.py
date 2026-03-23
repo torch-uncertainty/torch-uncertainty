@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.compute import _auc_compute
@@ -84,7 +86,7 @@ class AUSE(Metric):
         ax: _AX_TYPE | None = None,
         plot_oracle: bool = True,
         plot_value: bool = True,
-    ) -> tuple[plt.Figure | None, plt.Axes]:
+    ) -> tuple[Figure | None, Axes | object]:
         """Plot the sparsification curve corresponding to the inputs passed to
         ``update``, and the oracle sparsification curve.
 

@@ -112,10 +112,10 @@ class NormalInverseGamma(Distribution):
 
     def __init__(
         self,
-        loc: Number | Tensor,
-        lmbda: Number | Tensor,
-        alpha: Number | Tensor,
-        beta: Number | Tensor,
+        loc: Tensor | bool | float,
+        lmbda: Tensor | bool | float,
+        alpha: Tensor | bool | float,
+        beta: Tensor | bool | float,
         validate_args: bool | None = None,
     ) -> None:
         self.loc, self.lmbda, self.alpha, self.beta = broadcast_all(loc, lmbda, alpha, beta)

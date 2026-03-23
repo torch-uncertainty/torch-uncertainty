@@ -1,6 +1,6 @@
 import math
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
 import torch
 import torch.nn.functional as F
@@ -121,7 +121,6 @@ class PackedLinear(nn.Module):
         self.first = first
         self.last = last
         self.num_estimators = num_estimators
-        self.rearrange = rearrange
         self.implementation = implementation
 
         # Define the number of features of the underlying convolution
@@ -207,7 +206,7 @@ class PackedConv1d(nn.Module):
         groups: int = 1,
         minimum_channels_per_group: int = 64,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         first: bool = False,
         last: bool = False,
         device=None,
@@ -345,7 +344,7 @@ class PackedConv2d(nn.Module):
         groups: int = 1,
         minimum_channels_per_group: int = 64,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         first: bool = False,
         last: bool = False,
         device: Any | None = None,
@@ -483,7 +482,7 @@ class PackedConv3d(nn.Module):
         groups: int = 1,
         minimum_channels_per_group: int = 64,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["circular", "reflect", "replicate", "zeros"] = "zeros",
         first: bool = False,
         last: bool = False,
         device: Any | None = None,

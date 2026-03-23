@@ -10,6 +10,9 @@ class SegmentationFPR95(Metric):
     higher_is_better = False
     full_state_update = False
 
+    fpr95: Tensor
+    total: Tensor
+
     def __init__(self, pos_label: int, **kwargs) -> None:
         """FPR95 metric for segmentation tasks.
         Compute the mean FPR95 per batch across all batches.
@@ -25,11 +28,10 @@ class SegmentationFPR95(Metric):
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         batch_size = preds.size(0)
-        fpr95 = self.fpr95_metric(preds, target)
-        self.fpr95 += fpr95 * batch_size
+        self.fpr95 += self.fpr95_metric(preds, target) * batch_size
         self.total += batch_size
 
     def compute(self) -> Tensor:
         if self.total == 0:
-            return torch.tensor(0.0, device=self.fpr95.device)
+            return torch.tensor(torch.nan, device=self.fpr95.device)
         return self.fpr95 / self.total
