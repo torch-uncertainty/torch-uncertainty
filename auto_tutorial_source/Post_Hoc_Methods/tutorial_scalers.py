@@ -221,6 +221,7 @@ fig.show()
 # ~~~~~~~~~~~~~~~~~~~~~
 #
 # - Takeaways:
+#
 #   * BBQ averages multiple equal-frequency histograms weighted by the
 #     model posterior; it reduces overfitting relative to a single histogram.
 #     It still needs enough calibration data — in multiclass settings prefer
@@ -232,16 +233,15 @@ fig.show()
 #   * Isotonic regression enforces monotonicity (calibrated probability increases
 #     with model confidence) and typically yields smoother mappings than plain
 #     histogram binning; it can be advantageous when monotonicity is desirable.
+#
 # - Practical tips:
+#
 #   * Visualize the learned mapping: inspect bin values for histogram binning or
 #     the monotone piecewise mapping for isotonic to detect overfitting.
 #   * If calibration data is scarce, prefer low-parameter approaches (temperature
 #     scaling) or reduce `num_bins`.
 #   * If dataset shift is expected, measure calibration across multiple held-out
 #     splits or OOD datasets.
-#
-# (If you'd like, I can add a cell that visualizes per-class bin mappings for a
-# few classes, or a small grid-search cell that cross-validates `num_bins`.)
 #
 
 # %%
