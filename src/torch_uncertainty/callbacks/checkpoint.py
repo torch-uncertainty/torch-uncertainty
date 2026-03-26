@@ -82,12 +82,6 @@ class TUClsCheckpoint(_TUCheckpoint):
                 save_last=save_last,
                 auto_insert_metric_name=False,
             ),
-            "ece": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.3f}",
-                monitor="val/cal/ECE",
-                mode="min",
-                auto_insert_metric_name=False,
-            ),
             "brier": ModelCheckpoint(
                 filename="epoch={epoch}-step={step}-val_brier={val/cls/Brier:.3f}",
                 monitor="val/cls/Brier",

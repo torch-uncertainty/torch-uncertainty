@@ -104,7 +104,8 @@ nbsphinx_execute = "never"
 
 
 html_theme = "pydata_sphinx_theme"
-
+html_favicon = "_static/images/favicon.ico"
+html_title = "TorchUncertainty Docs"
 
 sass_src_dir = "_sass"
 sass_out_dir = "_static"
