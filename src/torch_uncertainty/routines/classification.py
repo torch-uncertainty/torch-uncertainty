@@ -61,7 +61,9 @@ class ClassificationRoutine(LightningModule):
         is_ensemble: bool = False,
         num_tta: int = 1,
         format_batch_fn: nn.Module | None = None,
-        optim_recipe: OptimizerLRScheduler | None = None,
+        optim_recipe: Callable[[nn.Module], OptimizerLRScheduler]
+        | OptimizerLRScheduler
+        | None = None,
         mixup_params: dict | None = None,
         eval_ood: bool = False,
         eval_shift: bool = False,
@@ -86,8 +88,8 @@ class ClassificationRoutine(LightningModule):
                 Defaults to ``1``.
             format_batch_fn (torch.nn.Module, optional): Function to format the batch.
                 Defaults to ``None``.
-            optim_recipe (OptimizerLRScheduler, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (Callable[[nn.Module], OptimizerLRScheduler] | OptimizerLRScheduler, optional): The optimizer and
+                optionally the scheduler to use, or a callable that returns them. Defaults to ``None``.
             mixup_params (dict, optional): Mixup parameters. Can include mixup type,
                 mixup mode, distance similarity, kernel tau max, kernel tau std,
                 mixup alpha, and cutmix alpha. If None, no mixup augmentations.
@@ -168,7 +170,7 @@ class ClassificationRoutine(LightningModule):
         self.model = model
         self.loss = loss
         self.format_batch_fn = format_batch_fn
-        self.optim_recipe = optim_recipe
+        self.optim_recipe = optim_recipe(self.model) if callable(optim_recipe) else optim_recipe
         self.is_ensemble = is_ensemble
 
         self.post_processing = post_processing

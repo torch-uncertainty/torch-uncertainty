@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 from typing import Literal
 
@@ -59,7 +60,9 @@ class PixelRegressionRoutine(LightningModule):
         *,
         is_ensemble: bool = False,
         format_batch_fn: nn.Module | None = None,
-        optim_recipe: OptimizerLRScheduler | None = None,
+        optim_recipe: Callable[[nn.Module], OptimizerLRScheduler]
+        | OptimizerLRScheduler
+        | None = None,
         eval_shift: bool = False,
         num_image_plot: int = 4,
         log_plots: bool = False,
@@ -80,8 +83,8 @@ class PixelRegressionRoutine(LightningModule):
                 point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble.
                 Defaults to ``False``.
-            optim_recipe (OptimizerLRScheduler, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (Callable[[nn.Module], OptimizerLRScheduler] | OptimizerLRScheduler, optional): The optimizer and
+                optionally the scheduler to use, or a callable that returns them. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
             format_batch_fn (nn.Module, optional): The function to format the
@@ -121,7 +124,7 @@ class PixelRegressionRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        self.optim_recipe = optim_recipe
+        self.optim_recipe = optim_recipe(self.model) if callable(optim_recipe) else optim_recipe
         self.format_batch_fn = format_batch_fn
         self._init_metrics()
 

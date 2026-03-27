@@ -1,4 +1,5 @@
 import warnings
+from collections.abc import Callable
 from pathlib import Path
 
 from einops import rearrange
@@ -43,7 +44,9 @@ class RegressionRoutine(LightningModule):
         dist_estimate: str | DistEstimate = "mean",
         *,
         is_ensemble: bool = False,
-        optim_recipe: OptimizerLRScheduler | None = None,
+        optim_recipe: Callable[[nn.Module], OptimizerLRScheduler]
+        | OptimizerLRScheduler
+        | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         log_plots: bool = False,
@@ -61,7 +64,7 @@ class RegressionRoutine(LightningModule):
             dist_family (str, optional): The distribution family to use for probabilistic regression. If ``None`` then point-wise regression. Defaults to ``None``.
             dist_estimate (str | DistEstimate, optional): The estimate to use when computing the point-wise metrics. Defaults to ``"mean"``.
             is_ensemble (bool, optional): Whether the model is an ensemble. Defaults to ``False``.
-            optim_recipe (OptimizerLRScheduler, optional): The optimizer and optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (Callable[[nn.Module], OptimizerLRScheduler] | OptimizerLRScheduler, optional): The optimizer and optionally the scheduler to use, or a callable that returns them. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the batch. Defaults to ``None``.
             log_plots (bool, optional): Indicates whether to log figures in the logger.
@@ -112,7 +115,7 @@ class RegressionRoutine(LightningModule):
         if isinstance(self.loss, ELBOLoss):
             self.loss.set_model(self.model)
 
-        self.optim_recipe = optim_recipe
+        self.optim_recipe = optim_recipe(self.model) if callable(optim_recipe) else optim_recipe
         self.format_batch_fn = format_batch_fn
         self.one_dim_regression = output_dim == 1
         self._init_metrics()

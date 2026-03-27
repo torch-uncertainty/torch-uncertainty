@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from pathlib import Path
 
 import torch
@@ -51,7 +52,9 @@ class SegmentationRoutine(LightningModule):
         num_classes: int,
         loss: nn.Module | None = None,
         *,
-        optim_recipe: OptimizerLRScheduler | None = None,
+        optim_recipe: Callable[[nn.Module], OptimizerLRScheduler]
+        | OptimizerLRScheduler
+        | None = None,
         eval_shift: bool = False,
         format_batch_fn: nn.Module | None = None,
         metric_subsampling_rate: float = 1e-2,
@@ -71,8 +74,8 @@ class SegmentationRoutine(LightningModule):
             num_classes (int): Number of classes in the segmentation task.
             loss (torch.nn.Module): Loss function to optimize the :attr:`model`.
                 Defaults to ``None``.
-            optim_recipe (OptimizerLRScheduler, optional): The optimizer and
-                optionally the scheduler to use. Defaults to ``None``.
+            optim_recipe (Callable[[nn.Module], OptimizerLRScheduler] | OptimizerLRScheduler, optional): The optimizer and
+                optionally the scheduler to use, or a callable that returns them. Defaults to ``None``.
             eval_shift (bool, optional): Indicates whether to evaluate the Distribution
                 shift performance. Defaults to ``False``.
             format_batch_fn (torch.nn.Module, optional): The function to format the
@@ -127,7 +130,7 @@ class SegmentationRoutine(LightningModule):
         if format_batch_fn is None:
             format_batch_fn = nn.Identity()
 
-        self.optim_recipe = optim_recipe
+        self.optim_recipe = optim_recipe(self.model) if callable(optim_recipe) else optim_recipe
         self.format_batch_fn = format_batch_fn
         self.metric_subsampling_rate = metric_subsampling_rate
         self.log_plots = log_plots
