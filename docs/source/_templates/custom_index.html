@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
 
+{% block htmltitle %}
+<title>{{ docstitle|striptags|e }}</title>
+{% endblock %}
+
 {% block extrahead %}
 {{ super() }}
 <!-- Load the compiled index.css only for this page -->
