@@ -255,7 +255,7 @@ fig.show()
 
 # %%
 # The results are somewhat better than MatrixScaling, but we again likely do not have enough data to
-# correclty tune the parameters of Dirichlet scaling.
+# correctly tune the parameters of Dirichlet scaling.
 #
 # Remark
 # ~~~~~~

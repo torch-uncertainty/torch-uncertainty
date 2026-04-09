@@ -4,7 +4,6 @@ from typing import Literal
 
 import numpy as np
 import torch
-from sklearn.isotonic import IsotonicRegression
 from torch import Tensor, nn
 from torch.utils.data import DataLoader
 

@@ -38,12 +38,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
-            PR_NUMBER=${{ github.event.workflow_run.pull_requests[0].number }}
-            IS_DRAFT=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json isDraft --jq '.isDraft')
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+
+            PR_NUMBER=$(gh pr list \
+              --repo ${{ github.repository }} \
+              --head "$BRANCH" \
+              --json number \
+              --jq '.[0].number')
+
+            if [ -z "$PR_NUMBER" ]; then
+              echo "No PR found for branch $BRANCH"
+              echo "is_draft=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            IS_DRAFT=$(gh pr view $PR_NUMBER \
+              --repo ${{ github.repository }} \
+              --json isDraft \
+              --jq '.isDraft')
+
             echo "is_draft=$IS_DRAFT" >> $GITHUB_OUTPUT
           else
             echo "is_draft=false" >> $GITHUB_OUTPUT
           fi
+          echo "BRANCH=$BRANCH"
+          echo "PR_NUMBER=$PR_NUMBER"
+          echo "IS_DRAFT=$IS_DRAFT"
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@v6
