@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers import BatchConv2d, BatchLinear
-from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble, batch_ensemble
+from torch_uncertainty.methods import BatchEnsemble, batch_ensemble
 
 
 @pytest.fixture

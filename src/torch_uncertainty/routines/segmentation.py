@@ -28,7 +28,7 @@ from torch_uncertainty.metrics import (
     SegmentationFPR95,
     SmoothCalibrationError,
 )
-from torch_uncertainty.models import (
+from torch_uncertainty.methods import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )

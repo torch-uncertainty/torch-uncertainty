@@ -5,7 +5,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from torch_uncertainty.layers import BayesConv1d, BayesLinear
-from torch_uncertainty.models.wrappers import StochasticModel
+from torch_uncertainty.methods import StochasticModel
 
 
 class _BayesianInceptionBlock(nn.Module):

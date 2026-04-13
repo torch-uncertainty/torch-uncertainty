@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models import CheckpointCollector
+from torch_uncertainty.methods import CheckpointCollector
 
 
 class TestCheckpointCollector:

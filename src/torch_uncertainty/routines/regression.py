@@ -19,7 +19,7 @@ from torch_uncertainty.metrics import (
     DistributionNLL,
     QuantileCalibrationError,
 )
-from torch_uncertainty.models import (
+from torch_uncertainty.methods import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
 )

@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from torch_uncertainty.models.wrappers import Zero
+from torch_uncertainty.methods import Zero
 
 
 class TestZero:

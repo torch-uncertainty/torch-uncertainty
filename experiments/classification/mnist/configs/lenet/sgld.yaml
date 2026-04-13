@@ -24,7 +24,7 @@ trainer:
         check_finite: true
 routine:
   model:
-    class_path: torch_uncertainty.models.wrappers.CheckpointCollector
+    class_path: torch_uncertainty.methods.CheckpointCollector
     init_args:
       model:
         class_path: torch_uncertainty.models.classification.lenet

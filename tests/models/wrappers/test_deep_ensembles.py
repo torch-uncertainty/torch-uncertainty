@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from tests._dummies import dummy_model
-from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.methods import deep_ensembles
 
 
 class TestDeepEnsemblesModel:

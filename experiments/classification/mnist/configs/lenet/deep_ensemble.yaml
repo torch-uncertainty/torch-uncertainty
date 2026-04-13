@@ -27,7 +27,7 @@ routine:
   # ClassificationRoutine
   model:
     # DeepEnsemble
-    class_path: torch_uncertainty.models.wrappers.deep_ensembles.deep_ensembles
+    class_path: torch_uncertainty.methods.deep_ensembles.deep_ensembles
     init_args:
       models:
         # LeNet

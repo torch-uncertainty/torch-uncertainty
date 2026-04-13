@@ -25,7 +25,7 @@ trainer:
   gradient_clip_val: 5
 routine:
   model:
-    class_path: torch_uncertainty.models.wrappers.CheckpointCollector
+    class_path: torch_uncertainty.methods.CheckpointCollector
     init_args:
       model:
         class_path: torch_uncertainty.models.classification.lenet

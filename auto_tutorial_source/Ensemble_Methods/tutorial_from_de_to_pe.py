@@ -212,7 +212,7 @@ perf = trainer.test(routine, dataloaders=[test_dl, ood_dl])
 # To train the ensemble, you will have to use the "deep_ensembles" function from TorchUncertainty, which will
 # replicate and change the initialization of your networks to ensure diversity.
 
-from torch_uncertainty.models import deep_ensembles
+from torch_uncertainty.methods import deep_ensembles
 from torch_uncertainty.transforms import RepeatTarget
 
 # Create the ensemble model

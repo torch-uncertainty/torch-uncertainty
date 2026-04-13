@@ -30,7 +30,10 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["einops", "seaborn"]
+dependencies = [
+    "einops",
+    "seaborn",
+]
 
 [dependency-groups]
 dev = [
