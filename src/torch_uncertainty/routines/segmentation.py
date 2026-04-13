@@ -14,6 +14,10 @@ from torchvision.transforms.v2 import ToDtype
 from torchvision.transforms.v2 import functional as F
 from torchvision.utils import draw_segmentation_masks
 
+from torch_uncertainty.methods import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 from torch_uncertainty.metrics import (
     AUGRC,
     AURC,
@@ -27,10 +31,6 @@ from torch_uncertainty.metrics import (
     SegmentationBinaryAveragePrecision,
     SegmentationFPR95,
     SmoothCalibrationError,
-)
-from torch_uncertainty.methods import (
-    EPOCH_UPDATE_MODEL,
-    STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.ood_criteria import (
     OODCriterionInputType,

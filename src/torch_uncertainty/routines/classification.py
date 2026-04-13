@@ -16,6 +16,10 @@ from torchmetrics.classification import (
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
+from torch_uncertainty.methods import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 from torch_uncertainty.metrics import (
     AUGRC,
     AURC,
@@ -32,10 +36,6 @@ from torch_uncertainty.metrics import (
     RiskAt80Cov,
     SetSize,
     SmoothCalibrationError,
-)
-from torch_uncertainty.methods import (
-    EPOCH_UPDATE_MODEL,
-    STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.ood_criteria import (
     OODCriterionInputType,

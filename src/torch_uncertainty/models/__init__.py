@@ -24,4 +24,3 @@ from .classification import (
     wideresnet28x10,
 )
 from .depth import bts_resnet
-
