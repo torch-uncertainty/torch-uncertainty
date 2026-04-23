@@ -14,7 +14,8 @@ class SGLD(Optimizer):
     ) -> None:
         r"""Stochastic Gradient Langevin Dynamics (SGLD) optimizer.
 
-        Use torch_uncertainty.models.wrappers.CheckpointCollector to collect the samples.
+        Note:
+            Use torch_uncertainty.methods.CheckpointCollector to collect the samples.
 
         Args:
             params (ParamsT): Iterable of parameters or named_parameters to optimize or iterable of

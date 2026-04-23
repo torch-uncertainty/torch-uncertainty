@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from torch_uncertainty.layers import BayesConv2d, BayesLinear, NormalLinear
-from torch_uncertainty.models import StochasticModel
+from torch_uncertainty.methods import StochasticModel
 
 
 class DummyModelLinear(nn.Module):

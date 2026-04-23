@@ -24,7 +24,7 @@ trainer:
         check_finite: true
 routine:
   model:
-    class_path: torch_uncertainty.models.wrappers.SWA
+    class_path: torch_uncertainty.methods.SWA
     init_args:
       model:
         class_path: torch_uncertainty.models.classification.lenet

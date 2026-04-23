@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models import EMA
+from torch_uncertainty.methods import EMA
 
 
 class TestEMA:

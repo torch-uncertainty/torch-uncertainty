@@ -6,7 +6,7 @@ from torch import Tensor, nn
 
 from torch_uncertainty.layers import BatchLinear, BayesLinear, MaskedLinear, PackedLinear
 from torch_uncertainty.layers.distributions import get_dist_linear_layer
-from torch_uncertainty.models import StochasticModel
+from torch_uncertainty.methods import StochasticModel
 
 __all__ = ["batched_mlp", "bayesian_mlp", "mimo_mlp", "mlp", "packed_mlp"]
 

@@ -16,6 +16,10 @@ from torchmetrics.classification import (
 )
 
 from torch_uncertainty.losses import DECLoss, ELBOLoss
+from torch_uncertainty.methods import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 from torch_uncertainty.metrics import (
     AUGRC,
     AURC,
@@ -32,10 +36,6 @@ from torch_uncertainty.metrics import (
     RiskAt80Cov,
     SetSize,
     SmoothCalibrationError,
-)
-from torch_uncertainty.models import (
-    EPOCH_UPDATE_MODEL,
-    STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.ood_criteria import (
     OODCriterionInputType,
@@ -125,7 +125,7 @@ class ClassificationRoutine(LightningModule):
             3. Ensure that the model's forward pass outputs a tensor of shape :math:`(M \times B, C)`,
             where :math:`M` is the number of estimators, :math:`B` is the batch size, :math:`C` is the number of classes.
 
-            For automated batch handling, consider using the available model wrappers in `torch_uncertainty.models.wrappers`.
+            For automated batch handling, consider using the available model wrappers in `torch_uncertainty.methods`.
 
         Note:
             If :attr:`eval_ood` is ``True``, we perform a binary classification and update the

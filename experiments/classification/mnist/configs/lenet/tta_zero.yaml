@@ -28,7 +28,7 @@ trainer:
         check_finite: true
 routine:
   model:
-    class_path: torch_uncertainty.models.wrappers.Zero
+    class_path: torch_uncertainty.methods.Zero
     init_args:
       model:
         class_path: torch_uncertainty.models.lenet._LeNet

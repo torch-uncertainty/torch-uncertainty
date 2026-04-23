@@ -36,7 +36,7 @@ from torchvision.utils import draw_segmentation_masks
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules.segmentation import MUADDataModule
-from torch_uncertainty.models import mc_dropout
+from torch_uncertainty.methods import mc_dropout
 from torch_uncertainty.models.segmentation.unet import small_unet
 from torch_uncertainty.routines import SegmentationRoutine
 

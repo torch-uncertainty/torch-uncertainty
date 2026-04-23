@@ -4,7 +4,7 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from tests._dummies.model import dummy_model
-from torch_uncertainty.models import SWA, SWAG
+from torch_uncertainty.methods import SWA, SWAG
 
 
 class TestSWA:

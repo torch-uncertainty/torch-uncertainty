@@ -15,13 +15,13 @@ from torch.utils.flop_counter import FlopCounterMode
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
 
 from torch_uncertainty.losses import ELBOLoss
+from torch_uncertainty.methods import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 from torch_uncertainty.metrics import (
     DistributionNLL,
     QuantileCalibrationError,
-)
-from torch_uncertainty.models import (
-    EPOCH_UPDATE_MODEL,
-    STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (

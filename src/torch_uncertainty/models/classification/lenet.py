@@ -8,8 +8,7 @@ from torch import nn
 from torch_uncertainty.layers.bayesian import BayesConv2d, BayesLinear
 from torch_uncertainty.layers.mc_batch_norm import MCBatchNorm2d
 from torch_uncertainty.layers.packed import PackedConv2d, PackedLinear
-from torch_uncertainty.models.wrappers.batch_ensemble import BatchEnsemble
-from torch_uncertainty.models.wrappers.stochastic import StochasticModel
+from torch_uncertainty.methods import BatchEnsemble, StochasticModel
 
 __all__ = ["batchensemble_lenet", "bayesian_lenet", "lenet", "packed_lenet"]
 

@@ -2,7 +2,7 @@ import copy
 
 from torch import nn
 
-from torch_uncertainty.models import EMA, SWA, deep_ensembles
+from torch_uncertainty.methods import EMA, SWA, deep_ensembles
 from torch_uncertainty.ood_criteria import TUOODCriterion
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.post_processing import TemperatureScaler

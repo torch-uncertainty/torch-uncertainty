@@ -23,7 +23,7 @@ First, we have to load the following utilities from TorchUncertainty:
 - the TUTrainer from TorchUncertainty utils
 - the datamodule handling dataloaders: MNISTDataModule from torch_uncertainty.datamodules
 - the model: lenet from torch_uncertainty.models
-- the MC Dropout wrapper: mc_dropout, from torch_uncertainty.models.wrappers
+- the MC Dropout wrapper: mc_dropout, from torch_uncertainty.methods
 - the classification training & evaluation routine in the torch_uncertainty.routines
 - an optimization recipe in the torch_uncertainty.optim_recipes module.
 
@@ -37,7 +37,7 @@ from torch import nn
 
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import MNISTDataModule
-from torch_uncertainty.models import mc_dropout
+from torch_uncertainty.methods import mc_dropout
 from torch_uncertainty.models.classification import lenet
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import ClassificationRoutine

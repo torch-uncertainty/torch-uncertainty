@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from tests._dummies.model import dummy_model, dummy_segmentation_model
-from torch_uncertainty.models import mc_dropout
+from torch_uncertainty.methods import mc_dropout
 
 
 class TestMCDropout:

@@ -20,6 +20,10 @@ from torchmetrics import MeanSquaredError, MetricCollection
 from torchvision.transforms.v2 import functional as F
 from torchvision.utils import make_grid
 
+from torch_uncertainty.methods import (
+    EPOCH_UPDATE_MODEL,
+    STEP_UPDATE_MODEL,
+)
 from torch_uncertainty.metrics import (
     DistributionNLL,
     Log10,
@@ -30,10 +34,6 @@ from torch_uncertainty.metrics import (
     MeanSquaredLogError,
     SILog,
     ThresholdAccuracy,
-)
-from torch_uncertainty.models import (
-    EPOCH_UPDATE_MODEL,
-    STEP_UPDATE_MODEL,
 )
 from torch_uncertainty.utils import csv_writer
 from torch_uncertainty.utils.distributions import (
