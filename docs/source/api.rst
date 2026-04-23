@@ -178,15 +178,17 @@ InceptionTime
     packed_inception_time
 
 
-Model Wrappers
+UQ Methods
 --------------
 
-Wrappers encapsulate your models to enable better uncertainty estimation.
+.. currentmodule:: torch_uncertainty.methods
+
+UQ Methods encapsulate your models to enable better uncertainty estimation.
 
 Functions
 ^^^^^^^^^
 
-Some wrappers can be directly created through functions such as the following: 
+Some methods can be directly created through functions such as the following: 
 
 .. autosummary::
     :toctree: generated/
@@ -200,7 +202,7 @@ Some wrappers can be directly created through functions such as the following:
 Classes
 ^^^^^^^
 
-Some wrappers need to be instantiated as classes such as the following:
+Some methods need to be instantiated as classes such as the following:
 
 .. autosummary::
     :toctree: generated/
