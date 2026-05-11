@@ -394,11 +394,7 @@ class PixelRegressionRoutine(LightningModule):
         target: Tensor,
         stage: Literal["val", "test"],
     ) -> None:
-        if (
-            self.logger is not None
-            and isinstance(self.logger, WandbLogger)
-            and self.one_dim_depth
-        ):
+        if self.logger is not None and isinstance(self.logger, WandbLogger) and self.one_dim_depth:
             all_imgs = []
             for i in range(inputs.size(0)):
                 img = F.normalize(inputs[i, ...].cpu(), **self.inv_norm_params)
