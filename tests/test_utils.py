@@ -1,6 +1,7 @@
 import contextlib
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pytest
 import torch
 from huggingface_hub.errors import (
@@ -14,6 +15,7 @@ from torch_uncertainty.utils import (
     get_version,
     hub,
     plot_hist,
+    plot_per_class_accuracy,
 )
 from torch_uncertainty.utils.distributions import TUStudentT
 
@@ -62,6 +64,20 @@ class TestMisc:
     def test_plot_hist(self) -> None:
         conf = [torch.rand(20), torch.rand(20)]
         plot_hist(conf, bins=10, title="test")
+
+    def test_plot_per_class_accuracy_default_names(self) -> None:
+        acc = torch.tensor([0.9, 0.7, 0.5])
+        fig, ax = plot_per_class_accuracy(acc)
+        assert isinstance(fig, plt.Figure)
+        assert ax.get_xlabel() == "Accuracy"
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_custom_names(self) -> None:
+        acc = torch.tensor([0.8, 0.6])
+        fig, ax = plot_per_class_accuracy(acc, class_names=["cat", "dog"])
+        assert isinstance(fig, plt.Figure)
+        assert [t.get_text() for t in ax.get_yticklabels()] == ["cat", "dog"]
+        plt.close(fig)
 
 
 class TestDistributions:
