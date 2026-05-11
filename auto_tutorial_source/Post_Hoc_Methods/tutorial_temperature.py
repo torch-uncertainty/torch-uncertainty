@@ -30,7 +30,7 @@ In this tutorial, we will need:
 - the temperature scaler to improve the top-label calibration
 - a utility function to download HF models easily
 
-If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
+If you use the classification routine, the plots will be automatically available in the wandb logs if you use the `log_plots` flag.
 """
 
 # %%

@@ -7,11 +7,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 75
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/lenet
-      name: bayesian
-      default_hp_metric: false
+      name: bayesian
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

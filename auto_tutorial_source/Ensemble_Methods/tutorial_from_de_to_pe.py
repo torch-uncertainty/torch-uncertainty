@@ -389,7 +389,7 @@ packed_perf = trainer.test(packed_routine, dataloaders=[test_dl, ood_dl])
 # To Go Further & More Concepts of Uncertainty in ML
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# **Question 1:** Have a look at the models in the "lightning_logs". If you are on your own machine, try to visualize the learning curves with `tensorboard --logdir lightning_logs`.
+# **Question 1:** Have a look at the models in the wandb dashboard. If you are on your own machine, try to visualize the learning curves at wandb.ai.
 #
 # **Question 2:** Add a cell below and try to find the errors made by packed-ensembles on the test set. Visualize the errors and their labels and look at the predictions of the different sub-models. Are they similar? Can you think of uncertainty scores that could help you identify these errors?
 #

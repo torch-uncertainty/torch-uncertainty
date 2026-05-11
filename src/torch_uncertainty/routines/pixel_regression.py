@@ -6,7 +6,7 @@ import matplotlib.cm as cm
 import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
 from torch.distributions import (
@@ -153,7 +153,7 @@ class PixelRegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore
-        """Put the hyperparameters in tensorboard."""
+        """Put the hyperparameters in the logger."""
         if self.loss is None:
             raise ValueError(
                 "To train a model, you must specify the `loss` argument in the routine. Got None."
@@ -396,7 +396,7 @@ class PixelRegressionRoutine(LightningModule):
     ) -> None:
         if (
             self.logger is not None
-            and isinstance(self.logger, TensorBoardLogger)
+            and isinstance(self.logger, WandbLogger)
             and self.one_dim_depth
         ):
             all_imgs = []
@@ -406,10 +406,9 @@ class PixelRegressionRoutine(LightningModule):
                 tgt = colorize(target[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth)
                 all_imgs.extend([img, pred, tgt])
 
-            self.logger.experiment.add_image(
-                f"{stage}/samples",
-                make_grid(torch.stack(all_imgs, dim=0), nrow=3),
-                self.current_epoch,
+            self.logger.log_image(
+                key=f"{stage}/samples",
+                images=[make_grid(torch.stack(all_imgs, dim=0), nrow=3)],
             )
 
 

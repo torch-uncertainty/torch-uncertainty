@@ -8,11 +8,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 10
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/lenet_trajectory
-      name: deep_ensemble
-      default_hp_metric: false
+      name: deep_ensemble
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

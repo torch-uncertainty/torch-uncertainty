@@ -7,11 +7,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 120
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/deeplab
-      name: standard
-      default_hp_metric: false
+      name: standard
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

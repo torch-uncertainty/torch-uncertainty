@@ -1,0 +1,183 @@
+# lightning.pytorch==2.6.1
+eval_after_fit: true
+seed_everything: false
+trainer:
+  accelerator: cpu
+  strategy: auto
+  devices: 1
+  num_nodes: 1
+  precision: 16-mixed
+  logger:
+    class_path: lightning.pytorch.loggers.WandbLogger
+    init_args:
+      name: standard
+      save_dir: .
+      version: null
+      offline: false
+      dir: null
+      id: null
+      anonymous: null
+      project: mnist
+      log_model: false
+      experiment: null
+      prefix: ''
+      checkpoint_name: null
+      add_file_policy: mutable
+      entity: null
+      notes: null
+      tags: null
+      config: null
+      config_exclude_keys: null
+      config_include_keys: null
+      allow_val_change: null
+      group: null
+      job_type: null
+      mode: null
+      force: null
+      reinit: null
+      resume: null
+      resume_from: null
+      fork_from: null
+      save_code: null
+      tensorboard: null
+      sync_tensorboard: null
+      monitor_gym: null
+      settings: null
+  callbacks:
+  - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
+    init_args:
+      save_last: false
+  - class_path: torch_uncertainty.callbacks.CompoundCheckpoint
+    init_args:
+      compound_metric_dict:
+        val/cls/Acc: 1.0
+        val/cal/ECE: -1.0
+      dirpath: null
+      verbose: false
+      save_last: false
+      save_top_k: 1
+      save_weights_only: false
+      mode: max
+      every_n_train_steps: null
+      train_time_interval: null
+      every_n_epochs: null
+      save_on_train_epoch_end: null
+      enable_version_counter: true
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: step
+      log_momentum: false
+      log_weight_decay: false
+  - class_path: lightning.pytorch.callbacks.EarlyStopping
+    init_args:
+      monitor: val/cls/Acc
+      min_delta: 0.0
+      patience: 1000
+      verbose: false
+      mode: min
+      strict: true
+      check_finite: true
+      stopping_threshold: null
+      divergence_threshold: null
+      check_on_train_epoch_end: null
+      log_rank_zero_only: false
+  fast_dev_run: false
+  max_epochs: 10
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: null
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0
+  val_check_interval: null
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: null
+  log_every_n_steps: null
+  enable_checkpointing: null
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  deterministic: null
+  benchmark: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+routine:
+  model:
+    class_path: torch_uncertainty.models.classification.lenet
+    init_args:
+      in_channels: 1
+      num_classes: 10
+      activation:
+        class_path: torch.nn.ReLU
+        init_args:
+          inplace: false
+      norm: torch.nn.Identity
+      groups: 1
+      dropout_rate: 0.0
+  num_classes: 10
+  loss:
+    class_path: torch.nn.CrossEntropyLoss
+    init_args:
+      weight: null
+      size_average: null
+      ignore_index: -100
+      reduce: null
+      reduction: mean
+      label_smoothing: 0.0
+  is_ensemble: false
+  format_batch_fn: null
+  optim_recipe: null
+  mixup_params: null
+  eval_grouping_loss: false
+  ood_criterion:
+    class_path: torch_uncertainty.ood_criteria.EnergyCriterion
+  post_processing: null
+  num_bins_calibration_error: 15
+  log_plots: false
+  save_in_csv: false
+  csv_filename: results.csv
+data:
+  root: ./data
+  batch_size: 128
+  eval_batch_size: null
+  eval_ood: true
+  eval_shift: true
+  ood_ds: fashion
+  num_tta: 1
+  val_split: null
+  postprocess_set: val
+  num_workers: 8
+  train_transform: null
+  test_transform: null
+  ood_transform: null
+  basic_augment: true
+  cutout: null
+  pin_memory: true
+  persistent_workers: true
+optimizer:
+  class_path: torch.optim.SGD
+  init_args:
+    lr: 0.05
+    momentum: 0.9
+    dampening: 0.0
+    weight_decay: 0.0005
+    nesterov: false
+    maximize: false
+    foreach: null
+    differentiable: false
+    fused: null
+lr_scheduler: null
+ckpt_path: null
+weights_only: null

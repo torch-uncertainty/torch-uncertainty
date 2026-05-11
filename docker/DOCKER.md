@@ -90,7 +90,7 @@ ssh -i /path/to/private_key root@<VM_HOST> -p <VM_PORT>
 Replace `<VM_HOST>` and `<VM_PORT>` with the host and port of your VM,  
 and `/path/to/private_key` with the private key that corresponds to `VM_SSH_PUBLIC_KEY`.
 
-The container exposes port `8888` in case you want to run Jupyter Notebooks or TensorBoard.
+The container exposes port `8888` in case you want to run Jupyter Notebooks.
 
 **Note:** The `/workspace` directory is mounted from your local machine or cloud storage,  
 so changes persist across container restarts.  

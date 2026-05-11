@@ -6,11 +6,10 @@ trainer:
   precision: bf16-mixed
   max_steps: 30000
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/muad/deeplab
-      name: deeplabv3+
-      default_hp_metric: false
+      name: deeplabv3+
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

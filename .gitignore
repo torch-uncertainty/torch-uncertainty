@@ -4,6 +4,7 @@
 data/
 logs/
 lightning_logs/
+wandb/
 auto_tutorial_source/**/*.png
 docs/*/generated/
 docs/*/auto_tutorials/

@@ -321,7 +321,7 @@ class ClassificationRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore
-        """Put the hyperparameters in tensorboard."""
+        """Put the hyperparameters in the logger."""
         if self.loss is None:
             raise ValueError(
                 "To train a model, you must specify the `loss` argument in the routine. Got None."

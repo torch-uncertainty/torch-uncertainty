@@ -64,7 +64,7 @@ docs = [
 
 [project.optional-dependencies]
 all = ["torch_uncertainty[experiments,image,distribution,timeseries,others]"]
-experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+experiments = ["wandb", "huggingface-hub>=0.31", "safetensors"]
 image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 distribution = ["scipy"]
 timeseries = ["tslearn"]

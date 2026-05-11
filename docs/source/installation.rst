@@ -34,7 +34,7 @@ You can install the package with the following options:
 * dev: includes all the dependencies for the development of the package
     including ruff, the pre-commits hooks, and sphinx for the documentation.
 * experiment: includes all the dependencies to make use of the `experiments` folder including
-    tensorboard, huggingface-hub, and safetensors.
+    wandb, huggingface-hub, and safetensors.
 * image: includes all the dependencies for the image processing module
     including opencv, kornia, h5py, and torch-uncertainty-assets
 * distribution: include scipy
