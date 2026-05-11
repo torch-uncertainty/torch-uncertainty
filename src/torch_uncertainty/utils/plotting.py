@@ -21,6 +21,43 @@ def show_segmentation_predictions(prediction: Tensor, target: Tensor) -> Figure:
     return fig
 
 
+def plot_per_class_accuracy(
+    per_class_acc: Tensor,
+    class_names: list[str] | None = None,
+    dpi: int = 60,
+) -> tuple[Figure, Axes]:
+    """Plot per-class accuracy as a horizontal bar chart.
+
+    Args:
+        per_class_acc (Tensor): Per-class accuracy tensor of shape ``(num_classes,)``.
+        class_names (list[str]): Names of the classes. If ``None``, uses class indices.
+            Defaults to ``None``.
+        dpi (int): The dpi of the plot. Defaults to ``60``.
+
+    Returns:
+        Tuple[Figure, Axes]: The figure and axes of the plot.
+    """
+    num_classes = len(per_class_acc)
+    if class_names is None:
+        class_names = [str(i) for i in range(num_classes)]
+    acc_values = per_class_acc.cpu().float().numpy()
+    mean_acc = float(acc_values.mean())
+
+    fig_height = max(4, num_classes * 0.3)
+    fig, ax = plt.subplots(1, figsize=(8, fig_height), dpi=dpi)
+    ax.barh(range(num_classes), acc_values, color="#1f77b4", alpha=0.8)
+    ax.axvline(mean_acc, color="#d45f00", linestyle="--", label=f"Mean: {mean_acc:.3f}")
+    ax.set_yticks(range(num_classes))
+    ax.set_yticklabels(class_names, fontsize=max(4, min(10, 120 // num_classes)))
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("Accuracy")
+    ax.set_title("Per-Class Accuracy")
+    ax.legend()
+    plt.grid(True, linestyle="--", alpha=0.7, axis="x", zorder=0)
+    fig.tight_layout()
+    return fig, ax
+
+
 def plot_hist(
     conf: list[torch.Tensor],
     bins: int = 20,

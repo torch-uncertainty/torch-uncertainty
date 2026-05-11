@@ -39,7 +39,7 @@ from torch_uncertainty.ood_criteria import (
 )
 from torch_uncertainty.post_processing import PostProcessing
 from torch_uncertainty.utils import csv_writer
-from torch_uncertainty.utils.plotting import show_segmentation_predictions
+from torch_uncertainty.utils.plotting import plot_per_class_accuracy, show_segmentation_predictions
 
 
 class SegmentationRoutine(LightningModule):
@@ -192,6 +192,9 @@ class SegmentationRoutine(LightningModule):
         self.val_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="val/")
         self.test_seg_metrics = seg_metrics.clone(prefix="test/")
         self.test_sbsmpl_seg_metrics = sbsmpl_seg_metrics.clone(prefix="test/")
+        self.test_per_class_acc = Accuracy(
+            task="multiclass", average="none", num_classes=self.num_classes
+        )
 
         if self.eval_ood:
             ood_metrics = MetricCollection(
@@ -354,6 +357,7 @@ class SegmentationRoutine(LightningModule):
             id_probs, _, id_targets = probs[id_mask], probs_per_est[id_mask], targets[id_mask]
             self.test_seg_metrics.update(id_probs, id_targets)
             self.test_sbsmpl_seg_metrics.update(*self._subsample(id_probs, id_targets))
+            self.test_per_class_acc.update(id_probs, id_targets)
 
         if self.eval_ood and dataloader_idx == 1:
             if self.ood_criterion.input_type == OODCriterionInputType.PROB:
@@ -403,6 +407,7 @@ class SegmentationRoutine(LightningModule):
 
         self.test_seg_metrics.reset()
         self.test_sbsmpl_seg_metrics.reset()
+        self.test_per_class_acc.reset()
         if self.eval_ood:
             self.test_ood_metrics.reset()
 
@@ -414,6 +419,10 @@ class SegmentationRoutine(LightningModule):
 
     def _plot_results(self):
         """Plot uncertainty quantification metrics and segmentation figures."""
+        self.logger.experiment.add_figure(
+            "Per-Class Accuracy",
+            plot_per_class_accuracy(self.test_per_class_acc.compute())[0],
+        )
         self.logger.experiment.add_figure(
             "Calibration/Reliabity diagram",
             self.test_sbsmpl_seg_metrics["cal/ECE"].plot()[0],
