@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/lenet_swag
-      name: standard
+      name: standard
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

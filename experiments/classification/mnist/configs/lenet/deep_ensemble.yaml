@@ -11,7 +11,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/lenet_trajectory
-      name: deep_ensemble
+      name: deep_ensemble
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

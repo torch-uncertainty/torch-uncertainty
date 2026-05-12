@@ -49,7 +49,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/wideresnet28x10
-      name: mixup
+      name: mixup
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -126,7 +126,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/wideresnet28x10
-      name: mixup_ensemble
+      name: mixup_ensemble
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -199,7 +199,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/wideresnet28x10
-      name: mixupmp
+      name: mixupmp
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

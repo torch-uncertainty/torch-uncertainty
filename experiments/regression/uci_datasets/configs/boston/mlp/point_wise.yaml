@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/boston/mlp/point_wise
-      name: standard
+      name: standard
   callbacks:
     - class_path: torch_uncertainty.callbacks.TURegCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

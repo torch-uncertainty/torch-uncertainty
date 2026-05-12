@@ -9,7 +9,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/olive-oil/inception-time
-      name: mc-dropout
+      name: mc-dropout
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
 routine:

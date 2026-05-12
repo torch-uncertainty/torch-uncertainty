@@ -9,7 +9,7 @@ trainer:
     class_path: lightning.pytorch.loggers.WandbLogger
     init_args:
       save_dir: logs/muad-small/unet
-      name: standard
+      name: standard
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
