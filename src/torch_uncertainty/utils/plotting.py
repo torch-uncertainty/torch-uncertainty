@@ -30,8 +30,8 @@ def plot_per_class_accuracy(
 
     Args:
         per_class_acc (Tensor): Per-class accuracy tensor of shape ``(num_classes,)``.
-        class_names (list[str]): Names of the classes. If ``None``, uses class indices.
-            Defaults to ``None``.
+        class_names (list[str] | None): Names of the classes. If ``None``, uses
+            class indices. Defaults to ``None``.
         dpi (int): The dpi of the plot. Defaults to ``60``.
 
     Returns:
