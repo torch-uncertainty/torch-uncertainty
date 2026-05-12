@@ -40,6 +40,11 @@ def plot_per_class_accuracy(
     num_classes = len(per_class_acc)
     if class_names is None:
         class_names = [str(i) for i in range(num_classes)]
+    elif len(class_names) != num_classes:
+        raise ValueError(
+            "class_names must have the same length as per_class_acc: "
+            f"expected {num_classes}, got {len(class_names)}."
+        )
     acc_values = per_class_acc.cpu().float().numpy()
     mean_acc = float(acc_values.mean())
 
