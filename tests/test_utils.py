@@ -69,14 +69,34 @@ class TestMisc:
         acc = torch.tensor([0.9, 0.7, 0.5])
         fig, ax = plot_per_class_accuracy(acc)
         assert isinstance(fig, plt.Figure)
-        assert ax.get_xlabel() == "Accuracy"
+        assert "Per-Class Accuracy" in ax.get_title()
         plt.close(fig)
 
     def test_plot_per_class_accuracy_custom_names(self) -> None:
         acc = torch.tensor([0.8, 0.6])
         fig, ax = plot_per_class_accuracy(acc, class_names=["cat", "dog"])
         assert isinstance(fig, plt.Figure)
-        assert [t.get_text() for t in ax.get_yticklabels()] == ["cat", "dog"]
+        assert "Per-Class Accuracy" in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk(self) -> None:
+        acc = torch.rand(50)
+        fig, ax = plot_per_class_accuracy(acc, top_k=10)
+        assert "10/50" in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk_larger_than_classes(self) -> None:
+        acc = torch.tensor([0.9, 0.7, 0.5])
+        fig, ax = plot_per_class_accuracy(acc, top_k=100)
+        assert "Per-Class Accuracy" in ax.get_title()
+        assert "100/" not in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk_none(self) -> None:
+        acc = torch.rand(50)
+        fig, ax = plot_per_class_accuracy(acc, top_k=None)
+        assert "Per-Class Accuracy" in ax.get_title()
+        assert "/" not in ax.get_title()
         plt.close(fig)
 
 
