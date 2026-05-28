@@ -16,7 +16,98 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+      only_changed: ${{ steps.changed-files-specific.outputs.only_changed }}
+      prev_result: ${{ steps.prev.outputs.result }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Get changed files
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v47
+        with:
+          since_last_remote_commit: 'true'
+          files: |
+            auto_tutorials_source/**
+            data/**
+            experiments/**
+            docs/**
+            **.md
+            **.yaml
+            **.yml
+            LICENSE
+            .gitignore
+
+      - name: Check previous commit workflow result
+        id: prev
+        run: |
+          result=$(gh api \
+            repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs \
+            --jq '.check_runs[] | select(.name | test("^(lint|test)")) | .conclusion' \
+            | head -n1)
+
+          echo "result=$result" >> $GITHUB_OUTPUT
+          echo "result=$result"
+          echo "only_changed=${{ steps.changed-files-specific.outputs.only_changed }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Fail if previous tests failed and nothing important changed
+        if: |
+          github.event.before != '' &&
+          steps.prev.outputs.result == 'failure' &&
+          steps.changed-files-specific.outputs.only_changed == 'true' &&
+          github.event_name != 'workflow_dispatch'
+
+        run: |
+          echo "Previous tests failed and no important files changed."
+          exit 1
+
+      - name: Decide test mode
+        id: mode
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "mode=full" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.changed-files-specific.outputs.only_changed }}" != "true" ]]; then
+            echo "mode=full" >> $GITHUB_OUTPUT
+          else
+            echo "mode=minimal" >> $GITHUB_OUTPUT
+          fi
+
+  lint:
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'full'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.8"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: "true"
+
+      - name: Install the project
+        run: uv sync --locked --dev --extra cpu
+
+      - name: Check style & format
+        run: |
+          uv run ruff check src/torch_uncertainty --no-fix --statistics
+          uv run ruff format src/torch_uncertainty --check
+
+  test:
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'full'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -38,76 +129,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: "true"
 
-      - name: Get changed files
-        id: changed-files-specific
-        uses: tj-actions/changed-files@v47
-        with:
-          since_last_remote_commit: 'true'
-          files: |
-            auto_tutorials_source/**
-            data/**
-            experiments/**
-            docs/**
-            **.md
-            **.yaml
-            **.yml
-            LICENSE
-            .gitignore
-      
-      - name: Check previous commit workflow result
-        id: prev
-        run: |
-          result=$(gh api \
-            repos/${{ github.repository }}/commits/${{ github.event.before }}/check-runs \
-            --jq '.check_runs[] | select(.name | test("^build")) | .conclusion' \
-            | head -n1)
-
-          echo "result=$result" >> $GITHUB_OUTPUT
-          echo "result=$result"
-          echo "only_changed=${{ steps.changed-files-specific.outputs.only_changed }}"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-
-      - name: Fail if previous tests failed and nothing important changed
-        if: |
-          github.event.before != '' &&
-          steps.prev.outputs.result == 'failure' &&
-          steps.changed-files-specific.outputs.only_changed == 'true' &&
-          github.event_name != 'workflow_dispatch'
-          
-        run: |
-          echo "Previous tests failed and no important files changed."
-          exit 1
-
-      - name: Decide test mode
-        id: mode
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "mode=full" >> $GITHUB_OUTPUT
-          elif [[ "${{ steps.changed-files-specific.outputs.only_changed }}" != "true" ]]; then
-            echo "mode=full" >> $GITHUB_OUTPUT
-          else
-            echo "mode=minimal" >> $GITHUB_OUTPUT
-          fi
-
       - name: Install the project
-        if: steps.mode.outputs.mode == 'full'
         run: uv sync --locked --dev --extra cpu
 
       - name: Check that torch-uncertainty can be imported
-        if: steps.mode.outputs.mode == 'full'
         run: |
           uv run python -c "import torch_uncertainty; from torch_uncertainty.datamodules import MNISTDataModule"
 
-      - name: Check style & format
-        if: steps.mode.outputs.mode == 'full'
-        run: |
-          uv run ruff check src/torch_uncertainty --no-fix --statistics
-          uv run ruff format src/torch_uncertainty --check
-
       - name: Test with pytest and compute coverage
-        if: steps.mode.outputs.mode == 'full'
         run: |
           if [[ "${RUN_COVERAGE}" == "true" ]]; then
             uv run --frozen pytest tests \
@@ -120,14 +149,14 @@ jobs:
             uv run --frozen pytest tests \
               --durations 10
           fi
-        
+
       # Store Python version
       - name: Full Python version
         run: |
           echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")" >> $GITHUB_ENV
 
       - name: Upload coverage to Codecov
-        if: steps.mode.outputs.mode == 'full' && env.RUN_COVERAGE == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+        if: env.RUN_COVERAGE == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
         uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
@@ -138,7 +167,7 @@ jobs:
           env_vars: PYTHON_VERSION
 
       - name: Upload test results to Codecov
-        if: steps.mode.outputs.mode == 'full' && env.RUN_COVERAGE == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
+        if: env.RUN_COVERAGE == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'dev')
         uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
@@ -148,6 +177,5 @@ jobs:
           report_type: test_results
 
       - name: Test sphinx build without tutorials
-        if: steps.mode.outputs.mode == 'full'
         run: |
           cd docs && make clean && make html-noplot
