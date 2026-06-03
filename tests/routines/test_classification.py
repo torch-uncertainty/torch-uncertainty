@@ -390,6 +390,7 @@ class TestClassification:
         "vim",
         "odin",
         "knn",
+        "neco",
         "gen",
         "nnguide",
     ]
@@ -505,6 +506,11 @@ class TestClassification:
                 c.args_dict = {"temperature": [1.0], "noise": [0.0014]}
             elif crit == "knn":
                 c.args_dict = {"K": [5]}
+            elif crit == "neco":
+                # train split has dm.num_images (64) samples; PCA rank is capped by n_samples
+                safe_dim = min(32, dm.num_images - 1, getattr(model, "feature_size", 256) - 1)
+                c.args_dict = {"neco_dim": [safe_dim]}
+                c.neco_dim = safe_dim
             elif crit == "gen":
                 # ensure m ≤ num_classes to avoid degenerate slices
                 c.gamma = getattr(c, "gamma", 0.1)
@@ -520,7 +526,7 @@ class TestClassification:
             assert getattr(c, "hyperparam_search_done", False), (
                 f"Hyperparam search did not complete for '{crit}'."
             )
-        for needs_setup in {"react", "adascale_a", "vim", "knn", "nnguide"}:
+        for needs_setup in {"react", "adascale_a", "vim", "knn", "neco", "nnguide"}:
             if crit == needs_setup:
                 assert getattr(c, "setup_flag", False), f"Setup not executed for '{crit}'."
 
@@ -556,6 +562,67 @@ class TestClassification:
             routine.setup("test")
         assert any("No train loader detected" in r.message for r in caplog.records)
 
+    def test_ood_val_loader_for_hyperparam_search_prefers_val_ood(self):
+        """HP search must use val_ood (e.g. Tiny ImageNet), not test_ood (same-domain CIFAR-100)."""
+
+        class _TaggedLoader:
+            def __init__(self, tag: str):
+                self.tag = tag
+
+            def __iter__(self):
+                return iter([])
+
+        loaders = [
+            _TaggedLoader("id_test"),
+            _TaggedLoader("test_ood"),
+            _TaggedLoader("val_ood"),
+            _TaggedLoader("near"),
+        ]
+        dm = types.SimpleNamespace(
+            test_dataloader=lambda: loaders,
+            get_indices=lambda: {
+                "test": [0],
+                "test_ood": [1],
+                "val_ood": [2],
+                "near_oods": [3],
+                "far_oods": [],
+                "shift": [],
+            },
+        )
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(model=model, loss=None, num_classes=3, eval_ood=True)
+        routine.trainer = types.SimpleNamespace(datamodule=dm)
+
+        chosen = routine._ood_val_loader_for_hyperparam_search()
+        assert chosen.tag == "val_ood"
+
+    def test_ood_val_loader_for_hyperparam_search_falls_back_to_test_ood(self):
+        class _TaggedLoader:
+            def __init__(self, tag: str):
+                self.tag = tag
+
+            def __iter__(self):
+                return iter([])
+
+        loaders = [_TaggedLoader("id_test"), _TaggedLoader("test_ood")]
+        dm = types.SimpleNamespace(
+            test_dataloader=lambda: loaders,
+            get_indices=lambda: {
+                "test": [0],
+                "test_ood": [1],
+                "val_ood": [],
+                "near_oods": [],
+                "far_oods": [],
+                "shift": [],
+            },
+        )
+        model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
+        routine = ClassificationRoutine(model=model, loss=None, num_classes=3, eval_ood=True)
+        routine.trainer = types.SimpleNamespace(datamodule=dm)
+
+        chosen = routine._ood_val_loader_for_hyperparam_search()
+        assert chosen.tag == "test_ood"
+
     def test_create_near_far_metric_dicts_non_ensemble(self, capsys):
         model = dummy_ood_model(in_channels=3, feat_dim=64, num_classes=3)
         routine = ClassificationRoutine(
@@ -577,12 +644,31 @@ class TestClassification:
                 far_oods=[_DS("farY")],
             )
         )
+        routine.on_test_start()
 
         routine.test_step((x, y), batch_idx=0, dataloader_idx=2)  # near
         assert "nearX" in routine.test_ood_metrics_near
 
         routine.test_step((x, y), batch_idx=0, dataloader_idx=3)  # far
         assert "farY" in routine.test_ood_metrics_far
+
+        routine.test_ood_metrics_near["stale_near"] = routine.ood_metrics_template.clone(
+            prefix="ood_near_stale_near_"
+        )
+        routine.test_ood_metrics_far["stale_far"] = routine.ood_metrics_template.clone(
+            prefix="ood_far_stale_far_"
+        )
+
+        routine.on_test_start()
+        assert "stale_near" not in routine.test_ood_metrics_near
+        assert "stale_far" not in routine.test_ood_metrics_far
+
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=2)
+        routine.test_step((x, y), batch_idx=0, dataloader_idx=3)
+        for near_metrics in routine.test_ood_metrics_near.values():
+            near_metrics.compute()
+        for far_metrics in routine.test_ood_metrics_far.values():
+            far_metrics.compute()
 
         fake_results = [
             {

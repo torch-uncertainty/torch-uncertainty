@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from .backbone_utils import forward_with_features, get_classifier
+
 
 class AdaScaleANet(nn.Module):
     def __init__(self, backbone):
@@ -9,19 +11,24 @@ class AdaScaleANet(nn.Module):
         self.logit_scaling = False
 
     def forward(self, x, return_feature=False, return_feature_list=False):
-        try:
-            return self.backbone(x, return_feature, return_feature_list)
-        except TypeError:
-            return self.backbone(x, return_feature)
+        if return_feature_list:
+            try:
+                return self.backbone(x, return_feature, return_feature_list)
+            except TypeError:
+                return self.backbone(x, return_feature)
+        if return_feature:
+            return forward_with_features(self.backbone, x)
+        return self.backbone(x)
 
     def forward_threshold(self, feature, percentiles):
         scale = ada_scale(torch.relu(feature), percentiles)
+        classifier = get_classifier(self.backbone)
         if self.logit_scaling:
-            logits_cls = self.backbone.get_fc_layer()(feature)
+            logits_cls = classifier(feature)
             logits_cls *= scale**2.0
         else:
             feature *= torch.exp(scale)
-            logits_cls = self.backbone.get_fc_layer()(feature)
+            logits_cls = classifier(feature)
         return logits_cls
 
 

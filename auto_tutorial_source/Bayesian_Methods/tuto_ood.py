@@ -1,5 +1,4 @@
-"""
-Simple Ood Evaluation
+"""Simple Ood Evaluation
 ================================================
 
 
@@ -121,11 +120,10 @@ from pathlib import Path
 # 2. Load the trained model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this tutorial we will be loading a pretrained model, but you can also train your own using the same classification routine and still get ood related metrics at test phase.
-
-
 import torch
-from torch_uncertainty.models.resnet import resnet
 from huggingface_hub import hf_hub_download
+
+from torch_uncertainty.models.resnet import resnet
 
 net = resnet(in_channels=3, arch=18, num_classes=100, style="cifar", conv_bias=False)
 
@@ -145,12 +143,11 @@ net.eval()
 # We also create the datamodule that handles the cifar100 dataset, dataloaders and transforms.
 # Datamodules can also handle OOD detection by setting the eval_ood parameter to True.
 
+import torch.nn as nn
+
+from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.routines import ClassificationRoutine
-import torch.nn as nn
-from pathlib import Path
-from torch_uncertainty import TUTrainer
-
 
 root = Path("data1")
 datamodule = CIFAR100DataModule(root=root, batch_size=200, eval_ood=True, eval_shift=True)
@@ -190,7 +187,6 @@ results = trainer.test(model=routine, datamodule=datamodule)
 
 from torchvision.datasets import CIFAR10, MNIST
 from torchvision.transforms import v2
-
 
 test_transform = v2.Compose(
     [

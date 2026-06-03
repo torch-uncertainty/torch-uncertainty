@@ -1,5 +1,4 @@
-"""
-Benchamrk bert with torch-uncertainty on SST2
+"""Benchamrk bert with torch-uncertainty on SST2
 ===============================================
 
 This tutorial is about using torch-uncertainty to benchmark a bert model on the sst2 dataset with various robustness metricis
@@ -17,11 +16,12 @@ also handled automatically by torch-uncertainty.
 """
 
 # %%
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
-from collections import OrderedDict
 from huggingface_hub import hf_hub_download
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification
 
 
 def load_tu_ckpt_into_hf(
@@ -70,10 +70,9 @@ load_tu_ckpt_into_hf(
 #
 # We define first the sst2 datamodule then run the classification routine as follows.
 
-from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import Sst2DataModule
-
+from torch_uncertainty.routines import ClassificationRoutine
 
 dm = Sst2DataModule(
     batch_size=64,

@@ -11,6 +11,8 @@ import torch
 from numpy.linalg import norm, pinv
 from scipy.special import logsumexp
 from sklearn.covariance import EmpiricalCovariance
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from statsmodels.distributions.empirical_distribution import ECDF
 from torch import Tensor, nn
 from tqdm import tqdm
@@ -21,6 +23,11 @@ from torch_uncertainty.ood.nets import (
     ASHNet,
     ReactNet,
     ScaleNet,
+)
+from torch_uncertainty.ood.nets.backbone_utils import (
+    forward_with_features,
+    get_fc_numpy,
+    get_feature_dim,
 )
 from torch_uncertainty.ood.utils import load_config
 
@@ -451,7 +458,7 @@ class AdaScaleCriterion(TUOODCriterion):
             feature_perturbed_log = []
             feature_shift_log = []
             net.eval()
-            self.feature_dim = net.backbone.feature_size
+            self.feature_dim = get_feature_dim(net.backbone)
             with torch.no_grad():
                 for batch in tqdm(id_loader["val"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
@@ -584,12 +591,12 @@ class VIMCriterion(TUOODCriterion):
             net.eval()
 
             with torch.no_grad():
-                self.w, self.b = net.get_fc()
+                self.w, self.b = get_fc_numpy(net)
                 logger.info("Extracting in-distribution training features")
                 feature_id_train = []
                 for batch in tqdm(id_loader["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
-                    _, feature = net(data, return_feature=True)
+                    _, feature = forward_with_features(net, data)
                     feature_id_train.append(feature.cpu().numpy())
                 feature_id_train = np.concatenate(feature_id_train, axis=0)
                 logit_id_train = feature_id_train @ self.w.T + self.b
@@ -612,7 +619,7 @@ class VIMCriterion(TUOODCriterion):
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
-        _, feature_ood = net.forward(data, return_feature=True)
+        _, feature_ood = forward_with_features(net, data)
         feature_ood = feature_ood.cpu()
         logit_ood = feature_ood @ self.w.T + self.b
         energy_ood = logsumexp(logit_ood.numpy(), axis=-1)
@@ -706,6 +713,92 @@ class ODINCriterion(TUOODCriterion):
         return [self.temperature, self.noise]
 
 
+class NECOCriterion(TUOODCriterion):
+    """OOD criterion based on Neural Collapse (NECO).
+
+    Fits a StandardScaler and PCA on in-distribution training features, then scores
+    samples by the ratio of norm in the leading PCA subspace to the full feature norm.
+    Higher scores indicate in-distribution samples. Heavily inspired by:
+
+    NECO: NEural Collapse Based Out-of-distribution detection (Ammar et al., 2023).
+    https://arxiv.org/abs/2310.06823
+    """
+
+    input_type = OODCriterionInputType.DATASET
+
+    def __init__(self, config) -> None:
+        super().__init__()
+        self.args = config.postprocessor.postprocessor_args
+        self.neco_dim = self.args.neco_dim
+        self.use_scaler = getattr(self.args, "use_scaler", True)
+        self.scale_by_maxlogit = getattr(self.args, "scale_by_maxlogit", True)
+        self.args_dict = config.postprocessor.postprocessor_sweep
+        self.scaler: StandardScaler | None = None
+        self.pca: PCA | None = None
+
+    def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict):
+        if self.setup_flag:
+            return
+
+        if "train" not in id_loader_dict:
+            raise RuntimeError(
+                "NECO requires an in-distribution train loader in setup. "
+                "Ensure the datamodule exposes train_dataloader()."
+            )
+
+        net.eval()
+        device = next(net.parameters()).device
+        activation_log = []
+        with torch.no_grad():
+            for batch in tqdm(id_loader_dict["train"], desc="Setup: ", position=0, leave=True):
+                data = batch[0].to(device).float()
+                _, feature = forward_with_features(net, data)
+                activation_log.append(feature.cpu().numpy())
+
+        train_feats = np.concatenate(activation_log, axis=0)
+        if self.use_scaler:
+            self.scaler = StandardScaler()
+            train_scaled = self.scaler.fit_transform(train_feats)
+        else:
+            self.scaler = None
+            train_scaled = train_feats
+
+        n_components = min(train_scaled.shape[0], train_scaled.shape[1])
+        self.pca = PCA(n_components=n_components)
+        self.pca.fit(train_scaled)
+        self.neco_dim = min(self.neco_dim, n_components)
+        self.setup_flag = True
+
+    def _ratio_score(self, features: np.ndarray, logits: np.ndarray) -> np.ndarray:
+        if self.scaler is not None:
+            features = self.scaler.transform(features)
+        n_dims = min(self.neco_dim, self.pca.n_components_)
+        reduced = self.pca.transform(features)[:, :n_dims]
+        norm_full = norm(features, axis=-1)
+        norm_red = norm(reduced, axis=-1)
+        ratio = norm_red / (norm_full + 1e-10)
+        if self.scale_by_maxlogit:
+            ratio = ratio * logits.max(axis=-1)
+        return ratio
+
+    @torch.no_grad()
+    def forward(self, net: nn.Module, data: Any):
+        logits, feature = forward_with_features(net, data)
+        feat_np = feature.cpu().numpy()
+        log_np = logits.cpu().numpy()
+        scores = self._ratio_score(feat_np, log_np)
+        return -torch.from_numpy(scores).to(device=feature.device, dtype=feature.dtype)
+
+    def set_hyperparam(self, hyperparam: list):
+        if self.pca is not None:
+            self.neco_dim = min(hyperparam[0], self.pca.n_components_)
+        else:
+            self.neco_dim = hyperparam[0]
+
+    def get_hyperparam(self):
+        return self.neco_dim
+
+
 class KNNCriterion(TUOODCriterion):
     """OOD criterion based on the K-Nearest Neighbors (KNN) method.
 
@@ -740,7 +833,7 @@ class KNNCriterion(TUOODCriterion):
             with torch.no_grad():
                 for batch in tqdm(id_loader_dict["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
-                    _, feature = net(data, return_feature=True)
+                    _, feature = forward_with_features(net, data)
                     activation_log.append(normalizer(feature.data.cpu().numpy()))
 
             self.activation_log = np.concatenate(activation_log, axis=0)
@@ -752,7 +845,7 @@ class KNNCriterion(TUOODCriterion):
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
-        _, feature = net(data, return_feature=True)
+        _, feature = forward_with_features(net, data)
         feature_normed = normalizer(feature.data.cpu().numpy())
         dis, _ = self.index.search(
             feature_normed,
@@ -874,7 +967,7 @@ class NNGuideCriterion(TUOODCriterion):
                 for batch in tqdm(id_loader_dict["train"], desc="Setup: ", position=0, leave=True):
                     data = batch[0].cuda().float()
 
-                    logit, feature = net(data, return_feature=True)
+                    logit, feature = forward_with_features(net, data)
                     bank_feas.append(normalizer(feature.data.cpu().numpy()))
                     bank_logits.append(logit.data.cpu().numpy())
                     if len(bank_feas) * id_loader_dict["train"].batch_size > int(
@@ -892,7 +985,7 @@ class NNGuideCriterion(TUOODCriterion):
 
     @torch.no_grad()
     def forward(self, net: nn.Module, data: Any):
-        logit, feature = net(data, return_feature=True)
+        logit, feature = forward_with_features(net, data)
         feas_norm = normalizer(feature.data.cpu().numpy())
         energy = logsumexp(logit.data.cpu().numpy(), axis=-1)
 
@@ -965,6 +1058,8 @@ def get_ood_criterion(ood_criterion):
             return ODINCriterion(config)
         if ood_criterion == "knn":
             return KNNCriterion(config)
+        if ood_criterion == "neco":
+            return NECOCriterion(config)
         if ood_criterion == "gen":
             return GENCriterion(config)
         if ood_criterion == "nnguide":

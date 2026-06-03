@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Literal
 
+import numpy as np
 from torch import Tensor, nn
 from torch.nn.functional import relu
 
@@ -340,8 +341,31 @@ class _ResNet(nn.Module):
         out = self.pool(out)
         return self.final_dropout(self.flatten(out))
 
-    def forward(self, x: Tensor) -> Tensor:
-        return self.linear(self.feats_forward(x))
+    @property
+    def feature_size(self) -> int:
+        return self.linear.in_features
+
+    def get_fc_layer(self) -> nn.Linear:
+        return self.linear
+
+    def get_fc(self) -> tuple[np.ndarray, np.ndarray]:
+        w = self.linear.weight.detach().cpu().numpy()
+        b = self.linear.bias.detach().cpu().numpy()
+        return w, b
+
+    def forward(
+        self,
+        x: Tensor,
+        return_feature: bool = False,
+        return_feature_list: bool = False,
+    ) -> Tensor | tuple[Tensor, Tensor]:
+        if return_feature_list:
+            raise NotImplementedError("return_feature_list is not supported for ResNet.")
+        feat = self.feats_forward(x)
+        logits = self.linear(feat)
+        if return_feature:
+            return logits, feat
+        return logits
 
 
 def resnet(

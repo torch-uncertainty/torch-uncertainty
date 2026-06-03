@@ -3,6 +3,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -42,6 +43,12 @@ from torch_uncertainty.metrics import (
 from torch_uncertainty.models import (
     EPOCH_UPDATE_MODEL,
     STEP_UPDATE_MODEL,
+)
+from torch_uncertainty.ood.nets.backbone_utils import (
+    FEATURE_OOD_CRITERIA,
+    model_supports_ood_features,
+    supports_return_feature,
+    warn_ood_feature_fallback,
 )
 from torch_uncertainty.ood.ood_criteria import (
     OODCriterionInputType,
@@ -391,6 +398,9 @@ class ClassificationRoutine(LightningModule):
     def setup(self, stage: str) -> None:
         super().setup(stage)
 
+        if stage == "test":
+            self.model.to(self.device)
+
         if stage == "test" and self.eval_ood and not self.ood_criterion.setup_flag:
             self.trainer.datamodule.setup(stage="fit")
             dm = self.trainer.datamodule
@@ -412,10 +422,48 @@ class ClassificationRoutine(LightningModule):
             self.ood_criterion.setup(self.model, id_loader, None)
             self._hyperparam_search_ood()
 
+    def _ood_val_loader_for_hyperparam_search(self):
+        """Return the OOD validation loader used to tune postprocessor hyperparameters."""
+        dm = self.trainer.datamodule
+        loaders = dm.test_dataloader()
+        indices = dm.get_indices()
+
+        val_ood_idx = indices.get("val_ood") or []
+        if val_ood_idx:
+            return loaders[val_ood_idx[0]]
+
+        test_ood_idx = indices.get("test_ood") or []
+        if test_ood_idx:
+            logger.warning(
+                "Datamodule has no val_ood loader; OOD hyperparameter search falls back to "
+                "test_ood (dataloader index %s).",
+                test_ood_idx[0],
+            )
+            return loaders[test_ood_idx[0]]
+
+        near_ood_idx = indices.get("near_oods") or []
+        if near_ood_idx:
+            logger.warning(
+                "Datamodule has no val_ood loader; OOD hyperparameter search falls back to the "
+                "first near-OOD loader (index %s).",
+                near_ood_idx[0],
+            )
+            return loaders[near_ood_idx[0]]
+
+        return None
+
     def _hyperparam_search_ood(self):
         crit: TUOODCriterion = self.ood_criterion
         # nothing to do if criterion has no grid or already done
         if not hasattr(crit, "args_dict") or crit.hyperparam_search_done:
+            return
+
+        ood_val = self._ood_val_loader_for_hyperparam_search()
+        if ood_val is None:
+            logger.warning(
+                "Skipping OOD hyperparameter search: no val_ood, test_ood, or near-OOD loader."
+            )
+            crit.hyperparam_search_done = True
             return
 
         names = list(crit.args_dict.keys())
@@ -423,7 +471,6 @@ class ClassificationRoutine(LightningModule):
         combos = list(itertools.product(*values))
 
         id_val = self.trainer.datamodule.val_dataloader()
-        ood_val = self.trainer.datamodule.test_dataloader()[1]
 
         best_auc = -float("inf")
         best_combo = None
@@ -473,6 +520,37 @@ class ClassificationRoutine(LightningModule):
             "✓ Selected %s with AUROC=%.4f", dict(zip(names, best_combo, strict=False)), best_auc
         )
 
+    def _reset_ood_test_metrics(self) -> None:
+        """Create one metric collection per near/far OOD dataset (ID + OOD scores each)."""
+        near = self.trainer.datamodule.near_oods
+        far = self.trainer.datamodule.far_oods
+        if self.is_ensemble:
+            self.test_ood_ens_metrics_near = {
+                ds.dataset_name: self.ood_metrics_template.clone(
+                    prefix=f"ood_near_{ds.dataset_name}_"
+                )
+                for ds in near
+            }
+            self.test_ood_ens_metrics_far = {
+                ds.dataset_name: self.ood_metrics_template.clone(
+                    prefix=f"ood_far_{ds.dataset_name}_"
+                )
+                for ds in far
+            }
+        else:
+            self.test_ood_metrics_near = {
+                ds.dataset_name: self.ood_metrics_template.clone(
+                    prefix=f"ood_near_{ds.dataset_name}_"
+                )
+                for ds in near
+            }
+            self.test_ood_metrics_far = {
+                ds.dataset_name: self.ood_metrics_template.clone(
+                    prefix=f"ood_far_{ds.dataset_name}_"
+                )
+                for ds in far
+            }
+
     def on_train_start(self) -> None:
         """Put the hyperparameters in tensorboard."""
         if self.loss is None:
@@ -500,11 +578,14 @@ class ClassificationRoutine(LightningModule):
         Setup the post-processing dataset and fit the post-processing method if needed, prepares
         the storage lists for logit plotting and update the batchnorms if needed.
         """
+        if self.eval_ood:
+            self._reset_ood_test_metrics()
+
         if self.post_processing is not None:
             with torch.inference_mode(False):
                 self.post_processing.fit(self.trainer.datamodule.postprocess_dataloader())
 
-        if self.eval_ood and self.log_plots and isinstance(self.logger, Logger):
+        if self.eval_ood and self.log_plots:
             self.id_score_storage = []
             self.ood_score_storage = {
                 ds.dataset_name: []
@@ -605,15 +686,21 @@ class ClassificationRoutine(LightningModule):
         # skip non necessary test loaders
         indices = self.trainer.datamodule.get_indices()
 
-        if self.eval_ood and dataloader_idx == indices.get("val_ood"):
+        def _loader_indices(key: str) -> list[int]:
+            raw = indices.get(key, [])
+            if raw is None:
+                return []
+            return raw if isinstance(raw, list) else [raw]
+
+        if self.eval_ood and dataloader_idx in _loader_indices("val_ood"):
             return
 
-        if not self.eval_ood and dataloader_idx in indices.get("near_oods", []) + indices.get(
-            "far_oods", []
+        if not self.eval_ood and dataloader_idx in _loader_indices("near_oods") + _loader_indices(
+            "far_oods"
         ):
             return
 
-        if not self.eval_shift and dataloader_idx in indices.get("shift", []):
+        if not self.eval_shift and dataloader_idx in _loader_indices("shift"):
             return
 
         if not self.eval_ood:
@@ -681,6 +768,22 @@ class ClassificationRoutine(LightningModule):
             if self.id_score_storage is not None:
                 self.id_score_storage.append(-ood_scores.detach().cpu())
 
+            if self.eval_ood:
+                id_labels = torch.zeros(targets.shape[0], device=targets.device, dtype=torch.long)
+                if self.is_ensemble:
+                    ood_metric_groups = (
+                        self.test_ood_ens_metrics_near.values(),
+                        self.test_ood_ens_metrics_far.values(),
+                    )
+                else:
+                    ood_metric_groups = (
+                        self.test_ood_metrics_near.values(),
+                        self.test_ood_metrics_far.values(),
+                    )
+                for metric_group in ood_metric_groups:
+                    for ood_metrics in metric_group:
+                        ood_metrics.update(ood_scores, id_labels)
+
             self.log_dict(self.test_cls_metrics, on_epoch=True, add_dataloader_idx=False)
             self.test_id_entropy(probs)
             self.log(
@@ -702,84 +805,35 @@ class ClassificationRoutine(LightningModule):
                 )
                 self.post_cls_metrics.update(pp_probs, targets)
 
-        if self.eval_ood and dataloader_idx == 1:
-            for ds in self.trainer.datamodule.near_oods:
-                ds_name = ds.dataset_name
-                if self.is_ensemble:
-                    if ds_name not in self.test_ood_ens_metrics_near:
-                        self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                            prefix=f"ood_near_{ds_name}_"
-                        )
-                    self.test_ood_ens_metrics_near[ds_name].update(
-                        ood_scores, torch.zeros_like(targets)
-                    )
-                else:
-                    if ds_name not in self.test_ood_metrics_near:
-                        self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                            prefix=f"ood_near_{ds_name}_"
-                        )
-                    self.test_ood_metrics_near[ds_name].update(
-                        ood_scores, torch.zeros_like(targets)
-                    )
-
-            for ds in self.trainer.datamodule.far_oods:
-                ds_name = ds.dataset_name
-                if self.is_ensemble:
-                    if ds_name not in self.test_ood_ens_metrics_far:
-                        self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                            prefix=f"ood_far_{ds_name}_"
-                        )
-                    self.test_ood_ens_metrics_far[ds_name].update(
-                        ood_scores, torch.zeros_like(targets)
-                    )
-                else:
-                    if ds_name not in self.test_ood_metrics_far:
-                        self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                            prefix=f"ood_far_{ds_name}_"
-                        )
-                    self.test_ood_metrics_far[ds_name].update(ood_scores, torch.zeros_like(targets))
-
-        if self.eval_ood and dataloader_idx in indices.get("near_oods", []):
-            ds_index = indices["near_oods"].index(dataloader_idx)
+        near_ood_indices = _loader_indices("near_oods")
+        if self.eval_ood and dataloader_idx in near_ood_indices:
+            ds_index = near_ood_indices.index(dataloader_idx)
             ds_name = self.trainer.datamodule.near_oods[ds_index].dataset_name
+            ood_labels = torch.ones(targets.shape[0], device=targets.device, dtype=torch.long)
             if self.is_ensemble:
-                if ds_name not in self.test_ood_ens_metrics_near:
-                    self.test_ood_ens_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                        prefix=f"ood_near_{ds_name}_"
-                    )
-                self.test_ood_ens_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+                self.test_ood_ens_metrics_near[ds_name].update(ood_scores, ood_labels)
                 if self.log_plots:
                     self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
             else:
-                if ds_name not in self.test_ood_metrics_near:
-                    self.test_ood_metrics_near[ds_name] = self.ood_metrics_template.clone(
-                        prefix=f"ood_near_{ds_name}_"
-                    )
-                self.test_ood_metrics_near[ds_name].update(ood_scores, torch.ones_like(targets))
+                self.test_ood_metrics_near[ds_name].update(ood_scores, ood_labels)
                 if self.log_plots:
                     self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
-        if self.eval_ood and dataloader_idx in indices.get("far_oods", []):
-            ds_index = indices["far_oods"].index(dataloader_idx)
+        far_ood_indices = _loader_indices("far_oods")
+        if self.eval_ood and dataloader_idx in far_ood_indices:
+            ds_index = far_ood_indices.index(dataloader_idx)
             ds_name = self.trainer.datamodule.far_oods[ds_index].dataset_name
+            ood_labels = torch.ones(targets.shape[0], device=targets.device, dtype=torch.long)
             if self.is_ensemble:
-                if ds_name not in self.test_ood_ens_metrics_far:
-                    self.test_ood_ens_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                        prefix=f"ood_far_{ds_name}_"
-                    )
-                self.test_ood_ens_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
+                self.test_ood_ens_metrics_far[ds_name].update(ood_scores, ood_labels)
                 if self.log_plots:
                     self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
             else:
-                if ds_name not in self.test_ood_metrics_far:
-                    self.test_ood_metrics_far[ds_name] = self.ood_metrics_template.clone(
-                        prefix=f"ood_far_{ds_name}_"
-                    )
-                self.test_ood_metrics_far[ds_name].update(ood_scores, torch.ones_like(targets))
-            if self.log_plots:
-                self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
+                self.test_ood_metrics_far[ds_name].update(ood_scores, ood_labels)
+                if self.log_plots:
+                    self.ood_score_storage[ds_name].append(-ood_scores.detach().cpu())
 
-        if self.eval_shift and dataloader_idx in indices.get("shift", []):
+        if self.eval_shift and dataloader_idx in _loader_indices("shift"):
             self.test_shift_metrics.update(probs, targets)
             if self.is_ensemble:
                 self.test_shift_ens_metrics.update(probs_per_est)
@@ -873,7 +927,13 @@ class ClassificationRoutine(LightningModule):
                 )
 
             # plot histograms of ood scores
-            if isinstance(self.logger, Logger) and self.log_plots and self.eval_ood:
+            if (
+                isinstance(self.logger, Logger)
+                and self.log_plots
+                and self.eval_ood
+                and self.id_score_storage is not None
+                and self.ood_score_storage is not None
+            ):
                 id_scores = torch.cat(self.id_score_storage, dim=0).numpy()
                 for name, batches in self.ood_score_storage.items():
                     ood_scores = torch.cat(batches, dim=0).numpy()
@@ -882,6 +942,7 @@ class ClassificationRoutine(LightningModule):
                         [id_scores, ood_scores], 20, f"OOD Score Histogram ({name})"
                     )[0]
                     self.logger.experiment.add_figure(f"OOD Score/{name}", fig_score)
+                    plt.close(fig_score)
 
         # reset metrics
         self.test_cls_metrics.reset()
@@ -974,6 +1035,17 @@ def _classification_routine_checks(
             "Your model must have a `classification_head` or `linear` "
             "attribute to compute the grouping loss."
         )
+
+    if isinstance(ood_criterion, str) and ood_criterion in FEATURE_OOD_CRITERIA:
+        if not model_supports_ood_features(model):
+            raise ValueError(
+                f"OOD criterion '{ood_criterion}' requires penultimate features. "
+                f"{type(model).__name__} must implement "
+                "forward(..., return_feature=True) or feats_forward() with "
+                "linear/fc/classification_head."
+            )
+        if not supports_return_feature(model):
+            warn_ood_feature_fallback(model)
 
     if num_bins_cal_err < 2:
         raise ValueError(f"num_bins_cal_err must be at least 2, got {num_bins_cal_err}.")

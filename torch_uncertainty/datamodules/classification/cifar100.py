@@ -185,7 +185,7 @@ class CIFAR100DataModule(TUDataModule):
 
         if self.eval_shift:
             self.shift_dataset(
-                self.root,
+                root=self.root,
                 download=True,
                 transform=self.test_transform,
                 shift_severity=self.shift_severity,
@@ -250,7 +250,7 @@ class CIFAR100DataModule(TUDataModule):
 
             if self.eval_shift:
                 self.shift = self.shift_dataset(
-                    self.root,
+                    root=self.root,
                     download=False,
                     shift_severity=self.shift_severity,
                     transform=self.test_transform,

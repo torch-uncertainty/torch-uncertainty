@@ -1,5 +1,4 @@
-"""
-ViT baslines with torch-uncertainty on imagenet1k
+"""ViT baslines with torch-uncertainty on imagenet1k
 ===============================================
 
 This tutorial is about using torch-uncertainty to benchmark a ViT model on imagenet1k with various robustness metricis
@@ -19,8 +18,8 @@ also handled automatically by torch-uncertainty.
 # %%
 import torch
 import torch.nn as nn
-from torchvision.models import vit_b_16
 from huggingface_hub import hf_hub_download
+from torchvision.models import vit_b_16
 
 
 def load_model_from_hf(repo_id: str, filename: str, device: str = "cpu", revision: str = "main"):
@@ -32,7 +31,7 @@ def load_model_from_hf(repo_id: str, filename: str, device: str = "cpu", revisio
 
     new_state = {}
     for k, v in state.items():
-        name = k[len("model.") :] if k.startswith("model.") else k
+        name = k.removeprefix("model.")
         new_state[name] = v
 
     renamed = {}
@@ -64,10 +63,9 @@ model1 = load_model_from_hf(
 #
 # We define first the imagnet1k datamodule then run the classification routine as follows.
 
-from torch_uncertainty.routines import ClassificationRoutine
 from torch_uncertainty import TUTrainer
 from torch_uncertainty.datamodules import ImageNetDataModule
-
+from torch_uncertainty.routines import ClassificationRoutine
 
 path = "./data"
 
