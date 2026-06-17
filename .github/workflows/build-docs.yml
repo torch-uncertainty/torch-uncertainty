@@ -29,7 +29,7 @@ jobs:
 
       - name: Full Python version
         run: |
-          echo "PYTHON_VERSION=$(uv run python -c "import platform; print(platform.python_version())")"
+          echo "PYTHON_VERSION=$(uv run --no-sync python -c "import platform; print(platform.python_version())")"
 
       # - name: Cache folder for TorchUncertainty
       #   uses: actions/cache@v4
