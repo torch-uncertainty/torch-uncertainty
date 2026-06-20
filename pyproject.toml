@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "torch_uncertainty"
-version = "0.11.0"
+version = "0.12.1"
 authors = [
   { name = "Adrien Lafage", email = "adrienlafage@outlook.com" },
   { name = "Olivier Laurent", email = "olivier.ar.laurent@gmail.com" },
@@ -64,7 +64,7 @@ docs = [
 
 [project.optional-dependencies]
 all = ["torch_uncertainty[experiments,image,distribution,timeseries,others]"]
-experiments = ["tensorboard", "huggingface-hub>=0.31", "safetensors"]
+experiments = ["mlflow", "huggingface-hub>=0.31", "safetensors"]
 image = ["kornia", "h5py", "opencv-python", "torch-uncertainty-assets"]
 distribution = ["scipy"]
 timeseries = ["tslearn"]

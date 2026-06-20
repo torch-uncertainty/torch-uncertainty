@@ -29,6 +29,25 @@ class BrierScore(Metric):
         accuracy of probabilistic predictions, where a lower score indicates
         better calibration and prediction quality.
 
+        Given predicted probabilities :math:`\hat{p}_{i,c}` and one-hot encoded
+        targets :math:`y_{i,c}` for :math:`N` samples and :math:`C` classes:
+
+        .. math::
+
+            \text{BS} = \frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C}
+            \left( \hat{p}_{i,c} - y_{i,c} \right)^2
+
+        When ``top_class=True``, only the top predicted class is considered:
+
+        .. math::
+
+            \text{BS}_{\text{top}} = \frac{1}{N} \sum_{i=1}^{N}
+            \left( \hat{p}_i - a_i \right)^2
+
+        where :math:`\hat{p}_i = \max_c \hat{p}_{i,c}` is the highest predicted
+        probability and :math:`a_i = \mathbf{1}[\hat{y}_i = y_i]` indicates
+        whether the top prediction is correct.
+
         Args:
             num_classes: Number of classes.
             top_class: If True, computes the Brier score for the top predicted class only.

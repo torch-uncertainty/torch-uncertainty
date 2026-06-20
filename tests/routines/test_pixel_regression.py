@@ -107,6 +107,36 @@ class TestPixelRegression:
         colorize(torch.ones((10, 10)), 0, 1)
         colorize(torch.ones((10, 10)), 0, 0)
 
+    def test_one_estimator_one_class_logs(self) -> None:
+        """Cover the image-plotting and CSV-saving paths."""
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            limit_train_batches=1,
+            limit_val_batches=1,
+            limit_test_batches=1,
+            enable_checkpointing=False,
+        )
+
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyPixelRegressionDataModule(root=root, batch_size=5, output_dim=1)
+
+        model = DummyPixelRegressionBaseline(
+            dist_family="normal",
+            in_channels=dm.num_channels,
+            output_dim=dm.output_dim,
+            image_size=dm.image_size,
+            loss=DistributionNLLLoss(),
+            baseline_type="single",
+            optim_recipe=optim_cifar10_resnet18,
+            log_plots=True,
+            save_to_csv=True,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+
     def test_depth_errors(self) -> None:
         with pytest.raises(ValueError, match=r"output_dim must be positive"):
             PixelRegressionRoutine(

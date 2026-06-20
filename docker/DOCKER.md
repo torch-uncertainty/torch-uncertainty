@@ -69,7 +69,7 @@ First, authenticate with your Docker registry if you use a private registry.
 Then run the following command to run the Docker image from your docker registriy
 
 ```bash
-docker run --rm -it --gpus all -p 8888:8888 -p 22:22 \
+docker run --rm -it --gpus all -p 5000:5000 -p 8888:8888 -p 22:22 \
     -e VM_SSH_PUBLIC_KEY \
     -e GITHUB_SSH_PRIVATE_KEY \
     -e GITHUB_USER \
@@ -90,7 +90,7 @@ ssh -i /path/to/private_key root@<VM_HOST> -p <VM_PORT>
 Replace `<VM_HOST>` and `<VM_PORT>` with the host and port of your VM,  
 and `/path/to/private_key` with the private key that corresponds to `VM_SSH_PUBLIC_KEY`.
 
-The container exposes port `8888` in case you want to run Jupyter Notebooks or TensorBoard.
+The container exposes port `5000` for the MLflow UI, port `8888` for Jupyter Notebooks, and port `22` for SSH.
 
 **Note:** The `/workspace` directory is mounted from your local machine or cloud storage,  
 so changes persist across container restarts.  

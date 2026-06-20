@@ -9,7 +9,16 @@ from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 class DistributionNLLLoss(nn.Module):
     def __init__(self, reduction: Literal["mean", "sum"] | None = "mean") -> None:
-        """Negative Log-Likelihood loss using given distributions as inputs.
+        r"""Negative Log-Likelihood loss for probabilistic regression.
+
+        Given a predictive distribution :math:`p_\theta(y \mid x)` and a target
+        :math:`y`, the per-sample loss is
+
+        .. math::
+            \mathcal{L}_i = -\log p_\theta(y_i \mid x_i),
+
+        reduced over the batch according to :attr:`reduction`. Positions flagged by
+        :attr:`padding_mask` are excluded from the reduction (``nan``-safe).
 
         Args:
             reduction: Specifies the reduction to apply to the output.
@@ -45,20 +54,29 @@ class DistributionNLLLoss(nn.Module):
 
 class DERLoss(DistributionNLLLoss):
     def __init__(self, reg_weight: float, reduction: str | None = "mean") -> None:
-        """The Deep Evidential Regression loss.
+        r"""The Deep Evidential Regression (DER) loss.
 
-        This loss combines the negative log-likelihood loss of the normal
-        inverse gamma distribution and a weighted regularization term.
+        Combines the negative log-likelihood of a Normal-Inverse-Gamma (NIG) predictive
+        distribution with a regulariser that penalises evidence on incorrect predictions:
+
+        .. math::
+            \mathcal{L}(\boldsymbol{\theta}, y) = -\log p_\text{NIG}(y \mid \boldsymbol{\theta})
+            + \lambda \, |y - \mu| \, (2\lambda_\text{NIG} + \alpha),
+
+        where :math:`\boldsymbol{\theta} = (\mu, \lambda_\text{NIG}, \alpha, \beta)` are
+        the NIG parameters predicted by the model and :math:`\lambda` is
+        :attr:`reg_weight`. The regulariser shrinks the *virtual observation count*
+        :math:`2\lambda_\text{NIG} + \alpha` whenever the prediction is wrong, thereby
+        increasing the predictive variance.
 
         Args:
-            reg_weight: The weight of the regularization term.
+            reg_weight: The weight :math:`\lambda` of the regularization term.
             reduction: Specifies the reduction to apply to the output.
                 Must be one of ``'none'``, ``'mean'`` or ``'sum'``.
 
         References:
-            [1] `Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2019). Deep evidential regression
-            <https://arxiv.org/abs/1910.02600>`_.
-
+            [1] `Amini, A., Schwarting, W., Soleimany, A., & Rus, D. (2020). Deep evidential
+            regression. NeurIPS 2020 <https://arxiv.org/abs/1910.02600>`_.
         """
         super().__init__(reduction=None)
 
@@ -103,18 +121,33 @@ class DERLoss(DistributionNLLLoss):
 
 class BetaNLL(nn.Module):
     def __init__(self, beta: float = 0.5, reduction: str | None = "mean") -> None:
-        """The Beta Negative Log-likelihood loss.
+        r"""The :math:`\beta`-Negative Log-Likelihood loss (Seitzer et al., 2022).
+
+        A re-weighted version of the Gaussian NLL that scales each per-sample loss by
+        the (stop-gradient) predicted variance raised to the power :math:`\beta`:
+
+        .. math::
+            \mathcal{L}_i = \sigma_i^{2\beta} \cdot
+            \left( \frac{(y_i - \mu_i)^2}{2 \sigma_i^2} + \frac{1}{2} \log \sigma_i^2 \right),
+
+        where :math:`(\mu_i, \sigma_i^2)` are the predicted mean and variance.
+        :math:`\beta = 0` recovers the standard Gaussian NLL (which down-weights
+        high-variance — i.e. uncertain — samples); :math:`\beta = 1` recovers the MSE
+        scaled by :math:`\sigma^2`. Intermediate values interpolate between the two
+        regimes and counteract the tendency of Gaussian NLL to neglect noisy targets.
 
         Args:
-            beta: Parameter from range [0, 1] controlling relative weighting between data points,
-                where ``0`` corresponds to high weight on low error points and ``1`` to an equal weighting.
+            beta: Parameter in :math:`[0, 1]` controlling the relative weighting between
+                data points: ``0`` is the standard Gaussian NLL (high weight on
+                low-error points); ``1`` recovers a variance-scaled MSE with equal
+                weighting.
             reduction: Specifies the reduction to apply to the output.
                 Must be one of ``'none'``, ``'mean'`` or ``'sum'``.
 
         References:
-            [1] `Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the pitfalls of heteroscedastic uncertainty estimation with probabilistic neural networks
+            [1] `Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). On the pitfalls
+            of heteroscedastic uncertainty estimation with probabilistic neural networks. ICLR 2022
             <https://arxiv.org/abs/2203.09168>`_.
-
         """
         super().__init__()
 

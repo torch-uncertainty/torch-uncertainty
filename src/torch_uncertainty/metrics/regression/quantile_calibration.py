@@ -28,10 +28,25 @@ class QuantileCalibrationError(BinaryCalibrationError):
         validate_args=True,
         **kwargs,
     ) -> None:
-        """Quantile Calibration Error for regression tasks.
+        r"""Quantile Calibration Error for regression tasks.
 
-        This metric computes the calibration error of quantile predictions
-        against the ground truth values.
+        For each confidence level :math:`\alpha \in (0, 1)`, a well-calibrated
+        probabilistic regressor should ensure that a fraction :math:`\alpha` of the
+        ground-truth targets lies inside the centered :math:`\alpha`-credible interval
+        of the predicted distribution :math:`p_\theta(\cdot \mid x)`. Concretely, let
+
+        .. math::
+            \hat{c}(\alpha) = \frac{1}{N} \sum_{i=1}^{N}
+            \mathbf{1}\!\left[ y_i \in
+            \left[ F^{-1}_{\theta, x_i}\!\left(\tfrac{1 - \alpha}{2}\right),
+                   F^{-1}_{\theta, x_i}\!\left(\tfrac{1 + \alpha}{2}\right) \right]
+            \right],
+
+        where :math:`F^{-1}_{\theta, x_i}` is the predictive inverse CDF (computed via
+        the distribution's ``icdf`` method). The Quantile Calibration Error then
+        aggregates the gap :math:`|\hat{c}(\alpha) - \alpha|` over a regular grid of
+        :attr:`num_bins` confidence levels using the chosen :attr:`norm` — the regression
+        counterpart of the :class:`~torch_uncertainty.metrics.classification.CalibrationError`.
 
         Args:
             num_bins: Number of bins to use for calibration. Defaults to ``15``.

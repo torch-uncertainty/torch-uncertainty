@@ -25,6 +25,7 @@ We also need import the neural network utils within `torch.nn`.
 """
 
 # %%
+import os
 from pathlib import Path
 
 from torch import nn
@@ -46,7 +47,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
 # datamodule
-root = Path("data")
+root = Path(os.environ.get("TU_DATA_DIR", "data"))
 datamodule = MNISTDataModule(root, batch_size=128)
 
 

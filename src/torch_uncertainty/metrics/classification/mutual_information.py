@@ -22,7 +22,20 @@ class MutualInformation(Metric):
         r"""Compute the Mutual Information Metric.
 
         The Mutual Information Metric estimates the epistemic uncertainty of an
-        ensemble of estimators.
+        ensemble of estimators. Given per-estimator predicted probabilities
+        :math:`\hat{\mathbf{p}}_n \in \Delta^{C-1}` for :math:`n = 1, \dots, N`,
+        it decomposes the total predictive uncertainty into an epistemic term:
+
+        .. math::
+
+            \text{MI} = H\!\left(\frac{1}{N}\sum_{n=1}^{N} \hat{\mathbf{p}}_n\right)
+            - \frac{1}{N}\sum_{n=1}^{N} H(\hat{\mathbf{p}}_n)
+
+        where :math:`H(\mathbf{p}) = -\sum_{c=1}^{C} p_c \log p_c` is the
+        Shannon entropy. The first term is the entropy of the ensemble mean
+        (total uncertainty) and the second is the mean entropy of individual
+        estimators (aleatoric uncertainty), so their difference captures the
+        epistemic uncertainty due to model disagreement.
 
         Args:
             reduction: Determines how to reduce over the :math:`B`/batch dimension:

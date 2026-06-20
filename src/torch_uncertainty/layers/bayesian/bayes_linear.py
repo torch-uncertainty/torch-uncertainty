@@ -11,8 +11,8 @@ class BayesLinear(nn.Module):
     in_features: int
     out_features: int
     weight: Tensor
-    lprior: Tensor
-    lvposterior: Tensor
+    log_prior: Tensor
+    log_variational_posterior: Tensor
 
     def __init__(
         self,
@@ -101,12 +101,12 @@ class BayesLinear(nn.Module):
         if self.bias_mu is not None:
             bias = self.bias_sampler.sample()
             bias_lposterior = self.bias_sampler.log_posterior()
-            bias_lprior = self.bias_prior_dist.log_prob(bias)
+            bias_log_prior = self.bias_prior_dist.log_prob(bias)
         else:
-            bias, bias_lposterior, bias_lprior = None, 0, 0
+            bias, bias_lposterior, bias_log_prior = None, 0, 0
 
-        self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
-        self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
+        self.log_variational_posterior = self.weight_sampler.log_posterior() + bias_lposterior
+        self.log_prior = self.weight_prior_dist.log_prob(weight) + bias_log_prior
 
         return F.linear(inputs, weight, bias)
 

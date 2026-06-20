@@ -17,13 +17,15 @@ from torch_uncertainty.utils.trainer import TUTrainer
 
 
 class TUSaveConfigCallback(SaveConfigCallback):
+    """To be used with TensorBoardLogger to avoid writing unnecessary config files."""
+
     @override
     def setup(self, trainer: Trainer, pl_module: LightningModule, stage: str) -> None:
         if self.already_saved:
             return
 
         if self.save_to_log_dir and stage == "fit":
-            log_dir = trainer.log_dir  # this broadcasts the directory
+            log_dir = trainer.log_dir
             assert log_dir is not None
             config_path = Path(log_dir) / self.config_filename
             fs = get_filesystem(log_dir)
@@ -64,7 +66,7 @@ class TULightningCLI(LightningCLI):
         datamodule_class: (
             type[LightningDataModule] | Callable[..., LightningDataModule] | None
         ) = None,
-        save_config_callback: type[SaveConfigCallback] | None = TUSaveConfigCallback,
+        save_config_callback: type[SaveConfigCallback] | None = None,
         save_config_kwargs: dict[str, Any] | None = None,
         trainer_class: type[Trainer] | Callable[..., Trainer] = TUTrainer,
         trainer_defaults: dict[str, Any] | None = None,

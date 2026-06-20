@@ -32,6 +32,7 @@ We also need to define an optimizer using torch.optim, the neural network utils 
 """
 
 # %%
+import os
 from pathlib import Path
 
 import torch
@@ -58,7 +59,7 @@ BATCH_SIZE = 512
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # datamodule
-root = Path() / "data"
+root = Path(os.environ.get("TU_DATA_DIR", "data"))
 datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, num_workers=8)
 
 model = lenet(

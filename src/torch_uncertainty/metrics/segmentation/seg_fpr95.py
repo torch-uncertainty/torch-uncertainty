@@ -14,13 +14,24 @@ class SegmentationFPR95(Metric):
     total: Tensor
 
     def __init__(self, pos_label: int, **kwargs) -> None:
-        """FPR95 metric for segmentation tasks.
+        r"""Image-averaged FPR@95 TPR for dense binary segmentation tasks.
 
-        Compute the mean FPR95 per batch across all batches.
+        For each image, a per-pixel False Positive Rate at 95% True Positive Rate is
+        computed (see :class:`~torch_uncertainty.metrics.classification.FPR95`) from
+        the pixel scores and binary OOD labels. The metric is then averaged over the
+        :math:`B` images of the test set:
+
+        .. math::
+            \text{FPR95} = \frac{1}{B} \sum_{b=1}^{B} \text{FPR95}_b.
+
+        Image-wise averaging is the convention used in the dense OOD-detection
+        literature.
 
         Args:
-            pos_label: The positive label in the segmentation OOD detection task.
-            **kwargs: Additional keyword arguments for the FPR95 metric.
+            pos_label: The positive label in the segmentation OOD detection task
+                (typically ``1`` for OOD pixels).
+            kwargs: Additional keyword arguments for the underlying
+                :class:`~torch_uncertainty.metrics.classification.FPR95` metric.
         """
         super().__init__(**kwargs)
         self.fpr95_metric = FPR95(pos_label, **kwargs)

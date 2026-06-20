@@ -1,23 +1,42 @@
 import contextlib
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 import torch
 from huggingface_hub.errors import (
     HfHubHTTPError,
     RepositoryNotFoundError,
 )
+from lightning.pytorch.loggers import MLFlowLogger
+from matplotlib.figure import Figure
 
 from torch_uncertainty.utils import (
     csv_writer,
     distributions,
+    get_logger_dir,
     get_version,
     hub,
+    log_figure,
+    log_image_array,
     plot_hist,
     plot_per_class_accuracy,
 )
 from torch_uncertainty.utils.distributions import TUStudentT
+
+
+def _make_mlflow_logger(save_dir: str | None = "mlruns") -> MagicMock:
+    """Return a MagicMock that passes isinstance(…, MLFlowLogger) checks."""
+    logger = MagicMock()
+    logger.__class__ = MLFlowLogger
+    logger.save_dir = save_dir
+    logger.name = "0"
+    logger.version = "abc123def456"
+    logger.run_id = "abc123def456"
+    logger.experiment = MagicMock()
+    return logger
 
 
 class TestUtils:
@@ -98,6 +117,86 @@ class TestMisc:
         assert "Per-Class Accuracy" in ax.get_title()
         assert "/" not in ax.get_title()
         plt.close(fig)
+
+
+class TestMiscLoggers:
+    """Tests for the logger-aware helper functions in misc.py."""
+
+    # --- get_logger_dir ---
+
+    def test_get_logger_dir_mlflow_local(self, tmp_path) -> None:
+        logger = _make_mlflow_logger(save_dir=str(tmp_path))
+        result = get_logger_dir(logger)
+        assert result == tmp_path / "0" / "abc123def456" / "artifacts"
+
+    def test_get_logger_dir_mlflow_remote(self) -> None:
+        logger = _make_mlflow_logger(save_dir=None)
+        assert get_logger_dir(logger) is None
+
+    def test_get_logger_dir_log_dir(self, tmp_path) -> None:
+        logger = MagicMock(spec=["log_dir", "experiment"])
+        logger.log_dir = str(tmp_path / "tb_logs")
+        assert get_logger_dir(logger) == tmp_path / "tb_logs"
+
+    def test_get_logger_dir_save_dir_fallback(self, tmp_path) -> None:
+        logger = MagicMock(spec=["save_dir", "experiment"])
+        logger.save_dir = str(tmp_path / "save_logs")
+        assert get_logger_dir(logger) == tmp_path / "save_logs"
+
+    def test_get_logger_dir_no_dir(self) -> None:
+        logger = MagicMock(spec=["experiment"])
+        assert get_logger_dir(logger) is None
+
+    # --- log_figure ---
+
+    def test_log_figure_mlflow(self) -> None:
+        logger = _make_mlflow_logger()
+        fig = MagicMock(spec=Figure)
+        log_figure(logger, "Reliability diagram", fig)
+        logger.experiment.log_figure.assert_called_once_with(
+            "abc123def456", fig, "Reliability diagram.png"
+        )
+
+    def test_log_figure_tensorboard(self) -> None:
+        logger = MagicMock()
+        logger.experiment = MagicMock()
+        fig = MagicMock(spec=Figure)
+        log_figure(logger, "some tag", fig)
+        logger.experiment.add_figure.assert_called_once_with("some tag", fig)
+
+    def test_log_figure_noop(self) -> None:
+        logger = MagicMock()
+        del logger.experiment.add_figure
+        logger.experiment = MagicMock(spec=[])
+        fig = MagicMock(spec=Figure)
+        log_figure(logger, "tag", fig)  # must not raise
+
+    # --- log_image_array ---
+
+    def test_log_image_array_mlflow(self) -> None:
+        logger = _make_mlflow_logger()
+        img = np.zeros((4, 4, 3), dtype=np.uint8)
+        log_image_array(logger, "depth/samples", img, step=0)
+        logger.experiment.log_image.assert_called_once_with(
+            "abc123def456", img, "depth/samples.png"
+        )
+
+    def test_log_image_array_tensorboard(self) -> None:
+        logger = MagicMock()
+        logger.experiment = MagicMock()
+        img = np.zeros((4, 4, 3), dtype=np.uint8)
+        log_image_array(logger, "depth/samples", img, step=2)
+        call_args = logger.experiment.add_image.call_args
+        assert call_args[0][0] == "depth/samples"
+        assert call_args[1]["global_step"] == 2
+        logged = call_args[0][1]
+        assert logged.shape == (3, 4, 4)  # transposed to (C, H, W)
+
+    def test_log_image_array_noop(self) -> None:
+        logger = MagicMock()
+        logger.experiment = MagicMock(spec=[])
+        img = np.zeros((4, 4, 3), dtype=np.uint8)
+        log_image_array(logger, "tag", img)  # must not raise
 
 
 class TestDistributions:

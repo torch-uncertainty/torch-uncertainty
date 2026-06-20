@@ -39,6 +39,7 @@ neural network utils from torch.nn.
 """
 
 # %%
+import os
 from pathlib import Path
 
 from torch import nn, optim
@@ -66,7 +67,7 @@ MAX_EPOCHS = 2
 trainer = TUTrainer(accelerator="gpu", devices=1, enable_progress_bar=False, max_epochs=MAX_EPOCHS)
 
 # datamodule
-root = Path("data")
+root = Path(os.environ.get("TU_DATA_DIR", "data"))
 datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, num_workers=8)
 
 # model

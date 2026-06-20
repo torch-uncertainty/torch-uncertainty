@@ -1,2 +1,14 @@
 # ruff: noqa: F401
-from .uci_regression import UCIRegression
+from .tabular import (
+    BostonHousing,
+    Concrete,
+    EnergyEfficiency,
+    EnergyPrediction,
+    Kin8NM,
+    NavalPropulsionPlant,
+    PowerPlant,
+    Protein,
+    TabularRegressionDataset,
+    WineQuality,
+    Yacht,
+)

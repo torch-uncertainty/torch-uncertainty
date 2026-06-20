@@ -46,11 +46,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 200
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.MLFlowLogger
     init_args:
-      save_dir: logs/wideresnet28x10
-      name: mixup
-      default_hp_metric: false
+      experiment_name: mixup
+      tracking_uri: logs/wideresnet28x10
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -124,11 +123,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 200
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.MLFlowLogger
     init_args:
-      save_dir: logs/wideresnet28x10
-      name: mixup_ensemble
-      default_hp_metric: false
+      experiment_name: mixup_ensemble
+      tracking_uri: logs/wideresnet28x10
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor
@@ -198,11 +196,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 200
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.MLFlowLogger
     init_args:
-      save_dir: logs/wideresnet28x10
-      name: mixupmp
-      default_hp_metric: false
+      experiment_name: mixupmp
+      tracking_uri: logs/wideresnet28x10
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

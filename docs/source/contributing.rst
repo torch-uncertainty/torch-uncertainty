@@ -7,22 +7,22 @@ Contributing
 .. role:: cmd(code)
     :language: bash
 
-TorchUncertainty is in early development stage. We are looking for
+TorchUncertainty is in an early development stage. We are looking for
 contributors to help us build a comprehensive library for uncertainty
 quantification in PyTorch.
 
-We are particularly open to any comment that you would have on this project.
-Specifically, we are open to changing these guidelines as the project evolves.
+We are particularly open to any comment you may have on this project, and we are open to
+revising these guidelines as the project evolves.
 
 The scope of TorchUncertainty
 -----------------------------
 
-TorchUncertainty can host any method - if possible linked to a paper - and
-roughly contained in the following fields:
+TorchUncertainty can host any method — ideally linked to a paper — that fits in one of the
+following fields:
 
-* Uncertainty quantification in general, including Bayesian deep learning, Monte Carlo dropout, ensemble methods, etc.
-* Out-of-distribution detection methods
-* Applications (e.g. object detection, segmentation, etc.)
+* uncertainty quantification in general, including Bayesian deep learning, Monte Carlo dropout, ensemble methods, etc.;
+* out-of-distribution detection methods;
+* applications (e.g., object detection, segmentation, depth estimation, etc.).
 
 Common guidelines
 -----------------
@@ -30,9 +30,9 @@ Common guidelines
 Clean development install of TorchUncertainty
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are interested in contributing to torch_uncertainty, we first advise you
-to follow the following steps to reproduce a clean development environment
-ensuring continuous integration does not break.
+If you are interested in contributing to TorchUncertainty, we recommend the
+following steps to set up a clean development environment and ensure that the
+continuous integration does not break.
 
 1. Install ``uv`` following the steps `here <https://docs.astral.sh/uv/getting-started/installation/>`_
 2. Clone the repository
@@ -63,11 +63,11 @@ Guidelines
 
 **Code quality**
 
-We use ruff for code formatting, linting, and imports (as a drop-in
+We use ruff for code formatting, linting, and import sorting (as a drop-in
 replacement for black, isort, and flake8). The pre-commit hooks will ensure
 that your code is properly formatted and linted before committing.
 
-To ensure that your code complies with the standards, run the following and check for warnings:
+To check that your code complies with the standards, run the following and address any warnings:
 
 .. parsed-literal::
 
@@ -79,9 +79,9 @@ And then:
 
     uv run ruff format
 
-Please ensure that the tests are passing on your machine before pushing on a
-PR. This will avoid multiplying the number of featureless commits. To do this,
-run, at the root of the folder:
+Please ensure that the tests pass on your machine before pushing a PR. This avoids
+adding featureless commits just to chase CI. To run the tests, from the root of the
+repository:
 
 .. parsed-literal::
 
@@ -224,8 +224,8 @@ Check that your PR complies with the following conditions:
 * Your code is mostly original, and the parts coming from licensed sources are explicitly stated as such
 * If you implement a method, please add a reference to the corresponding paper in the
   `references page <https://torch-uncertainty.github.io/references.html>`_.
-* Also, remember to add TorchUncertainty to the list of libraries implementing this reference
-  on `PapersWithCode <https://paperswithcode.com>`_.
+* If you implement a metric that you add to one of the routines, add a reference in the 
+  `evaluation page <https://torch-uncertainty.github.io/evaluation.html>`_.
 
 If you need help to implement a method, increase the coverage, or solve ruff-raised errors,
 create the PR with the ``need-help`` flag and explain your problems in the comments. A maintainer

@@ -19,24 +19,46 @@ class ConformalClsAPS(Conformal):
         enable_ts: bool = True,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        r"""Conformal prediction with APS scores.
+        r"""Conformal classification with Adaptive Prediction Sets (APS;
+        Romano, Sesia & Candès, NeurIPS 2020).
+
+        Uses as non-conformity score the cumulative probability mass needed to reach
+        the true class once the predictions are sorted by decreasing probability. For
+        a sample with predicted probabilities :math:`\hat{\mathbf{p}}` whose true class
+        ranks at position :math:`k` after sorting,
+
+        .. math::
+            s(\mathbf{x}, y) = \sum_{i=1}^{k} \hat{p}_{(i)} - U \cdot \hat{p}_{(k)},
+
+        where :math:`U \sim \mathrm{Uniform}(0, 1)` smooths the cumulative score when
+        :attr:`randomized` is ``True``. The calibrated quantile :math:`\hat{q}` defines
+        the test-time prediction set
+
+        .. math::
+            \mathcal{C}(\mathbf{x}) = \{ c : s(\mathbf{x}, c) \leq \hat{q} \},
+
+        which adapts in size to the difficulty of each example: easy points get tight
+        sets, ambiguous points get larger ones.
 
         Args:
-            alpha: The confidence level meaning we allow :math:`1-\alpha` error.
+            alpha: Target mis-coverage level :math:`\alpha \in (0, 1)`.
             model: Trained classification model. Defaults to ``None``.
-            randomized: Whether to use randomized smoothing in APS. Defaults to ``True``.
+            randomized: Whether to use randomised tie-breaking in APS. Defaults to ``True``.
             ts_init_val: Initial value for the temperature. Defaults to ``1.0``.
             ts_lr: Learning rate for the temperature scaling optimizer. Defaults to ``0.1``.
             ts_max_iter: Maximum number of iterations for the temperature scaling optimizer.
                 Defaults to ``100``.
-            enable_ts: Whether to scale the logits. Defaults to ``False``.
-            device: device. Defaults to ``None``.
+            enable_ts: Whether to apply temperature scaling to the logits before
+                computing the conformal scores. Defaults to ``True``.
+            device: Device to use. Defaults to ``None``.
 
         Warning:
-            This implementation only works in the multiclass setting. Raise an issue if binary is needed.
+            This implementation only works in the multiclass setting. Raise an issue
+            if binary support is needed.
 
         Reference:
-            - TODO:
+            - `Romano, Y., Sesia, M., & Candès, E. (2020). Classification with Valid
+              and Adaptive Coverage. NeurIPS 2020 <https://arxiv.org/abs/2006.02544>`_.
 
         Code inspired by TorchCP.
         """

@@ -75,7 +75,7 @@ class LPBNNLinear(nn.Module):
         self.num_estimators = num_estimators
 
         # for the KL Loss
-        self.lprior = 0
+        self.log_prior = 0
 
         self.linear = nn.Linear(in_features, out_features, bias=False, **factory_kwargs)
         self.alpha = nn.Parameter(
@@ -124,7 +124,7 @@ class LPBNNLinear(nn.Module):
             mse = F.mse_loss(alpha_sample, self.alpha)
             kld = -0.5 * torch.sum(1 + latent_logvar - latent_mean**2 - torch.exp(latent_logvar))
             # For the KL Loss
-            self.lvposterior = mse + kld
+            self.log_variational_posterior = mse + kld
 
         # Compute the output
         num_examples_per_model = int(x.size(0) / self.num_estimators)
@@ -197,7 +197,7 @@ class LPBNNConv2d(nn.Module):
         self.num_estimators = num_estimators
 
         # for the KL Loss
-        self.lprior = 0
+        self.log_prior = 0
 
         self.conv = nn.Conv2d(
             in_channels,
@@ -262,7 +262,7 @@ class LPBNNConv2d(nn.Module):
             mse = F.mse_loss(alpha_sample, self.alpha)
             kld = -0.5 * torch.sum(1 + latent_logvar - latent_mean.pow(2) - latent_logvar.exp())
             # for the KL Loss
-            self.lvposterior = mse + kld
+            self.log_variational_posterior = mse + kld
 
         num_examples_per_model = int(x.size(0) / self.num_estimators)
 

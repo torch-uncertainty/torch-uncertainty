@@ -24,39 +24,48 @@ class BBQScaler(PostProcessing):
         eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Bayesian Binning into Quantiles (BBQ) post-processing.
+        r"""Bayesian Binning into Quantiles (BBQ) post-processing (Naeini et al., AAAI 2015).
 
-        BBQ is a non-parametric calibration method that extends histogram
-        binning by considering multiple equal-frequency binning models
-        (differing in the number of bins). It computes a weighted average of
-        the predictions from all models, where the weights are the posterior
-        probabilities of the binning models given the calibration data.
+        BBQ extends histogram binning by considering an ensemble of equal-frequency
+        binning models with a different number of bins :math:`M \in \{2, \dots, M_\max\}`,
+        and combining their predictions through a Bayesian model average:
 
-        For multiclass inputs, this scaler strictly utilizes a One-vs-Rest (OvR)
-        strategy, fitting independent Bayesian ensembles per class.
+        .. math::
+            \tilde{p}(\hat{p}) = \sum_{M=2}^{M_\max} w_M \cdot \tilde{p}_M(\hat{p}),
+            \quad w_M \propto p(\mathcal{D} \mid M),
+
+        where :math:`\tilde{p}_M` is the calibrated probability from the
+        :math:`M`-bin histogram binning and :math:`p(\mathcal{D} \mid M)` is the
+        marginal likelihood of the calibration data under a Dirichlet prior with
+        equivalent sample size :attr:`prior_weight`. Compared to plain histogram
+        binning, BBQ avoids the need to commit to a single number of bins.
+
+        For multi-class inputs, this scaler uses a One-vs-Rest (OvR) strategy: an
+        independent BBQ ensemble is fit per class and the resulting probabilities are
+        renormalised.
 
         Args:
             model: Model to calibrate. Defaults to ``None``.
-            max_bins: The maximum number of bins to consider. The scaler
-                will evaluate all binning schemes from 2 up to ``max_bins``.
+            max_bins: The maximum number of bins :math:`M_\max` to consider. The
+                scaler evaluates all binning schemes from 2 up to ``max_bins``.
                 Defaults to ``15``.
-            prior_weight: The equivalent sample size ($N'$) for the
-                uniform prior distributed across bins to penalize models with
-                too many bins. Defaults to ``2.0``(the value used in the original) paper.
-            model_pruning: Prune a model if its weight is below :attr:`model_pruning`.
-                Do not prune if ``None``. Defaults to ``1e-9``.
+            prior_weight: The equivalent sample size :math:`N'` for the uniform
+                Dirichlet prior over bins. Larger values penalise models with too
+                many bins. Defaults to ``2.0`` (the value used in the original paper).
+            model_pruning: Prune a model if its posterior weight is below
+                :attr:`model_pruning`. Do not prune if ``None``. Defaults to ``1e-9``.
             eps: Small value for stability when converting probs back to logits.
                 Defaults to ``1e-6``.
             device: Device to use for tensor operations. Defaults to ``None``.
 
         References:
-            [1] Obtaining Well Calibrated Probabilities Using Bayesian Binning.
-            In AAAI 2015.
+            [1] `Naeini, M. P., Cooper, G. F., & Hauskrecht, M. (2015). Obtaining well
+            calibrated probabilities using Bayesian binning. AAAI 2015
             <https://www.dbmi.pitt.edu/wp-content/uploads/2022/10/Obtaining-well-calibrated-probabilities-using-Bayesian-binning.pdf>`_.
 
-        Remark:
-            This implementation will work better with a limited number of classes.
-            Otherwise, the equal-frequency bins will be imprecise for high-confidence
+        Warning:
+            This implementation works best with a limited number of classes. With many
+            classes, the equal-frequency bins become imprecise for high-confidence
             values.
         """
         super().__init__(model)

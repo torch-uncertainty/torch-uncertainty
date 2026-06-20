@@ -7,11 +7,10 @@ trainer:
   precision: 16-mixed
   max_epochs: 10
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.MLFlowLogger
     init_args:
-      save_dir: logs/lenet_trajectory
-      name: standard
-      default_hp_metric: false
+      experiment_name: standard
+      tracking_uri: sqlite:///logs/lenet_trajectory
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUClsCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

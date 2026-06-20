@@ -43,6 +43,8 @@ Here is the outline of the process:
 """
 
 # %%
+import os
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -68,12 +70,12 @@ MAX_EPOCHS = 3
 BATCH_SIZE = 256
 
 trainset = torchvision.datasets.CIFAR10(
-    root="./data", train=True, download=True, transform=transform
+    root=os.environ.get("TU_DATA_DIR", "data"), train=True, download=True, transform=transform
 )
 trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8)
 
 testset = torchvision.datasets.CIFAR10(
-    root="./data", train=False, download=True, transform=transform
+    root=os.environ.get("TU_DATA_DIR", "data"), train=False, download=True, transform=transform
 )
 testloader = DataLoader(testset, batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
 

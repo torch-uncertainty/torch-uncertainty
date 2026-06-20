@@ -6,11 +6,10 @@ trainer:
   devices: 1
   max_epochs: 50
   logger:
-    class_path: lightning.pytorch.loggers.TensorBoardLogger
+    class_path: lightning.pytorch.loggers.MLFlowLogger
     init_args:
-      save_dir: logs/muad-small/unet
-      name: standard
-      default_hp_metric: false
+      experiment_name: standard
+      tracking_uri: sqlite:///logs/muad-small/unet
   callbacks:
     - class_path: torch_uncertainty.callbacks.TUSegCheckpoint
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

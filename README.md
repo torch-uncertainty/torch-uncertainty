@@ -11,25 +11,25 @@
 [![Downloads](https://static.pepy.tech/badge/torch-uncertainty)](https://pepy.tech/project/torch-uncertainty)
 </div>
 
-_TorchUncertainty_ is a package designed to help leverage [uncertainty quantification techniques](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning) to make deep neural networks more reliable. It aims at being collaborative and including as many methods as possible, so reach out to add yours!
+_TorchUncertainty_ is a package designed to help leverage [uncertainty quantification techniques](https://github.com/ENSTA-U2IS-AI/awesome-uncertainty-deeplearning) to make deep neural networks more reliable. It aims to be collaborative and to include as many methods as possible — so reach out to add yours!
 
-_TorchUncertainty_ is in development: expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [discord server](https://discord.gg/HMCawt5MJu).**
+_TorchUncertainty_ is in active development: expect changes, but reach out and contribute if you are interested in the project! **Please raise an issue if you have any bugs or difficulties and join the [Discord server](https://discord.gg/HMCawt5MJu).**
 
-Our webpage and documentation is available here: [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
+Our website and documentation are available at [torch-uncertainty.github.io](https://torch-uncertainty.github.io). :books:
 
-TorchUncertainty contains the _official implementations_ of multiple papers from _major machine-learning and computer vision conferences_ and was featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
+TorchUncertainty contains the _official implementations_ of multiple papers from _major machine-learning and computer-vision conferences_ and was featured in tutorials at **[WACV](https://wacv2024.thecvf.com/) 2024**, **[HAICON](https://haicon24.de/) 2024** and **[ECCV](https://eccv.ecva.net/) 2024**.
 
-Torch-Uncertainty is published at [NeurIPS D&B 2025](https://neurips.cc/virtual/2025/loc/san-diego/poster/121463). Please consider citing the paper if the framework is helpful for your research.
+Torch-Uncertainty was published at [NeurIPS D&B 2025](https://neurips.cc/virtual/2025/loc/san-diego/poster/121463). Please consider citing the paper if the framework is helpful for your research.
 
 ---
 
 This package provides a multi-level API, including:
 
-- easy-to-use :zap: lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, and segmentation.
-- fully automated evaluation of the performance of models with proper scores, selective classification, out-of-distribution detection and distribution shift performance metrics!
-- **layers**, **models**, **metrics**, & **losses** available for your networks
-- scikit-learn style post-processing methods such as Temperature Scaling.
-- transformations and augmentations, including corruptions resulting in additional "corrupted datasets" available on [HuggingFace](https://huggingface.co/torch-uncertainty)
+- easy-to-use :zap: Lightning **uncertainty-aware** training & evaluation routines for **4 tasks**: classification, probabilistic and pointwise regression, segmentation, and pixelwise regression (e.g., monocular depth estimation);
+- fully automated evaluation of models with proper scores, calibration, selective classification, out-of-distribution detection and distribution-shift metrics — see the [Evaluating Models](https://torch-uncertainty.github.io/evaluation.html) page;
+- **layers**, **models**, **metrics**, & **losses** ready to drop into your networks;
+- scikit-learn-style post-processing methods such as temperature scaling and conformal prediction;
+- transformations and augmentations, including a set of corruptions used to build "corrupted datasets" hosted on [HuggingFace](https://huggingface.co/torch-uncertainty).
 
 Have a look at the [Reference page](https://torch-uncertainty.github.io/references.html) or the [API reference](https://torch-uncertainty.github.io/api.html) for a more exhaustive list of the implemented methods, datasets, metrics, etc.
 
@@ -46,8 +46,8 @@ The installation procedure for contributors is different: have a look at the [co
 
 ### :whale: Docker image for contributors
 
-For contributors running experiments on cloud GPU instances, we provide a pre-built Docker image that includes all necessary dependencies and configurations and the Dockerfile for building your custom Docker images.
-This allows you to quickly launch an experiment-ready container with minimal setup. Please refer to [DOCKER.md](docker/DOCKER.md) for further details.
+For contributors running experiments on cloud GPU instances, we provide a pre-built Docker image with all the necessary dependencies and a Dockerfile to build your own custom images.
+This lets you launch an experiment-ready container with minimal setup. See [DOCKER.md](docker/DOCKER.md) for further details.
 
 ## :racehorse: Quickstart
 
@@ -61,11 +61,11 @@ We also provide the following methods:
 
 ### Uncertainty quantification models
 
-To date, the following deep learning uncertainty quantification modes have been implemented. **Click** :inbox_tray: **on the methods for tutorials**:
+To date, the following deep-learning uncertainty quantification methods have been implemented. **Click** :inbox_tray: **on the methods for tutorials**:
 
 - [Deep Ensembles](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_from_de_to_pe.html), BatchEnsemble, Masksembles, & MIMO
 - [MC-Dropout](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_mc_dropout.html)
-- [Packed-Ensembles](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_from_de_to_pe.html) (see [Blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
+- [Packed-Ensembles](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_from_de_to_pe.html) (see the [blog post](https://medium.com/@adrien.lafage/make-your-neural-networks-more-reliable-with-packed-ensembles-7ad0b737a873))
 - Mixup Ensembles and MixupMP
 - [Variational Bayesian Neural Networks](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_bayesian.html)
 - Checkpoint Ensembles & Snapshot Ensembles
@@ -78,30 +78,32 @@ To date, the following deep learning uncertainty quantification modes have been 
 
 The following data augmentation methods have been implemented:
 
-- Mixup, MixupIO, RegMixup, WarpingMixup
-- Modernized corruptions to evaluate model performance under distribution shift
+- Mixup, MixupIO, RegMixup, and WarpingMixup
+- modernized corruptions to evaluate model performance under distribution shift
 
 ### Post-processing methods
 
 To date, the following post-processing methods have been implemented:
 
-- [Temperature, Vector, Matrix scaling, & Dirichlet calibration](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_temperature.html)
+- [Temperature, vector, and matrix scaling, & Dirichlet calibration](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_temperature.html)
 - [Histogram binning, isotonic regression, and Bayesian binning into quantiles](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_scalers.html)
 - [Conformal Predictions](https://torch-uncertainty.github.io/auto_tutorials/Post_Hoc_Methods/tutorial_conformal.html) with APS and RAPS
+- [DEUP (Direct Epistemic Uncertainty Prediction)](https://github.com/ursinasanderink/deup) — error-predictor post-hoc epistemic scores
 - [Monte Carlo Batch Normalization](https://torch-uncertainty.github.io/auto_tutorials/Bayesian_Methods/tutorial_mc_batch_norm.html)
 - Laplace approximation through the [Laplace library](https://github.com/aleximmer/Laplace)
 
 ### Metrics
 
-The following metrics have been implemented:
+The following metrics have been implemented (see the [Evaluating Models](https://torch-uncertainty.github.io/evaluation.html) page for the full breakdown per task):
 
-- proper scores: Brier score, Categorical NLL
-- out-of-distribution detection: FPR95%
-- calibration: ECE with improved reliability diagrams, SmoothECE, Adaptive ECE, Classwise ECE, and QuantileCalibration for regression
+- proper scores: Brier score, Categorical NLL, distribution NLL
+- out-of-distribution detection: AUROC, AUPR, FPR95
+- selective classification with OOD: SCOD-AURC, SCOD-AUGRC, SCOD-CovAt5%Risk, SCOD-RiskAt80%Cov
+- calibration: ECE with improved reliability diagrams, SmoothECE, Adaptive ECE, Classwise ECE, and QuantileCalibrationError for regression
 - selective classification: AURC, AUGRC, CovAt5%Risk, RiskAt80%Cov
 - conformal predictions: CoverageRate, SetSize
-- prediction diversity: Disagreement, Entropy, MutualInformation
-- multiple pixel regression and segmentation metrics 
+- prediction diversity: Disagreement, Entropy, MutualInformation, VariationRatio
+- multiple pixelwise-regression and segmentation metrics
 
 
 ### Official Implementations
@@ -119,6 +121,8 @@ Check out all our tutorials at [torch-uncertainty.github.io/auto_tutorials](http
 ## Experiments
 
 We provide some configuration files in the `experiments` folder. You may find more examples in other repositories related to the Torch-Uncertainty organization, such as the [Packed-Ensembles reproducibility repo.](https://github.com/torch-uncertainty/packed-ensembles-ICLR-experiments) or the [Torch-Uncertainty reproducibility repo](https://github.com/torch-uncertainty/torch-uncertainty-neurIPS-experiments).
+
+Experiment results are tracked with [MLflow](https://mlflow.org). After running an experiment, launch `mlflow ui` (or `mlflow ui --backend-store-uri sqlite:///logs/<name>` for the SQLite configs) and open `http://localhost:5000` to compare runs, inspect metric curves, and browse logged artifacts. See the [MLflow Guide](https://torch-uncertainty.github.io/mlflow_guide.html) for full details.
 
 ## :telescope: Projects using TorchUncertainty
 

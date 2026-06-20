@@ -28,6 +28,23 @@ class AURC(Metric):
         discriminate between correct and incorrect predictions based on their
         rank (and not their values in contrast with calibration).
 
+        Let :math:`\sigma` be the permutation sorting the :math:`N` samples by
+        descending top-class confidence, so that
+        :math:`\hat{p}_{\sigma(1)} \geq \cdots \geq \hat{p}_{\sigma(N)}`.
+        The error rate at coverage :math:`\kappa = k/N` is
+
+        .. math::
+
+            r\!\left(\tfrac{k}{N}\right) = \frac{1}{k}
+            \sum_{i=1}^{k} \mathbf{1}\!\left[\hat{y}_{\sigma(i)} \neq y_{\sigma(i)}\right]
+
+        and the AURC is
+
+        .. math::
+
+            \text{AURC} = \int_0^1 r(\kappa)\,\mathrm{d}\kappa
+            \approx \frac{1}{N} \sum_{k=1}^{N} r\!\left(\tfrac{k}{N}\right)
+
         As input to ``forward`` and ``update`` the metric accepts the following input:
 
         - **preds** (:class:`~torch.Tensor`): A float tensor of shape
@@ -183,7 +200,16 @@ class AUGRC(AURC):
         r"""Calculate The Area Under the Generalized Risk-Coverage curve (AUGRC).
 
         The Area Under the Generalized Risk-Coverage curve (AUGRC) for selective classification
-        performance assessment. It avoids putting too much weight on the most confident samples.
+        performance assessment. Unlike AURC, it weights the error rate at each coverage level
+        by the coverage itself, reducing the influence of the most confident samples and
+        making the metric more sensitive to performance at intermediate coverage levels.
+
+        Using the same notation as :class:`AURC`, the AUGRC is defined as
+
+        .. math::
+
+            \text{AUGRC} = \int_0^1 \kappa \cdot r(\kappa)\,\mathrm{d}\kappa
+            \approx \frac{1}{N} \sum_{k=1}^{N} \frac{k}{N} \cdot r\!\left(\tfrac{k}{N}\right)
 
         As input to ``forward`` and ``update`` the metric accepts the following input:
 
@@ -478,11 +504,15 @@ class RiskAt80Cov(RiskAtxCov):
     def __init__(self, **kwargs) -> None:
         r"""Compute the risk at 80% coverage.
 
-        This is a specific case of the more general :class:`RiskAtxCov` metric, where the coverage level is fixed at 80%.
+        The risk at 80% coverage is the error rate among the 80% most confident
+        predictions. Samples are ranked by descending top-class confidence and
+        the error rate is computed over the top 80%.
+
+        This is a specific case of the more general :class:`RiskAtxCov` metric,
+        where the coverage level is fixed at 80%.
 
         .. seealso::
             - :class:`RiskAtxCov` : Parent class, the RiskAtxCov metric
-
         """
         super().__init__(cov_threshold=0.8, **kwargs)
 

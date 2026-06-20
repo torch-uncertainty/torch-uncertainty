@@ -33,8 +33,8 @@ RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
     echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
 
-# Expose port 8888 for TensorBoard and Jupyter Notebook and port 22 for SSH
-EXPOSE 8888 22
+# Expose port 5000 for MLflow UI and port 8888 for Jupyter Notebook and port 22 for SSH
+EXPOSE 5000 8888 22
 
 # Entrypoint script (runs every time the container starts)
 COPY docker/entrypoint.sh /usr/local/bin/

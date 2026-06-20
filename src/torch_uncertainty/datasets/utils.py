@@ -1,8 +1,60 @@
 import copy
+import gzip
+import io
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from torch.utils.data import Dataset, random_split
+
+
+def load_arff(path: Path) -> pd.DataFrame:
+    """Parse an ARFF file into a pandas DataFrame.
+
+    Handles both plain text and gzip-compressed ARFF files.
+    """
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            content = f.read()
+    except (gzip.BadGzipFile, OSError):
+        with path.open(encoding="utf-8") as f:
+            content = f.read()
+
+    col_names = []
+    data_start = 0
+    lines = content.splitlines()
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        lower = stripped.lower()
+        if not stripped or stripped.startswith("%"):
+            continue
+        if lower.startswith("@relation"):
+            continue
+        if lower.startswith("@attribute"):
+            parts = stripped.split(None, 2)
+            col_names.append(parts[1].strip("'\""))
+        elif lower.startswith("@data"):
+            data_start = i + 1
+            break
+
+    if not col_names or data_start == 0:
+        raise ValueError(
+            f"Could not parse ARFF file '{path}': no @attribute or @data section found. "
+            "The file may be corrupt or not a valid ARFF file. "
+            "Delete the cached file and re-download."
+        )
+
+    data_content = "\n".join(lines[data_start:])
+    return pd.read_csv(
+        io.StringIO(data_content),
+        header=None,
+        names=col_names,
+        na_values=["?", ""],
+        skipinitialspace=True,
+        quotechar="'",
+    )
 
 
 def create_train_val_split(

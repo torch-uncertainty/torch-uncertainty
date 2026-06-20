@@ -19,18 +19,19 @@ First, we have to load the following utilities from TorchUncertainty:
 
 - the TUTrainer which mostly handles the link with the hardware (accelerators, precision, etc)
 - the regression training & evaluation routine from torch_uncertainty.routines
-- the datamodule handling dataloaders: UCIRegressionDataModule from torch_uncertainty.datamodules
+- the datamodule handling dataloaders: TabularRegressionDatamodule from torch_uncertainty.datamodules
 - the model: mlp from torch_uncertainty.models
 """
 
 # %%
+import os
 from pathlib import Path
 
 import torch
 from torch import nn
 
 from torch_uncertainty import TUTrainer
-from torch_uncertainty.datamodules import UCIRegressionDataModule
+from torch_uncertainty.datamodules.tabular_regression import YachtDataModule
 from torch_uncertainty.models.mlp import mlp
 from torch_uncertainty.routines import RegressionRoutine
 
@@ -44,8 +45,8 @@ from torch_uncertainty.routines import RegressionRoutine
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=20, enable_progress_bar=False)
 
 # datamodule providing the dataloaders to the trainer, specifically we use the yacht dataset
-datamodule = UCIRegressionDataModule(
-    root=Path("data"), dataset_name="yacht", batch_size=32, num_workers=4
+datamodule = YachtDataModule(
+    root=Path(os.environ.get("TU_DATA_DIR", "data")), batch_size=32, num_workers=4
 )
 
 # %%

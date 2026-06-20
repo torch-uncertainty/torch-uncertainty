@@ -29,12 +29,20 @@ class IsotonicRegressionScaler(PostProcessing):
         eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Isotonic Regression post-processing for calibrated probabilities.
+        r"""Isotonic Regression post-processing for calibrated probabilities
+        (Zadrozny & Elkan, 2002).
 
-        Isotonic regression is a non-parametric calibration method that fits a
-        piecewise-constant, non-decreasing function to map uncalibrated
-        probabilities to calibrated ones. It minimizes the mean squared error.
-        Multi-class calibration is handled using a one-vs-rest approach per class.
+        A non-parametric calibration method that fits a piecewise-constant,
+        monotonically non-decreasing mapping :math:`f` from the uncalibrated
+        probabilities to the calibrated ones by minimising the mean squared error:
+
+        .. math::
+            \min_{f \text{ non-decreasing}} \sum_{i=1}^{N} \left( y_i - f(\hat{p}_i) \right)^2.
+
+        Compared to :class:`HistogramBinningScaler`, the bins are not pre-defined and
+        the resulting mapping is smoother. Multi-class calibration is handled with a
+        one-vs-rest approach: one isotonic regressor is fit per class and the
+        calibrated probabilities are renormalised to sum to one.
 
         Args:
             model: Model to calibrate. Defaults to ``None``.
@@ -43,17 +51,17 @@ class IsotonicRegressionScaler(PostProcessing):
             device: Device to use for tensor operations. Defaults to ``None``.
 
         References:
-            [1] Transforming Classifier Scores into Accurate Multiclass
-            Probability Estimates. In KDD 2002.
+            [1] `Zadrozny, B., & Elkan, C. (2002). Transforming classifier scores into
+            accurate multiclass probability estimates. KDD 2002
             <https://dl.acm.org/doi/10.1145/775047.775151>`_.
 
         Note:
-            This implementation uses Scikit-Learn's ``IsotonicRegression`` as the
-            underlying solver.
+            This implementation uses scikit-learn's
+            :class:`~sklearn.isotonic.IsotonicRegression` as the underlying solver.
 
-        Remark:
+        Warning:
             Isotonic regression requires a sufficient amount of calibration data
-            to avoid overfitting the step function, especially in multiclass
+            to avoid overfitting the step function, especially in multi-class
             scenarios.
         """
         if not sklearn_installed:

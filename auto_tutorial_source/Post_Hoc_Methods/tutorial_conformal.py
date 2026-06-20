@@ -9,6 +9,8 @@ We use the pretrained ResNet models we provide on Hugging Face.
 """
 
 # %%
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -43,7 +45,7 @@ model = model.cuda().eval()
 BATCH_SIZE = 128
 
 datamodule = CIFAR10DataModule(
-    root="./data",
+    root=os.environ.get("TU_DATA_DIR", "data"),
     batch_size=BATCH_SIZE,
     num_workers=8,
     eval_ood=True,

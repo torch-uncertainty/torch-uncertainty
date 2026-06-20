@@ -22,31 +22,42 @@ class MCBatchNorm(PostProcessing):
         mc_batch_size: int = 32,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Monte Carlo Batch Normalization wrapper for 2d inputs.
+        r"""Monte Carlo Batch Normalization (MCBN) wrapper for 2D inputs
+        (Teye, Azizpour & Smith, ICML 2018).
+
+        Replaces the standard ``BatchNorm2d`` layers with stochastic
+        :class:`~torch_uncertainty.layers.mc_batch_norm.MCBatchNorm2d` layers whose
+        running statistics are re-sampled at every forward pass from random
+        mini-batches of the training/calibration set. This turns the model into a
+        stochastic predictor at test time and provides a cheap Bayesian-style
+        uncertainty estimate equivalent to MC Dropout but for batch-normalised
+        networks.
 
         Args:
-            model: model to be converted.
-            num_estimators: number of estimators.
-            convert: whether to convert the model. Defaults to ``True``.
-            mc_batch_size: Monte-Carlo batch size. The smaller the more variability in the
-                predictions. Defaults to ``32``.
-            device: device. Defaults to ``None``.
+            model: Model to be converted.
+            num_estimators: Number of MC estimators to draw at test time.
+            convert: Whether to convert the model's ``BatchNorm2d`` layers in place.
+                Defaults to ``True``.
+            mc_batch_size: Monte-Carlo batch size. Smaller batches yield more
+                variability in the predictions. Defaults to ``32``.
+            device: Device to use. Defaults to ``None``.
 
         Warning:
-            The update of the batch statistics slightly differs from the method as worded in the
-            original paper but sticks to its implementation. Instead of updating the training-based
-            statistics with 1 new batch of data, we perform a direct replacement.
-            See `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
+            The update of the batch statistics slightly differs from the description
+            in the original paper but matches its reference implementation: instead of
+            updating the training-based statistics with one new batch, we perform a
+            direct replacement. See
+            `this issue/discussion <https://github.com/torch-uncertainty/torch-uncertainty/issues/218>`_.
 
         Note:
-            This wrapper will be stochastic in eval mode only.
+            This wrapper is stochastic in eval mode only.
 
         Note:
-            Raise an issue if you would like a wrapper for 1d and 3d inputs.
+            Raise an issue if you need a wrapper for 1D or 3D inputs.
 
         References:
-            [1] `Teye M, Azizpour H, Smith K. Bayesian uncertainty estimation for batch normalized deep networks. In ICML 2018
-            <https://arxiv.org/abs/1802.06455>`_.
+            [1] `Teye, M., Azizpour, H., & Smith, K. (2018). Bayesian uncertainty estimation
+            for batch normalized deep networks. ICML 2018 <https://arxiv.org/abs/1802.06455>`_.
         """
         super().__init__()
         self.num_estimators = num_estimators

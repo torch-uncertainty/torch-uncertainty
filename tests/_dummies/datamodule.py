@@ -198,6 +198,7 @@ class DummySegmentationDataModule(TUDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
         num_images: int = 2,
+        eval_ood: bool = False,
     ) -> None:
         super().__init__(
             root=root,
@@ -213,8 +214,10 @@ class DummySegmentationDataModule(TUDataModule):
         self.num_channels = 3
         self.num_images = num_images
         self.image_size = image_size
+        self.eval_ood = eval_ood
 
         self.dataset = DummySegmentationDataset
+        self.ood_dataset = DummySegmentationDataset
 
         self.train_transform = v2.ToDtype(
             dtype={
@@ -263,9 +266,22 @@ class DummySegmentationDataModule(TUDataModule):
                 transforms=self.test_transform,
                 num_images=self.num_images,
             )
+            if self.eval_ood:
+                # Labels >= num_classes are treated as out-of-distribution pixels.
+                self.ood = self.ood_dataset(
+                    self.root,
+                    num_channels=self.num_channels,
+                    num_classes=self.num_classes + 1,
+                    image_size=self.image_size,
+                    transforms=self.test_transform,
+                    num_images=self.num_images,
+                )
 
     def test_dataloader(self) -> DataLoader | list[DataLoader]:
-        return [self._data_loader(self.test, training=False, shuffle=False)]
+        dataloader = [self._data_loader(self.test, training=False, shuffle=False)]
+        if self.eval_ood:
+            dataloader.append(self._data_loader(self.ood, training=False, shuffle=False))
+        return dataloader
 
     def _get_train_data(self) -> ArrayLike:
         return self.train.data

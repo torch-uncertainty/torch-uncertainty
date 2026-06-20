@@ -3,6 +3,8 @@ from .classification import (
     AUGRC,
     AURC,
     FPR95,
+    SCODAUGRC,
+    SCODAURC,
     AdaptiveCalibrationError,
     BrierScore,
     CalibrationError,
@@ -17,6 +19,10 @@ from .classification import (
     MutualInformation,
     RiskAt80Cov,
     RiskAtxCov,
+    SCODCovAt5Risk,
+    SCODCovAtxRisk,
+    SCODRiskAt80Cov,
+    SCODRiskAtxCov,
     SetSize,
     SmoothCalibrationError,
     VariationRatio,
@@ -35,8 +41,10 @@ from .regression import (
 )
 from .segmentation import (
     MeanIntersectionOverUnion,
+    PAvPU,
     SegmentationBinaryAUROC,
     SegmentationBinaryAveragePrecision,
     SegmentationFPR95,
+    SegmentationMetric,
 )
 from .sparsification import AUSE

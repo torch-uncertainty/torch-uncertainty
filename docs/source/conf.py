@@ -141,6 +141,7 @@ html_sidebars = {
     "installation": [],
     "quickstart": [],
     "references": [],
+    "evaluation": ["page-toc"],
     "index": [],
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"],
 }

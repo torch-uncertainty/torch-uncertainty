@@ -1,6 +1,5 @@
 import warnings
 from collections.abc import Callable
-from pathlib import Path
 
 from einops import rearrange
 from lightning.pytorch import LightningModule
@@ -23,7 +22,7 @@ from torch_uncertainty.metrics import (
     DistributionNLL,
     QuantileCalibrationError,
 )
-from torch_uncertainty.utils import csv_writer
+from torch_uncertainty.utils import csv_writer, get_logger_dir, log_figure
 from torch_uncertainty.utils.distributions import (
     DistEstimate,
     get_dist_class,
@@ -146,7 +145,7 @@ class RegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore
-        """Put the hyperparameters in tensorboard."""
+        """Log the hyperparameters."""
         if self.loss is None:
             raise ValueError(
                 "To train a model, you must specify the `loss` argument in the routine. Got None."
@@ -361,7 +360,8 @@ class RegressionRoutine(LightningModule):
 
             if isinstance(self.logger, Logger) and self.log_plots:
                 try:
-                    self.logger.experiment.add_figure(
+                    log_figure(
+                        self.logger,
                         "Calibration/Reliability diagram",
                         self.test_prob_metrics["cal/QCE"].plot()[0],
                     )
@@ -381,10 +381,10 @@ class RegressionRoutine(LightningModule):
             self.test_prob_metrics.reset()
 
         if self.save_to_csv and self.logger is not None:
-            csv_writer(
-                Path(self.logger.log_dir) / self.csv_filename,
-                result_dict,
-            )
+            log_dir = get_logger_dir(self.logger)
+            if log_dir is not None:
+                log_dir.mkdir(parents=True, exist_ok=True)
+                csv_writer(log_dir / self.csv_filename, result_dict)
 
 
 def _regression_routine_checks(output_dim: int) -> None:

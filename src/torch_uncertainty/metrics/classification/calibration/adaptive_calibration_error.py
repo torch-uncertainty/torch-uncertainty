@@ -477,6 +477,38 @@ class AdaptiveCalibrationError:
         to the distribution of predicted probabilities. Unlike uniform binning, adaptive binning
         ensures a more balanced representation of predictions across bins.
 
+        Given top-class confidences :math:`\hat{p}_i` and accuracies
+        :math:`a_i = \mathbf{1}[\hat{y}_i = y_i]`, the :math:`N` samples are sorted by
+        confidence and split into :math:`M` bins :math:`B_1, \dots, B_M` each containing
+        (approximately) the same number of samples. Three norms are available:
+
+        **Adaptive Calibration Error (ACE):**
+
+        .. math::
+
+            \text{ACE} = \sum_{m=1}^{M} \frac{|B_m|}{N}
+            \left| \operatorname{acc}(B_m) - \operatorname{conf}(B_m) \right|
+
+        **Maximum Adaptive Calibration Error (MACE):**
+
+        .. math::
+
+            \text{MACE} = \max_{m} \left| \operatorname{acc}(B_m) -
+            \operatorname{conf}(B_m) \right|
+
+        **Root Mean Square Adaptive Calibration Error (RMACE):**
+
+        .. math::
+
+            \text{RMACE} = \sqrt{\sum_{m=1}^{M} \frac{|B_m|}{N}
+            \left( \operatorname{acc}(B_m) - \operatorname{conf}(B_m) \right)^2}
+
+        where :math:`\operatorname{acc}(B_m) = \tfrac{1}{|B_m|}\sum_{i \in B_m} a_i`
+        is the fraction of correct predictions in bin :math:`m`,
+        :math:`\operatorname{conf}(B_m) = \tfrac{1}{|B_m|}\sum_{i \in B_m} \hat{p}_i`
+        is the mean predicted confidence in bin :math:`m`, and :math:`|B_m|/N` is
+        the fraction of total samples in bin :math:`m`.
+
         This metric is particularly useful for datasets or models where predictions are
         concentrated in certain regions of the probability space.
 
@@ -525,7 +557,7 @@ class AdaptiveCalibrationError:
             <https://arxiv.org/abs/1904.01685>`_.
 
         .. seealso::
-            - See `:class:`CalibrationError` for a metric that uses uniform binning.
+            - :class:`CalibrationError` for a metric that uses uniform binning.
         """
         task_enum = ClassificationTaskNoMultilabel.from_str(task)
         kwargs.update(

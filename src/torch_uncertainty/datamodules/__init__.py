@@ -1,18 +1,40 @@
 # ruff: noqa: F401
 from .abstract import TUDataModule
 from .classification import (
+    AdultCensusIncomeDataModule,
+    AmazonAccessDataModule,
+    APSFailureDataModule,
     BankMarketingDataModule,
     CIFAR10DataModule,
     CIFAR100DataModule,
+    CreditApprovalDataModule,
     DOTA2GamesDataModule,
+    GermanCreditDataModule,
+    HiggsBosonDataModule,
     HTRU2DataModule,
     ImageNetDataModule,
+    KDDChurnDataModule,
     MNISTDataModule,
     OnlineShoppersDataModule,
+    PimaDiabetesDataModule,
     SpamBaseDataModule,
+    TabularClassificationDataModule,
+    TelcoChurnDataModule,
     TinyImageNetDataModule,
-    UCIClassificationDataModule,
     UCRUEADataModule,
+    WineQualityDataModule,
 )
 from .segmentation import CamVidDataModule, CityscapesDataModule, MUADDataModule
-from .uci_regression import UCIRegressionDataModule
+from .tabular_regression import (
+    BostonHousingDataModule,
+    ConcreteDataModule,
+    EnergyEfficiencyDataModule,
+    EnergyPredictionDataModule,
+    Kin8NMDataModule,
+    NavalPropulsionPlantDataModule,
+    PowerPlantDataModule,
+    ProteinDataModule,
+    TabularRegressionDataModule,
+    WineQualityRegressionDataModule,
+    YachtDataModule,
+)

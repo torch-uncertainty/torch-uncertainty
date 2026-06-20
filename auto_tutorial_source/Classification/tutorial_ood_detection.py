@@ -22,6 +22,8 @@ We will:
 # First, we need to import the necessary libraries and set up our environment.
 # This includes importing PyTorch, TorchUncertainty components, and TorchUncertainty's Trainer (built on top of Lightning's),
 # as well as two criteria for OOD detection, the maximum softmax probability [1] and the Max Logit [2].
+import os
+
 from torch import nn, optim
 
 from torch_uncertainty import TUTrainer
@@ -40,7 +42,9 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 # For CIFAR-10, the corresponding OOD-detection dataset is SVHN as used in the community.
 # To enable OOD evaluation, activate the `eval_ood` flag as done below.
 
-datamodule = CIFAR10DataModule(root="./data", batch_size=512, num_workers=8, eval_ood=True)
+datamodule = CIFAR10DataModule(
+    root=os.environ.get("TU_DATA_DIR", "data"), batch_size=512, num_workers=8, eval_ood=True
+)
 
 # %%
 # Model Initialization

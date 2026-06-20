@@ -58,10 +58,15 @@ class MaxLogitCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
-        """OOD criterion based on the maximum logit value.
+        r"""OOD criterion based on the Max-Logit score (Hendrycks et al.).
 
-        This criterion computes the negative of the highest logit value across
-        the output dimensions. Lower maximum logits indicate greater uncertainty.
+        Defined as the negative of the highest logit value (averaged over estimators
+        in the ensemble case):
+
+        .. math::
+            \text{score}(\mathbf{z}) = -\max_{i} z_i.
+
+        Lower maximum logits indicate greater uncertainty.
 
         Attributes:
             input_type: Expected input type is logits.
@@ -72,7 +77,7 @@ class MaxLogitCriterion(TUOODCriterion):
         """Compute the negative of the maximum logit value.
 
         Args:
-            inputs: Tensor of logits with shape (batch_size, num_classes).
+            inputs: Tensor of logits with shape ``(batch_size, num_estimators, num_classes)``.
 
         Returns:
             Tensor: Negative of the maximum logit value for each sample.
@@ -85,15 +90,16 @@ class EnergyCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.LOGIT
 
     def __init__(self) -> None:
-        r"""OOD criterion based on the energy function.
+        r"""OOD criterion based on the free-energy score (Liu et al., NeurIPS 2020).
 
-        This criterion computes the negative log-sum-exp of the logits.
-        Higher energy values indicate greater uncertainty.
+        Defined as the negative log-sum-exp of the logits:
 
         .. math::
-            E(\mathbf{z}) = -\log\left(\sum_{i=1}^{C} \exp(z_i)\right)
+            \text{score}(\mathbf{z}) = -\log\left(\sum_{i=1}^{C} \exp(z_i)\right)
 
-        where :math:`\mathbf{z} = [z_1, z_2, \dots, z_C]` is the logit vector.
+        where :math:`\mathbf{z} = [z_1, \dots, z_C]` is the logit vector. Larger values
+        of the *energy* (i.e. of the score) indicate greater uncertainty and a higher
+        likelihood of being out-of-distribution.
 
         Attributes:
             input_type: Expected input type is logits.
@@ -116,16 +122,16 @@ class MaxSoftmaxCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.PROB
 
     def __init__(self) -> None:
-        r"""OOD criterion based on maximum softmax probability.
+        r"""OOD criterion based on the Maximum Softmax Probability (MSP) baseline of
+        Hendrycks & Gimpel (ICLR 2017).
 
-        This criterion computes the negative of the highest softmax probability.
-        Lower maximum probabilities indicate greater uncertainty. Probabilities are also called
-        likelihoods in a more formal context.
+        Defined as the negative of the maximum predicted class probability:
 
         .. math::
-            \text{score} = -\max_{i}(p_i)
+            \text{score}(\mathbf{p}) = -\max_{i} p_i,
 
-        where :math:`\mathbf{p} = [p_1, p_2, \dots, p_C]` is the probability vector.
+        where :math:`\mathbf{p} = [p_1, \dots, p_C]` is the predictive distribution.
+        Lower maximum probabilities indicate greater uncertainty.
 
         Attributes:
             input_type: Expected input type is probabilities.
@@ -146,6 +152,19 @@ class MaxSoftmaxCriterion(TUOODCriterion):
 
 class PostProcessingCriterion(MaxSoftmaxCriterion):
     input_type = OODCriterionInputType.POST_PROCESSING
+
+
+class DEUPCriterion(TUOODCriterion):
+    """OOD criterion from DEUP epistemic uncertainty scores.
+
+    Higher values indicate greater epistemic uncertainty (likely OOD or unreliable).
+    Use with :class:`~torch_uncertainty.post_processing.DEUP`.
+    """
+
+    input_type = OODCriterionInputType.POST_PROCESSING
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        return inputs
 
 
 class EntropyCriterion(TUOODCriterion):
@@ -184,15 +203,20 @@ class MutualInformationCriterion(TUOODCriterion):
     input_type = OODCriterionInputType.ESTIMATOR_PROB
 
     def __init__(self) -> None:
-        r"""OOD criterion based on mutual information.
+        r"""OOD criterion based on mutual information (BALD).
 
-        This criterion computes the mutual information between ensemble predictions.
-        Higher mutual information values indicate lower uncertainty.
+        This criterion computes the mutual information between the prediction and the
+        model parameters across the ensemble's predictions — a classical estimator of
+        *epistemic* uncertainty. Higher mutual information values indicate greater
+        epistemic uncertainty and thus a higher likelihood of being out-of-distribution.
 
-        Given ensemble predictions :math:`\{\mathbf{p}^{(k)}\}_{k=1}^{K}`, the mutual information is computed as:
+        Given ensemble predictions :math:`\{\mathbf{p}^{(k)}\}_{k=1}^{K}`, the mutual information is
 
         .. math::
-            I(y, \theta) = H\Big(\frac{1}{K}\sum_{k=1}^{K} \mathbf{p}^{(k)}\Big) - \frac{1}{K}\sum_{k=1}^{K} H(\mathbf{p}^{(k)})
+            I(y, \theta) = H\!\left(\frac{1}{K}\sum_{k=1}^{K} \mathbf{p}^{(k)}\right)
+            - \frac{1}{K}\sum_{k=1}^{K} H(\mathbf{p}^{(k)}),
+
+        i.e. the total predictive entropy minus the average per-estimator entropy.
 
         Attributes:
             ensemble_only: Requires ensemble predictions.
@@ -272,6 +296,8 @@ def get_ood_criterion(ood_criterion: type[TUOODCriterion] | TUOODCriterion | str
             return MaxSoftmaxCriterion()
         if ood_criterion == "post_processing":
             return PostProcessingCriterion()
+        if ood_criterion == "deup":
+            return DEUPCriterion()
         if ood_criterion == "entropy":
             return EntropyCriterion()
         if ood_criterion == "mutual_information":
@@ -280,7 +306,8 @@ def get_ood_criterion(ood_criterion: type[TUOODCriterion] | TUOODCriterion | str
             return VariationRatioCriterion()
         raise ValueError(
             "The OOD criterion must be one of 'msp', 'logit', 'energy', 'entropy',"
-            f" 'mutual_information' or 'variation_ratio'. Got {ood_criterion}."
+            " 'mutual_information', 'variation_ratio', or 'post_processing', or 'deup'. "
+            f"Got {ood_criterion=}."
         )
     if isinstance(ood_criterion, type):
         return ood_criterion()

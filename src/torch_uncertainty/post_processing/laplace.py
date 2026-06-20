@@ -25,23 +25,37 @@ class LaplaceApprox(PostProcessing):
         link_approx: Literal["mc", "probit", "bridge", "bridge_norm"] = "probit",
         optimize_prior_precision: bool = True,
     ) -> None:
-        """Laplace approximation for uncertainty estimation.
+        r"""Laplace approximation for post-hoc Bayesian uncertainty estimation.
 
-        This class is a wrapper of Laplace classes from the laplace-torch library.
+        Fits a Gaussian posterior :math:`\mathcal{N}(\boldsymbol{\theta}_\text{MAP},
+        \mathbf{H}^{-1})` around the MAP estimate of a trained network, where
+        :math:`\mathbf{H}` is (an approximation of) the Hessian of the negative
+        log-posterior, computed on the calibration set. Predictions are then obtained
+        by marginalising over the posterior — analytically for regression (and the
+        ``"probit"`` / ``"bridge"`` classification approximations), or by Monte Carlo
+        for ``"mc"``.
+
+        This class is a thin wrapper around the
+        `laplace-torch <https://github.com/aleximmer/Laplace>`_ library.
 
         Args:
-            task: task type.
-            model: model to be converted.
-            weight_subset: subset of weights to be considered. Defaults to ``"last_layer"``.
-            hessian_struct: structure of the Hessian matrix. Defaults to ``"kron"``.
-            pred_type: type of posterior predictive, see the Laplace library for more details.
-                Defaults to ``"glm"``.
-            link_approx: how to approximate the classification link function for the ``"glm"``.
-                See the Laplace library for more details. Defaults to "probit".
-            optimize_prior_precision: whether to optimize the prior precision. Defaults to ``True``.
+            task: Task type. Either ``"classification"`` or ``"regression"``.
+            model: Model to be converted.
+            weight_subset: Subset of weights to be considered (e.g. ``"last_layer"``
+                or ``"all"``). Defaults to ``"last_layer"``.
+            hessian_struct: Structure of the Hessian approximation (e.g. ``"kron"``,
+                ``"diag"``, ``"full"``). Defaults to ``"kron"``.
+            pred_type: Type of posterior predictive. See the Laplace library for
+                details. Defaults to ``"glm"``.
+            link_approx: How to approximate the classification link function for the
+                ``"glm"`` predictive. See the Laplace library for details. Defaults to
+                ``"probit"``.
+            optimize_prior_precision: Whether to optimize the prior precision by
+                marginal likelihood. Defaults to ``True``.
 
         References:
-            [1] `Daxberger et al. Laplace Redux - Effortless Bayesian Deep Learning. In NeurIPS 2021
+            [1] `Daxberger, E., Kristiadi, A., Immer, A., Eschenhagen, R., Bauer, M., &
+            Hennig, P. (2021). Laplace Redux — Effortless Bayesian Deep Learning. NeurIPS 2021
             <https://arxiv.org/abs/2106.14806>`_.
         """
         super().__init__()

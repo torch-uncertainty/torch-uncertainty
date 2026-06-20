@@ -30,10 +30,12 @@ In this tutorial, we will need:
 - the temperature scaler to improve the top-label calibration
 - a utility function to download HF models easily
 
-If you use the classification routine, the plots will be automatically available in the tensorboard logs if you use the `log_plots` flag.
+If you use the classification routine, the plots will be automatically available in the MLflow logs if you use the `log_plots` flag.
 """
 
 # %%
+import os
+
 from torch_uncertainty.datamodules import CIFAR100DataModule
 from torch_uncertainty.metrics import CalibrationError
 from torch_uncertainty.models.classification import resnet
@@ -64,7 +66,7 @@ model.load_state_dict(weights)
 # element if eval_ood is True: the dataloader of in-distribution data and the dataloader
 # of out-of-distribution data. Otherwise, it is a list of 1 element.
 
-dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
+dm = CIFAR100DataModule(root=os.environ.get("TU_DATA_DIR", "data"), eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
 

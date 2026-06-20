@@ -88,7 +88,60 @@ class TestSegmentation:
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
 
+    @pytest.mark.parametrize(
+        ("baseline_type", "ood_criterion"),
+        [
+            ("single", "msp"),  # OODCriterionInputType.PROB
+            ("ensemble", "mutual_information"),  # OODCriterionInputType.ESTIMATOR_PROB
+        ],
+    )
+    def test_two_classes_ood_logs(self, baseline_type: str, ood_criterion: str) -> None:
+        """Cover the OOD, plotting and CSV-saving paths for both OOD input types."""
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            limit_train_batches=1,
+            limit_val_batches=1,
+            enable_checkpointing=False,
+        )
+
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        # ``batch_size`` > ``num_samples_to_plot`` (3) exercises the plot-buffer
+        # break, and several batches exercise the cached-FLOPs branch.
+        dm = DummySegmentationDataModule(
+            root=root, batch_size=4, num_classes=2, num_images=8, eval_ood=True
+        )
+
+        model = DummySegmentationBaseline(
+            in_channels=dm.num_channels,
+            num_classes=dm.num_classes,
+            image_size=dm.image_size,
+            loss=nn.CrossEntropyLoss(),
+            baseline_type=baseline_type,
+            optim_recipe=optim_cifar10_resnet18,
+            log_plots=True,
+            eval_ood=True,
+            ood_criterion=ood_criterion,
+            save_to_csv=True,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
+
     def test_segmentation_errors(self) -> None:
+        routine = SegmentationRoutine(
+            model=nn.Identity(),
+            num_classes=2,
+            loss=nn.CrossEntropyLoss(),
+            eval_ood=True,
+        )
+        assert routine.test_ood_metrics.prefix == "ood/"
+        assert "SCOD_AURC" in routine.test_ood_metrics
+        assert "SCOD_AUGRC" in routine.test_ood_metrics
+        assert "SCOD_Cov_5Risk" in routine.test_ood_metrics
+        assert "SCOD_Risk_80Cov" in routine.test_ood_metrics
+
         with pytest.raises(ValueError, match=r"num_classes must be at least 2, got"):
             SegmentationRoutine(model=nn.Identity(), num_classes=1, loss=nn.CrossEntropyLoss())
 

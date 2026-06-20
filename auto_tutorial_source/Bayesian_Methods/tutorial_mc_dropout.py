@@ -31,6 +31,7 @@ We also need import the neural network utils within `torch.nn`.
 """
 
 # %%
+import os
 from pathlib import Path
 
 from torch import nn
@@ -59,7 +60,7 @@ BATCH_SIZE = 512
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=MAX_EPOCHS, enable_progress_bar=False)
 
 # datamodule
-root = Path("data")
+root = Path(os.environ.get("TU_DATA_DIR", "data"))
 datamodule = MNISTDataModule(root=root, batch_size=BATCH_SIZE, num_workers=8)
 
 

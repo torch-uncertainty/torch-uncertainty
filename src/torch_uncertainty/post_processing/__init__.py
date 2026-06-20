@@ -15,5 +15,6 @@ from .conformal import (
     ConformalClsRAPS,
     ConformalClsTHR,
 )
+from .deup import DEUP
 from .laplace import LaplaceApprox
 from .mc_batch_norm import MCBatchNorm

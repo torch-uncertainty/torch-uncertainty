@@ -45,7 +45,8 @@ class TestTUSegCheckpoint:
     def test_init_default(self) -> None:
         ckpt = TUSegCheckpoint()
         assert "miou" in ckpt.callbacks
-        assert "ece" in ckpt.callbacks
+        assert "brier" in ckpt.callbacks
+        assert "nll" in ckpt.callbacks
 
     def test_best_model_path(self) -> None:
         ckpt = TUSegCheckpoint()
@@ -54,7 +55,7 @@ class TestTUSegCheckpoint:
     def test_state_dict(self) -> None:
         ckpt = TUSegCheckpoint()
         sd = ckpt.state_dict()
-        assert set(sd.keys()) == {"miou", "ece", "brier", "nll"}
+        assert set(sd.keys()) == {"miou", "brier", "nll"}
 
 
 class TestTURegCheckpoint:

@@ -4,15 +4,16 @@ CLI Guide
 Introduction to the Lightning CLI
 ---------------------------------
 
-The Lightning CLI tool eases the implementation of a CLI to instanciate models to train and evaluate them on
-some data. The CLI tool is a wrapper around the ``Trainer`` class and provides a set of subcommands to train
-and test a ``LightningModule`` on a ``LightningDataModule``. To better match our needs, we created an inherited
-class from the ``LightningCLI`` class, namely ``TULightningCLI``.
+The Lightning CLI tool simplifies the implementation of a CLI that instantiates models and trains
+or evaluates them on data. The CLI is a wrapper around the ``Trainer`` class and provides a set of
+subcommands to train and test a ``LightningModule`` on a ``LightningDataModule``. To better match
+our needs, we subclass ``LightningCLI`` into ``TULightningCLI``.
 
 .. note::
-    ``TULightningCLI`` adds a new argument to the ``LightningCLI`` class: :attr:`eval_after_fit` to know whether
-    an evaluation on the test set should be performed after the training phase. It is better to restrict the usage
-    of this parameter for single node training to avoid small test performance inconsistencies.
+    ``TULightningCLI`` adds (among others) a new argument to ``LightningCLI``: :attr:`eval_after_fit`, which
+    controls whether an evaluation on the test set is performed after the training phase. We
+    recommend restricting the use of this parameter to single-node training to avoid small
+    test-performance inconsistencies.
 
 Let's see how to implement the CLI, by checking out the ``experiments/classification/cifar10/main.py``.
 
@@ -39,15 +40,15 @@ Let's see how to implement the CLI, by checking out the ``experiments/classifica
             cli.trainer.test(datamodule=cli.datamodule, ckpt_path="best")
 
 This file enables both training and testing on the CIFAR-10 dataset. The model, optimizer and
-learning rate schedulers will be set in the configuration file as shown below.
+learning-rate scheduler are set in the configuration file as shown below.
 
 .. code:: python
 
     def cli_main() -> TULightningCLI:
         return TULightningCLI(ClassificationRoutine, CIFAR10DataModule)
 
-Depending on the CLI subcommand calling ``cli_main()`` will either train or test the model on the using
-the CIFAR-10 dataset. But what are these subcommands?
+Depending on the CLI subcommand, calling ``cli_main()`` will either train or test the model on the
+CIFAR-10 dataset. But what are these subcommands?
 
 .. parsed-literal::
 
@@ -66,15 +67,15 @@ This command will display the available subcommands of the CLI tool.
         test                Perform one evaluation epoch over the test set.
         predict             Run evaluation on your data.
 
-You can execute whichever subcommand you like and set up all your hyperparameters directly using the command line.
+You can run any of these subcommands and set up all your hyperparameters directly on the command line.
 
-Due to the large number of hyperparameters, we advise against it and suggest using configuration files. Let's see how to do that.
+Given the large number of hyperparameters, we recommend using configuration files instead. Let's see how.
 
 
 Configuration files
 -------------------
 
-By default the ``LightningCLI`` support configuration files in the YAML format (learn more about this format
+By default, ``LightningCLI`` supports configuration files in the YAML format (learn more about this format
 `here <https://lightning.ai/docs/pytorch/stable/cli/lightning_cli_faq.html#what-is-a-yaml-config-file>`_).
 Taking the previous example, we can create a configuration file named ``config.yaml`` with the following content:
 
@@ -119,12 +120,12 @@ Then, we can run the following command to train the model:
 
     python main.py fit --config config.yaml
 
-By default, executing the command above will store the experiment results in a directory named ``lightning_logs``,
-and the last state of the model will be saved in a directory named ``lightning_logs/version_{int}/checkpoints``.
-In addition, all arguments passed to instanciate the ``Trainer``, ``CIFAR10DataModule``,
-``torch.optim.SGD``, and ``torch.optim.lr_scheduler.MultiStepLR`` classes will be saved in a file named
-``lightning_logs/version_{int}/config.yaml``. When testing the model, we advise to use this configuration file
-to ensure that the same hyperparameters are used for training and testing.
+By default, executing the command above stores the experiment results in a directory named ``lightning_logs``,
+and the last state of the model is saved in ``lightning_logs/version_{int}/checkpoints``.
+In addition, all arguments passed to instantiate the ``Trainer``, ``CIFAR10DataModule``,
+``torch.optim.SGD``, and ``torch.optim.lr_scheduler.MultiStepLR`` classes are saved in
+``lightning_logs/version_{int}/config.yaml``. When testing the model, we recommend reusing this
+configuration file to ensure that the same hyperparameters are used for training and testing.
 
 .. parsed-literal::
 
@@ -133,9 +134,8 @@ to ensure that the same hyperparameters are used for training and testing.
 Experiment folder usage
 -----------------------
 
-Now that we have seen how to implement the CLI tool and how to use configuration files, let explore the
-configurations available in the ``experiments`` directory. The ``experiments`` directory is
-mainly organized as follows:
+Now that we have seen how to implement the CLI and how to use configuration files, let's explore
+the configurations available in the ``experiments`` directory, which is organized roughly as follows:
 
 .. code:: bash
 

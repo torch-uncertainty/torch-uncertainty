@@ -20,6 +20,8 @@ By the end of this tutorial, you will understand how to use TorchUncertainty to 
 # First, we need to import the necessary libraries and set up our environment.
 # This includes importing PyTorch, TorchUncertainty components, and TorchUncertainty's Trainer (built on top of Lightning's).
 
+import os
+
 from torch import nn, optim
 
 from torch_uncertainty import TUTrainer
@@ -39,7 +41,7 @@ from torch_uncertainty.routines.classification import ClassificationRoutine
 
 # Initialize the CIFAR-10 DataModule
 datamodule = CIFAR10DataModule(
-    root="./data",
+    root=os.environ.get("TU_DATA_DIR", "data"),
     batch_size=512,
     num_workers=8,
     eval_shift=True,

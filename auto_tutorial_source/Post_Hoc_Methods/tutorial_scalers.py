@@ -17,6 +17,8 @@ scalers from the package to calibrate a pretrained ResNet-18 on CIFAR-100.
 # - the resnet builder and load_hf to fetch pretrained weights
 # - BBQScaler, HistogramBinningScaler, and IsotonicRegressionScaler to calibrate predictions
 
+import os
+
 import torch
 from torch.utils.data import DataLoader, random_split
 
@@ -49,7 +51,7 @@ model = model.eval()
 # Prepare CIFAR-100 test set and create DataLoaders. We split the test set
 # into a calibration subset and a held-out test subset for reliable ECE computation.
 
-dm = CIFAR100DataModule(root="./data", eval_ood=False, batch_size=32)
+dm = CIFAR100DataModule(root=os.environ.get("TU_DATA_DIR", "data"), eval_ood=False, batch_size=32)
 dm.prepare_data()
 dm.setup("test")
 
@@ -139,17 +141,19 @@ fig.show()
 #
 # We plot the learned histogram-binning mapping for a handful of classes.
 # For each selected class we show:
-#  - the bin centers (x-axis) vs. calibrated bin values (y-axis) as a line+marker
-#  - a reference diagonal y=x (perfect calibration)
-#  - marker size scaled by the number of calibration examples that fell into the bin
+#
+# - the bin centers (x-axis) vs. calibrated bin values (y-axis) as a line+marker
+# - a reference diagonal y=x (perfect calibration)
+# - marker size scaled by the number of calibration examples that fell into the bin
 #
 # This visualization helps detect bins with very few samples (small markers)
 # and whether the method systematically under- or over-estimates confidence.
 #
 # Notes:
-#  - The code uses matplotlib only and creates one figure per class.
-#  - If your scaler stores `bin_edges` and `bin_values` under different names,
-#    adjust accordingly.
+#
+# - The code uses matplotlib only and creates one figure per class.
+# - If your scaler stores `bin_edges` and `bin_values` under different names,
+#   adjust accordingly.
 #
 # We'll pick 3 classes.
 

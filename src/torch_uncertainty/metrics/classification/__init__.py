@@ -21,5 +21,13 @@ from .risk_coverage import (
     RiskAt80Cov,
     RiskAtxCov,
 )
+from .scod_risk_coverage import (
+    SCODAUGRC,
+    SCODAURC,
+    SCODCovAt5Risk,
+    SCODCovAtxRisk,
+    SCODRiskAt80Cov,
+    SCODRiskAtxCov,
+)
 from .set_size import SetSize
 from .variation_ratio import VariationRatio

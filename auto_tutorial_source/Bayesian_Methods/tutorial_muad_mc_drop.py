@@ -24,6 +24,8 @@ First, we load the following utilities from TorchUncertainty:
 """
 
 # %%
+import os
+
 import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.v2.functional as F
@@ -80,7 +82,7 @@ test_transform = v2.Compose(
 
 # datamodule providing the dataloaders to the trainer
 datamodule = MUADDataModule(
-    root="./data",
+    root=os.environ.get("TU_DATA_DIR", "data"),
     batch_size=10,
     version="small",
     train_transform=train_transform,

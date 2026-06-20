@@ -69,7 +69,7 @@ class _TUCheckpoint(Checkpoint):
 class TUClsCheckpoint(_TUCheckpoint):
     def __init__(self, save_last: bool | Literal["link"] = False) -> None:
         """Keep multiple checkpoints corresponding to the best model in terms of: Accuracy,
-        Expected Calibration Error, Brier-Score and Negative Log-Likelihood.
+        Brier-Score and Negative Log-Likelihood.
 
         Args:
             save_last: When ``True``, saves a last.ckpt copy whenever a
@@ -108,7 +108,7 @@ class TUClsCheckpoint(_TUCheckpoint):
 class TUSegCheckpoint(_TUCheckpoint):
     def __init__(self, save_last: bool | Literal["link"] = False) -> None:
         """Keep multiple checkpoints corresponding to the best model in terms of: Mean Intersection
-        over Union, Expected Calibration Error, Brier-Score and Negative Log-Likelihood.
+        over Union, Brier-Score and Negative Log-Likelihood.
 
         Args:
             save_last: When ``True``, saves a last.ckpt copy whenever a
@@ -123,12 +123,6 @@ class TUSegCheckpoint(_TUCheckpoint):
                 monitor="val/seg/mIoU",
                 mode="max",
                 save_last=save_last,
-                auto_insert_metric_name=False,
-            ),
-            "ece": ModelCheckpoint(
-                filename="epoch={epoch}-step={step}-val_ece={val/cal/ECE:.3f}",
-                monitor="val/cal/ECE",
-                mode="min",
                 auto_insert_metric_name=False,
             ),
             "brier": ModelCheckpoint(

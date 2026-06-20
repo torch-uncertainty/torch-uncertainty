@@ -7,13 +7,13 @@ Quickstart
 TorchUncertainty is centered around **uncertainty-aware** training and evaluation routines.
 These routines make it very easy to:
 
-- train ensembles-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc)
-- compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.
-- leverage post-processing methods automatically during evaluation
+- train ensemble-like methods (Deep Ensembles, Packed-Ensembles, MIMO, Masksembles, etc.),
+- compute and monitor uncertainty metrics: calibration, out-of-distribution detection, proper scores, grouping loss, etc.,
+- leverage post-processing methods automatically during evaluation.
 
-Yet, we take account that their will be as many different uses of TorchUncertainty as there are of users.
-This page provides ideas on how to benefit from TorchUncertainty at all levels: from ready-to-train lightning-based models to using only specific
-PyTorch layers.
+That said, we know there will be as many uses of TorchUncertainty as there are users.
+This page outlines how to benefit from TorchUncertainty at every level, from ready-to-train
+Lightning-based models all the way down to individual PyTorch layers.
 
 .. figure:: _static/images/structure_torch_uncertainty.jpg
   :alt: TorchUncertainty structure
@@ -26,7 +26,7 @@ PyTorch layers.
 Training with TorchUncertainty's Uncertainty-aware Routines
 -----------------------------------------------------------
 
-TorchUncertainty provides a set of Ligthning training and evaluation routines that wrap PyTorch models. Let's have a look at the
+TorchUncertainty provides a set of Lightning training and evaluation routines that wrap PyTorch models. Let's have a look at the
 `Classification routine <https://github.com/torch-uncertainty/torch-uncertainty/blob/main/torch_uncertainty/routines/classification.py>`_
 and its parameters.
 
@@ -55,9 +55,10 @@ and its parameters.
 
 Building your First Routine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This routine is a wrapper of any custom or TorchUncertainty classification model. To use it,
-just build your model and pass it to the routine as argument along with an optimization recipe
-and the loss as well as the number of classes that we use for torch metrics.
+
+This routine wraps any custom or TorchUncertainty classification model. To use it, build
+your model and pass it to the routine along with an optimization recipe, the loss, and the
+number of classes (which is forwarded to ``torchmetrics``).
 
 .. code:: python
 
@@ -75,10 +76,11 @@ and the loss as well as the number of classes that we use for torch metrics.
 Training with the Routine
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To train with this routine, you will first need to create a lightning Trainer and have either a lightning datamodule
-or PyTorch dataloaders. When benchmarking models, we advise to use lightning datamodules that will automatically handle
-train/val/test splits, out-of-distribution detection and dataset shift. For this example, let us use TorchUncertainty's
-CIFAR10 datamodule.
+To train with this routine, you will need to create a Lightning ``Trainer`` and either a Lightning
+``DataModule`` or PyTorch ``DataLoader``\ s. When benchmarking models, we recommend using
+Lightning datamodules: they automatically handle the train/val/test splits, the
+out-of-distribution dataloader and the dataset-shift dataloader. For this example, let us use
+TorchUncertainty's CIFAR10 datamodule.
 
 .. code:: python
 
@@ -90,18 +92,22 @@ CIFAR10 datamodule.
   trainer.fit(routine, dm)
   trainer.test(routine, dm)
 
-Here it is, you have trained your first model with TorchUncertainty! As a result, you will get access to various metrics
-measuring the ability of your model to handle uncertainty. You can get other examples of training with lightning Trainers
-looking at the `Tutorials <auto_tutorials/index.html>`_.
+That's it — you have trained your first model with TorchUncertainty! As a result, you get
+access to a wide range of metrics measuring the ability of your model to handle uncertainty.
+For more examples of training with Lightning ``Trainer``\ s, check the
+`Tutorials <auto_tutorials/index.html>`_. For a complete overview of what is logged at
+evaluation time, see the `Evaluating Models <evaluation.html>`_ page.
 
 More metrics
 ^^^^^^^^^^^^
 
-With TorchUncertainty datamodules, you can easily test models on out-of-distribution datasets, by
-setting the ``eval_ood`` parameter to ``True``. You can also evaluate the grouping loss by setting ``eval_grouping_loss`` to ``True``.
-Finally, you can calibrate your model using the ``calibration_set`` parameter. In this case, you will get
-metrics for but the uncalibrated and calibrated models: the metrics corresponding to the temperature scaled
-model will begin with ``ts_``.
+With TorchUncertainty datamodules, you can easily evaluate models on out-of-distribution
+datasets by setting ``eval_ood=True``, and on distribution-shifted versions of the test set
+by setting ``eval_shift=True``. You can also evaluate the grouping loss with
+``eval_grouping_loss=True``. Finally, you can calibrate your model by passing a
+``post_processing`` method (e.g., temperature scaling) — in that case the metrics for the
+post-processed predictions will be logged under the ``test/post/`` prefix in addition to the
+uncalibrated ones.
 
 ----
 
@@ -112,9 +118,10 @@ Procedure
 ^^^^^^^^^
 
 The library leverages the `Lightning CLI tool <https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html>`_
-to provide a simple way to train models and evaluate them, while insuring reproducibility via configuration files.
-Under the ``experiment`` folder, you will find scripts for the three application tasks covered by the library:
-classification, regression and segmentation. Take the most out of the CLI by checking our `CLI Guide <cli_guide.html>`_.
+to provide a simple way to train and evaluate models, while ensuring reproducibility via
+configuration files. Under the ``experiments`` folder, you will find scripts for the four
+application tasks covered by the library: classification, regression, segmentation, and
+pixel regression. To get the most out of the CLI, check our `CLI Guide <cli_guide.html>`_.
 
 .. note::
 
@@ -143,11 +150,11 @@ Using the PyTorch-based models
 Procedure
 ^^^^^^^^^
 
-If you prefer classic PyTorch pipelines, we provide PyTorch Modules that do not
+If you prefer classic PyTorch pipelines, we provide PyTorch ``Module``\ s that do not
 require Lightning.
 
-1. Check the API reference under the *Models* section to ensure the architecture of your choice is supported by the library.
-2. Create a ``torch.nn.Module`` in your training/testing script using one of the provided building functions listed in the API reference.
+1. Check the *Models* section of the API reference to ensure that your architecture of choice is supported.
+2. Instantiate a ``torch.nn.Module`` in your training/testing script using one of the provided builder functions listed in the API reference.
 
 Example
 ^^^^^^^
@@ -177,18 +184,17 @@ Procedure
 ^^^^^^^^^
 
 It is likely that your desired architecture is not supported by our library.
-In that case, you might be interested in directly using the actual layers.
+In that case, you can directly use the underlying layers.
 
-1. Check the API reference for specific layers of your choosing.
-2. Import the layers and use them as you would for any standard PyTorch layer.
+1. Check the API reference for the specific layers you need.
+2. Import the layers and use them as you would any standard PyTorch layer.
 
 If you think that your architecture should be added to the package, raise an
 issue on the GitHub repository!
 
 .. tip::
 
-  Do not hesitate to go to the `API Reference <api.html#layers>`_ to get better explanations on the
-  layer usage.
+  Do not hesitate to head to the `API Reference <api.html#layers>`_ for more detailed explanations on layer usage.
 
 Example
 ^^^^^^^

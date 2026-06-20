@@ -20,7 +20,22 @@ class CoverageRate(Metric):
         validate_args: bool = True,
         **kwargs,
     ) -> None:
-        """Empirical coverage rate metric.
+        r"""Empirical coverage rate metric.
+
+        For a prediction set :math:`\mathcal{C}(X)` returned by a conformal predictor
+        (or any set-valued predictor), the coverage rate is the fraction of test points
+        whose ground-truth label is contained in the predicted set:
+
+        .. math::
+            \text{Coverage} = \frac{1}{N} \sum_{i=1}^{N}
+            \mathbf{1}\!\left[ y_i \in \mathcal{C}(x_i) \right].
+
+        With ``average="macro"``, the per-class coverage rates are averaged uniformly:
+
+        .. math::
+            \text{Coverage}_{\text{macro}} = \frac{1}{C} \sum_{c=1}^{C}
+            \frac{\sum_{i:\, y_i = c} \mathbf{1}\!\left[ y_i \in \mathcal{C}(x_i) \right]}
+                 {\sum_{i:\, y_i = c} 1}.
 
         Args:
             num_classes: Number of classes. Defaults to ``None``.
@@ -63,7 +78,7 @@ class CoverageRate(Metric):
         self.add_state("correct", torch.zeros(size, dtype=torch.long), dist_reduce_fx="sum")
         self.add_state("total", torch.zeros(size, dtype=torch.float), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:  # pyrefly: ignore[bad-override]
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         """Update the metric state with predictions and targets.
 
         Args:

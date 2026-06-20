@@ -18,26 +18,38 @@ class TemperatureScaler(Scaler):
         eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Temperature scaling post-processing for calibrated probabilities.
+        r"""Temperature scaling post-processing for calibrated probabilities.
+
+        Rescales the model's logits by a single learnable scalar :math:`T > 0`
+        (the *temperature*) before the softmax:
+
+        .. math::
+            \tilde{\mathbf{p}}(\mathbf{x}) = \mathrm{softmax}\!\left(\mathbf{z}(\mathbf{x}) / T\right).
+
+        :math:`T` is fit by minimising the cross-entropy on a held-out calibration set.
+        Despite being a single-parameter transformation, temperature scaling is a
+        remarkably effective recipe for fixing the overconfidence of modern neural
+        networks (Guo et al., 2017).
 
         Args:
             model: Model to calibrate.
-            init_temperature: Initial value for the temperature. Defaults to ``1``.
+            init_temperature: Initial value for the temperature :math:`T`.
+                Defaults to ``1``.
             lr: Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter: Maximum number of iterations for the optimizer. Defaults to ``100``.
             eps: Small value for stability. Defaults to ``1e-8``.
             device: Device to use for optimization. Defaults to ``None``.
 
         References:
-            [1] `On calibration of modern neural networks. In ICML 2017
-            <https://arxiv.org/abs/1706.04599>`_.
+            [1] `Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration
+            of modern neural networks. ICML 2017 <https://arxiv.org/abs/1706.04599>`_.
 
         Warning:
-            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
-            corresponding 2-class logits.
+            For binary models, a sigmoid is applied before the prediction is
+            transposed to the corresponding 2-class logits.
 
         Note:
-            The Scaler will log an error if the temperature after fitting is negative.
+            The scaler will log an error if the temperature converges to a negative value.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 

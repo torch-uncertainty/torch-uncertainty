@@ -23,6 +23,7 @@ First, we have to load the following utilities from TorchUncertainty:
 """
 
 # %%
+import os
 from pathlib import Path
 
 from torch import nn
@@ -43,7 +44,7 @@ from torch_uncertainty.routines import ClassificationRoutine
 trainer = TUTrainer(accelerator="gpu", devices=1, max_epochs=2, enable_progress_bar=False)
 
 # datamodule providing the dataloaders to the trainer
-root = Path("data")
+root = Path(os.environ.get("TU_DATA_DIR", "data"))
 datamodule = MNISTDataModule(root=root, batch_size=128)
 
 # %%

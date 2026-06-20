@@ -151,7 +151,11 @@ class TUDataModule(LightningDataModule, ABC):
         Return:
             DataLoader: calibration dataloader.
         """
-        return self.val_dataloader() if self.postprocess_set == "val" else self.test_dataloader()[0]
+        if self.postprocess_set == "val":
+            if getattr(self, "val", None) is None:
+                self.setup("fit")
+            return self.val_dataloader()
+        return self.test_dataloader()[0]
 
     def _data_loader(self, dataset: Dataset, training: bool, shuffle: bool = False) -> DataLoader:
         """Create a dataloader for a given dataset.

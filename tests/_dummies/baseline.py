@@ -116,6 +116,7 @@ class DummyRegressionBaseline:
         dist_family: str | None = "normal",
         ema: bool = False,
         swa: bool = False,
+        save_to_csv: bool = False,
     ) -> RegressionRoutine:
         model = dummy_model(
             in_channels=in_features,
@@ -135,6 +136,7 @@ class DummyRegressionBaseline:
                 optim_recipe=optim_recipe(model),
                 dist_family=dist_family,
                 log_plots=True,
+                save_to_csv=save_to_csv,
             )
         # baseline_type == "ensemble":
         model = deep_ensembles(
@@ -151,6 +153,7 @@ class DummyRegressionBaseline:
             format_batch_fn=RepeatTarget(2),
             dist_family=dist_family,
             log_plots=True,
+            save_to_csv=save_to_csv,
         )
 
 
@@ -167,6 +170,9 @@ class DummySegmentationBaseline:
         log_plots: bool = False,
         ema: bool = False,
         swa: bool = False,
+        eval_ood: bool = False,
+        ood_criterion: str = "msp",
+        save_to_csv: bool = False,
     ) -> SegmentationRoutine:
         model = dummy_segmentation_model(
             in_channels=in_channels,
@@ -187,6 +193,9 @@ class DummySegmentationBaseline:
                 optim_recipe=optim_recipe(model),
                 metric_subsampling_rate=metric_subsampling_rate,
                 log_plots=log_plots,
+                eval_ood=eval_ood,
+                ood_criterion=ood_criterion,
+                save_to_csv=save_to_csv,
             )
 
         # baseline_type == "ensemble":
@@ -202,6 +211,9 @@ class DummySegmentationBaseline:
             optim_recipe=optim_recipe(model),
             metric_subsampling_rate=metric_subsampling_rate,
             log_plots=log_plots,
+            eval_ood=eval_ood,
+            ood_criterion=ood_criterion,
+            save_to_csv=save_to_csv,
         )
 
 
@@ -217,6 +229,8 @@ class DummyPixelRegressionBaseline:
         optim_recipe=None,
         ema: bool = False,
         swa: bool = False,
+        log_plots: bool = False,
+        save_to_csv: bool = False,
     ) -> PixelRegressionRoutine:
         model = dummy_segmentation_model(
             num_classes=output_dim,
@@ -236,6 +250,8 @@ class DummyPixelRegressionBaseline:
                 loss=loss,
                 optim_recipe=optim_recipe(model),
                 dist_family=dist_family,
+                log_plots=log_plots,
+                save_to_csv=save_to_csv,
             )
 
         # baseline_type == "ensemble":
@@ -252,4 +268,6 @@ class DummyPixelRegressionBaseline:
             is_ensemble=True,
             optim_recipe=optim_recipe(model),
             dist_family=dist_family,
+            log_plots=log_plots,
+            save_to_csv=save_to_csv,
         )

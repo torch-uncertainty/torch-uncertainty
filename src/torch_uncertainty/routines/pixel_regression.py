@@ -1,12 +1,10 @@
 from collections.abc import Callable
-from pathlib import Path
 from typing import Literal
 
 import matplotlib.cm as cm
 import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
-from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 from torch import Tensor, nn
 from torch.distributions import (
@@ -35,7 +33,7 @@ from torch_uncertainty.metrics import (
     SILog,
     ThresholdAccuracy,
 )
-from torch_uncertainty.utils import csv_writer
+from torch_uncertainty.utils import csv_writer, get_logger_dir, log_image_array
 from torch_uncertainty.utils.distributions import (
     get_dist_class,
     get_dist_estimate,
@@ -153,7 +151,7 @@ class PixelRegressionRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore
-        """Put the hyperparameters in tensorboard."""
+        """Log the hyperparameters."""
         if self.loss is None:
             raise ValueError(
                 "To train a model, you must specify the `loss` argument in the routine. Got None."
@@ -382,10 +380,10 @@ class PixelRegressionRoutine(LightningModule):
             self.test_prob_metrics.reset()
 
         if self.save_to_csv and self.logger is not None:
-            csv_writer(
-                Path(self.logger.log_dir) / self.csv_filename,
-                result_dict,
-            )
+            log_dir = get_logger_dir(self.logger)
+            if log_dir is not None:
+                log_dir.mkdir(parents=True, exist_ok=True)
+                csv_writer(log_dir / self.csv_filename, result_dict)
 
     def _plot_pixel_regression(
         self,
@@ -394,22 +392,21 @@ class PixelRegressionRoutine(LightningModule):
         target: Tensor,
         stage: Literal["val", "test"],
     ) -> None:
-        if (
-            self.logger is not None
-            and isinstance(self.logger, TensorBoardLogger)
-            and self.one_dim_depth
-        ):
+        if self.logger is not None and self.one_dim_depth:
             all_imgs = []
             for i in range(inputs.size(0)):
                 img = F.normalize(inputs[i, ...].cpu(), **self.inv_norm_params)
-                pred = colorize(preds[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth)
-                tgt = colorize(target[i, 0, ...].cpu(), vmin=0, vmax=self.model.max_depth)
+                pred = colorize(preds[i, ..., 0].cpu(), vmin=0, vmax=self.model.max_depth)
+                tgt = colorize(target[i, ..., 0].cpu(), vmin=0, vmax=self.model.max_depth)
                 all_imgs.extend([img, pred, tgt])
 
-            self.logger.experiment.add_image(
-                f"{stage}/samples",
-                make_grid(torch.stack(all_imgs, dim=0), nrow=3),
-                self.current_epoch,
+            grid = make_grid(torch.stack(all_imgs, dim=0), nrow=3)
+            grid_np = (grid.cpu().permute(1, 2, 0).numpy() * 255).astype("uint8")
+            log_image_array(
+                self.logger,
+                f"{stage}/samples_{self.current_epoch}",
+                grid_np,
+                step=self.current_epoch,
             )
 
 

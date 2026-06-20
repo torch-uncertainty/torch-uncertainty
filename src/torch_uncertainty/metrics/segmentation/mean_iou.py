@@ -16,7 +16,23 @@ class MeanIntersectionOverUnion(MulticlassStatScores):
         validate_args: bool = True,
         **kwargs,
     ) -> None:
-        r"""Computes Mean Intersection over Union (IoU) score.
+        r"""Computes the Mean Intersection over Union (mIoU) score.
+
+        For a multi-class segmentation task with :math:`C` classes, the per-class
+        Intersection over Union is
+
+        .. math::
+            \text{IoU}_c = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c},
+
+        where :math:`\text{TP}_c`, :math:`\text{FP}_c`, :math:`\text{FN}_c` are the
+        numbers of true-positive, false-positive and false-negative pixels for class
+        :math:`c` (aggregated over all images). The mean IoU is the unweighted average
+
+        .. math::
+            \text{mIoU} = \frac{1}{C} \sum_{c=1}^{C} \text{IoU}_c.
+
+        Classes that never appear in the targets are excluded from the average
+        (``nanmean``).
 
         Args:
             num_classes: Integer specifying the number of classes.
@@ -56,7 +72,7 @@ class MeanIntersectionOverUnion(MulticlassStatScores):
         )
 
     def compute(self) -> Tensor:
-        """Compute the Means Intersection over Union (MIoU) based on saved inputs."""
+        """Compute the Mean Intersection over Union (mIoU) based on the accumulated state."""
         tp, fp, _, fn = self._final_state()
 
         return _safe_divide(tp, tp + fp + fn, zero_division=float("nan")).nanmean()

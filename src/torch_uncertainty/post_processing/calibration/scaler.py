@@ -25,7 +25,13 @@ class Scaler(PostProcessing):
         eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Virtual class for scaling post-processing for calibrated probabilities.
+        """Abstract base class for logit-scaling calibrators.
+
+        Subclasses implement a learnable linear transformation of the logits and fit
+        its parameters on a held-out calibration set by minimising the cross-entropy
+        with :class:`~torch.optim.LBFGS`. See :class:`TemperatureScaler`,
+        :class:`VectorScaler`, :class:`MatrixScaler`, and :class:`DirichletScaler` for
+        concrete subclasses.
 
         Args:
             model: Model to calibrate. Defaults to ``None``.
@@ -35,12 +41,12 @@ class Scaler(PostProcessing):
             device: Device to use for optimization. Defaults to ``None``.
 
         References:
-            [1] `On calibration of modern neural networks. In ICML 2017
-            <https://arxiv.org/abs/1706.04599>`_.
+            [1] `Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration
+            of modern neural networks. ICML 2017 <https://arxiv.org/abs/1706.04599>`_.
 
         Warning:
-            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
-            2-class case.
+            For binary models, a sigmoid is applied before the prediction is transposed
+            to the 2-class case.
         """
         super().__init__(model)
         self.device = device

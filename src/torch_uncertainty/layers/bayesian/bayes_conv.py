@@ -57,8 +57,8 @@ class _BayesConvNd(Module):
     padding_mode: str
     weight: Tensor
     bias: Tensor | None
-    lprior: Tensor
-    lvposterior: Tensor
+    log_prior: Tensor
+    log_variational_posterior: Tensor
 
     def __init__(
         self,
@@ -274,12 +274,12 @@ class BayesConv1d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prob(bias)
+                bias_log_prior = self.bias_prior_dist.log_prob(bias)
             else:
-                bias, bias_lposterior, bias_lprior = None, 0, 0
+                bias, bias_lposterior, bias_log_prior = None, 0, 0
 
-            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
-            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
+            self.log_variational_posterior = self.weight_sampler.log_posterior() + bias_lposterior
+            self.log_prior = self.weight_prior_dist.log_prob(weight) + bias_log_prior
 
         return self._conv_forward(inputs, weight, bias)
 
@@ -367,12 +367,12 @@ class BayesConv2d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prob(bias)
+                bias_log_prior = self.bias_prior_dist.log_prob(bias)
             else:
-                bias, bias_lposterior, bias_lprior = None, 0, 0
+                bias, bias_lposterior, bias_log_prior = None, 0, 0
 
-            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
-            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
+            self.log_variational_posterior = self.weight_sampler.log_posterior() + bias_lposterior
+            self.log_prior = self.weight_prior_dist.log_prob(weight) + bias_log_prior
 
         return self._conv_forward(inputs, weight, bias)
 
@@ -460,11 +460,11 @@ class BayesConv3d(_BayesConvNd):
             if self.bias_mu is not None:
                 bias = self.bias_sampler.sample()
                 bias_lposterior = self.bias_sampler.log_posterior()
-                bias_lprior = self.bias_prior_dist.log_prob(bias)
+                bias_log_prior = self.bias_prior_dist.log_prob(bias)
             else:
-                bias, bias_lposterior, bias_lprior = None, 0, 0
+                bias, bias_lposterior, bias_log_prior = None, 0, 0
 
-            self.lvposterior = self.weight_sampler.log_posterior() + bias_lposterior
-            self.lprior = self.weight_prior_dist.log_prob(weight) + bias_lprior
+            self.log_variational_posterior = self.weight_sampler.log_posterior() + bias_lposterior
+            self.log_prior = self.weight_prior_dist.log_prob(weight) + bias_log_prior
 
         return self._conv_forward(inputs, weight, bias)

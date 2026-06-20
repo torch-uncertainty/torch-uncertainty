@@ -276,6 +276,18 @@ For ZERO, consider citing:
 Post-Processing Methods
 -----------------------
 
+DEUP (Direct Epistemic Uncertainty Prediction)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For DEUP post-processing, consider citing:
+
+**DEUP: Direct Epistemic Uncertainty Prediction**
+
+* Authors: *Salem Lahlou, Moksh Jain, Hadi Nekoei, Victor Ion Butoi, Paul Bertin, Jarrid Rector-Brooks, Maksym Korablyov, and Yoshua Bengio*
+* Paper: `TMLR 2023 <https://openreview.net/forum?id=eGLdVRvvfQ>`__.
+
+For the standalone sklearn/time-series implementation, see `deup <https://github.com/ursinasanderink/deup>`__.
+
 Temperature, Vector, & Matrix scaling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -593,6 +605,111 @@ MUAD
 
 * Authors: *Gianni Franchi, Xuanlong Yu, Andrei Bursuc, et al.*
 * Paper: `BMVC 2022 <https://arxiv.org/pdf/2203.01437.pdf>__`
+
+Tabular Classification Datasets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HTRU2
+"""""
+
+**Fifty Years of Pulsar Candidate Selection: From simple filters to a new principled real-time classification approach**
+
+* Authors: *Rob J. Lyon, B.W. Stappers, S. Cooper, J.M. Brooke, and J.D. Knowles*
+* Paper: `MNRAS 2016 <https://arxiv.org/abs/1603.05166>`__.
+
+SpamBase
+""""""""
+
+* Authors: *Mark Hopkins, Erik Reeber, George Forman, and Jaap Suermondt*
+* Source: `UCI Machine Learning Repository <https://archive.ics.uci.edu/dataset/94/spambase>`__.
+
+Online Shoppers Purchasing Intention
+"""""""""""""""""""""""""""""""""""""
+
+**Real-time prediction of online shoppers' purchasing intention using multilayer perceptron and LSTM recurrent neural networks**
+
+* Authors: *C. Okan Sakar, S. Olcay Polat, Mete Katircioglu, and Yomi Kastro*
+* Paper: `Neural Computing and Applications 2019 <https://link.springer.com/article/10.1007/s00521-018-3523-0>`__.
+
+Bank Marketing
+""""""""""""""
+
+**A Data-Driven Approach to Predict the Success of Bank Telemarketing**
+
+* Authors: *Sérgio Moro, Paulo Cortez, and Paulo Rita*
+* Paper: `Decision Support Systems 2014 <https://doi.org/10.1016/j.dss.2014.03.001>`__.
+
+DOTA 2 Games Results
+""""""""""""""""""""
+
+**Performance of Machine Learning Algorithms in Predicting Game Outcome from Drafts in Dota 2**
+
+* Authors: *Aleksandr Semenov, Peter Romov, Sergey Romov, Danil Yashkov, and Kirill Neklyudov*
+* Paper: `ICDS 2016 <https://link.springer.com/chapter/10.1007/978-3-319-57273-5_27>`__.
+
+Adult Census Income
+"""""""""""""""""""
+
+**Scaling Up the Accuracy of Naive-Bayes Classifiers: A Decision-Tree Hybrid**
+
+* Authors: *Ron Kohavi*
+* Paper: `KDD 1996 <https://aaai.org/papers/kdd96-koh030-scaling-up-the-accuracy-of-naive-bayes-classifiers-a-decision-tree-hybrid/>`__.
+
+German Credit
+"""""""""""""
+
+* Authors: *Hans Hofmann*
+* Source: `UCI Machine Learning Repository <https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data>`__.
+
+APS Failure at Scania Trucks
+"""""""""""""""""""""""""""""
+
+* Authors: *Machine Learning Group, Scania CV AB*
+* Source: `UCI Machine Learning Repository <https://archive.ics.uci.edu/dataset/421/aps+failure+at+scania+trucks>`__.
+
+Pima Indians Diabetes
+""""""""""""""""""""""
+
+**Using the ADAP Learning Algorithm to Forecast the Onset of Diabetes Mellitus**
+
+* Authors: *Jack W. Smith, J.E. Everhart, W.C. Dickson, W.C. Knowler, and R.S. Johannes*
+* Paper: `Annual Symposium on Computer Applications in Medical Care 1988 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2245318/>`__.
+
+Credit Approval
+"""""""""""""""
+
+* Source: `UCI Machine Learning Repository <https://archive.ics.uci.edu/dataset/27/credit+approval>`__.
+
+Telco Customer Churn
+"""""""""""""""""""""
+
+* Source: `OpenML dataset 40701 <https://www.openml.org/search?type=data&id=40701>`__.
+
+Higgs Boson
+"""""""""""
+
+**Searching for Exotic Particles in High-energy Physics with Deep Learning**
+
+* Authors: *Pierre Baldi, Peter Sadowski, and Daniel Whiteson*
+* Paper: `Nature Communications 2014 <https://www.nature.com/articles/ncomms5308>`__.
+
+KDD Cup 2009 Churn
+""""""""""""""""""
+
+* Source: `KDD Cup 2009 <https://www.openml.org/search?type=data&id=1112>`__.
+
+Amazon Employee Access
+"""""""""""""""""""""""
+
+* Source: `Kaggle Amazon Employee Access Challenge 2013 <https://www.kaggle.com/competitions/amazon-employee-access-challenge>`__.
+
+Wine Quality
+""""""""""""
+
+**Modeling wine preferences by data mining from physicochemical properties**
+
+* Authors: *Paulo Cortez, António Cerdeira, Fernando Almeida, Telmo Matos, and José Reis*
+* Paper: `Decision Support Systems 2009 <https://doi.org/10.1016/j.dss.2009.05.016>`__.
 
 Architectures
 -------------

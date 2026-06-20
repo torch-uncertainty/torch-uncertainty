@@ -23,7 +23,26 @@ class Disagreement(Metric):
         r"""Calculate the Disagreement Metric.
 
         The Disagreement Metric estimates the confidence of an ensemble of
-        estimators.
+        estimators. Given the predicted classes :math:`\hat{y}_{b,n} =
+        \arg\max_c \hat{p}_{b,n,c}` for sample :math:`b` and estimator
+        :math:`n`, the disagreement is the fraction of estimator pairs that
+        predict different classes:
+
+        .. math::
+
+            \text{Disagreement} = \frac{2}{N(N-1)}
+            \sum_{1 \le n < m \le N} \mathbf{1}\!\left[
+            \hat{y}_{b,n} \neq \hat{y}_{b,m} \right]
+
+        where :math:`N` is the number of estimators. Equivalently, this equals
+
+        .. math::
+
+            \text{Disagreement} = 1 - \frac{1}{\binom{N}{2}}
+            \sum_{c=1}^{C} \binom{n_c}{2}
+
+        where :math:`n_c = \sum_{n=1}^{N} \mathbf{1}[\hat{y}_{b,n} = c]`
+        is the number of estimators predicting class :math:`c`.
 
         Args:
             reduction: Determines how to reduce over the :math:`B`/batch dimension:

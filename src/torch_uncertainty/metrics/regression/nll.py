@@ -5,6 +5,31 @@ from torch_uncertainty.metrics import CategoricalNLL
 
 
 class DistributionNLL(CategoricalNLL):
+    r"""Negative Log-Likelihood under a predictive distribution.
+
+    Evaluates a probabilistic regression model by computing the negative log-likelihood
+    of the targets under the model's predictive distribution
+    :math:`p_\theta(y \mid x)`:
+
+    .. math::
+        \text{NLL} = -\frac{1}{N} \sum_{i=1}^{N} \log p_\theta(y_i \mid x_i).
+
+    For multi-variate targets, the underlying distribution is typically wrapped in a
+    :class:`torch.distributions.Independent` so that ``log_prob`` correctly sums the
+    log-density over the event dimensions.
+
+    Args:
+        reduction: How to reduce the per-sample losses (``"mean"``, ``"sum"``,
+            ``"none"`` or ``None``). Defaults to ``"mean"``.
+        kwargs: Additional keyword arguments, see `Advanced metric settings
+            <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
+
+    Inputs:
+        - :attr:`dist`: a :class:`torch.distributions.Distribution` over the targets.
+        - :attr:`target`: ground-truth targets of compatible shape.
+        - :attr:`padding_mask`: optional boolean mask of positions to ignore (``True`` for padding).
+    """
+
     def update(  # pyrefly: ignore[bad-override]
         self,
         dist: distributions.Distribution,

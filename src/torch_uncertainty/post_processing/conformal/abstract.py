@@ -21,10 +21,35 @@ class Conformal(PostProcessing):
         enable_ts: bool,
         device: Literal["cpu", "cuda"] | torch.device | None,
     ) -> None:
-        """Conformal base class.
+        r"""Abstract base class for split-conformal classification predictors.
+
+        Builds prediction sets :math:`\mathcal{C}(\mathbf{x}) \subseteq \{1, \dots, C\}`
+        with the *marginal coverage guarantee*
+
+        .. math::
+            \mathbb{P}\!\left[ Y \in \mathcal{C}(X) \right] \geq 1 - \alpha,
+
+        provided that the calibration and test points are exchangeable. At fit time,
+        non-conformity scores are computed on a held-out calibration set and the
+        empirical :math:`(1 - \alpha)`-quantile :math:`\hat{q}` is stored in
+        :attr:`q_hat`. At test time, the prediction set is built by including all
+        classes whose conformal score is below :math:`\hat{q}`. See :class:`ConformalClsTHR`,
+        :class:`ConformalClsAPS`, and :class:`ConformalClsRAPS` for concrete scores.
+
+        Args:
+            alpha: Target mis-coverage level :math:`\alpha \in (0, 1)`. A smaller
+                :math:`\alpha` yields larger prediction sets.
+            model: Underlying classifier.
+            ts_init_val: Initial temperature used when :attr:`enable_ts` is ``True``.
+            ts_lr: Learning rate for the temperature optimizer.
+            ts_max_iter: Maximum number of iterations for the temperature optimizer.
+            enable_ts: If ``True``, wraps the model in a :class:`TemperatureScaler`
+                fit on the calibration set before computing the conformal scores.
+            device: Device to run the post-processing on.
 
         Warning:
-            This implementation only works in the multiclass setting. Raise an issue if binary is needed.
+            This implementation only works in the multiclass setting. Raise an issue
+            if binary support is needed.
         """
         super().__init__(model=model)
         self.alpha = alpha

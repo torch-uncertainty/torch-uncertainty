@@ -12,11 +12,22 @@ from .imagenet import (
 from .mnist_c import MNISTC
 from .not_mnist import NotMNIST
 from .openimage_o import OpenImageO
-from .uci import (
+from .tabular import (
     HTRU2,
+    AdultCensusIncome,
+    AmazonAccess,
+    APSFailure,
     BankMarketing,
+    CreditApproval,
     DOTA2Games,
+    GermanCredit,
+    HiggsBoson,
+    KDDChurn,
     OnlineShoppers,
+    PimaDiabetes,
     SpamBase,
+    TabularClassificationDataset,
+    TelcoChurn,
+    WineQuality,
 )
 from .ucr_uea import UCRUEADataset

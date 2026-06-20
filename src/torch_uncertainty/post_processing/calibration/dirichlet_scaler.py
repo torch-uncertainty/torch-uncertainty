@@ -24,30 +24,49 @@ class DirichletScaler(MatrixScaler):
         eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
-        """Dirichlet scaling post-processing for calibrated probabilities.
+        r"""Dirichlet scaling post-processing for calibrated probabilities (Kull et al., 2019).
+
+        Like :class:`MatrixScaler`, fits a full affine transformation of the logits
+
+        .. math::
+            \tilde{\mathbf{p}}(\mathbf{x}) = \mathrm{softmax}\!\left(\mathbf{W} \mathbf{z}(\mathbf{x}) + \mathbf{b}\right),
+
+        but adds two off-diagonal :math:`\ell_2` regularisers that pull the
+        transformation towards a temperature-scaling solution and avoid overfitting on
+        small calibration sets:
+
+        .. math::
+            \mathcal{L} = \mathrm{CE}(\tilde{\mathbf{p}}, y)
+            + \lambda \sum_{i \neq j} W_{ij}^2 + \mu \sum_{i} b_i^2.
+
+        :math:`\lambda` (:attr:`lambda_reg`) and :math:`\mu` (:attr:`mu_reg`) typically
+        need to be tuned on a held-out subset of the calibration data.
 
         Args:
-            num_classes: Number of classes.
+            num_classes: Number of classes :math:`C`.
             model: Model to calibrate. Defaults to ``None``.
             init_weight_temperature: Initial value for the weight matrix. Defaults to ``1``.
             init_bias_temperature: Initial value for the bias. The inverse bias will be
                 set to the ``0`` vector if set to ``None``. Defaults to ``None``.
             lr: Learning rate for the optimizer. Defaults to ``0.1``.
             max_iter: Maximum number of iterations for the optimizer. Defaults to ``200``.
-            lambda_reg: Regularization coefficient applied to the
+            lambda_reg: Regularization coefficient :math:`\lambda` applied to the
                 off-diagonal elements of the weight matrix. Used to mitigate overfitting.
                 Defaults to ``None``.
-            mu_reg: Regularization coefficient applied to the bias vector. Defaults to ``None``.
+            mu_reg: Regularization coefficient :math:`\mu` applied to the bias vector.
+                Defaults to ``None``.
             eps: Small value for numerical stability. Defaults to ``1e-8``.
             device: Device to use for optimization. Defaults to ``None``.
 
         References:
-            [1] `Beyond temperature scaling: Obtaining well-calibrated multiclass
-            probabilities with Dirichlet calibration <https://arxiv.org/abs/1910.12656>`_.
+            [1] `Kull, M., Perello-Nieto, M., Kängsepp, M., Silva Filho, T., Song, H., & Flach, P.
+            (2019). Beyond temperature scaling: Obtaining well-calibrated multiclass
+            probabilities with Dirichlet calibration. NeurIPS 2019
+            <https://arxiv.org/abs/1910.12656>`_.
 
         Warning:
-            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
-            2-class case.
+            For binary tasks, a sigmoid is applied before the prediction is transposed
+            to the 2-class case.
         """
         super().__init__(
             num_classes=num_classes,

@@ -6,7 +6,7 @@ from torch import nn
 
 from tests._dummies import DummyRegressionBaseline, DummyRegressionDataModule
 from torch_uncertainty import TUTrainer
-from torch_uncertainty.losses import DistributionNLLLoss
+from torch_uncertainty.losses import DistributionNLLLoss, ELBOLoss
 from torch_uncertainty.optim_recipes import optim_cifar10_resnet18
 from torch_uncertainty.routines import RegressionRoutine
 
@@ -149,6 +149,40 @@ class TestRegression:
         trainer.validate(model, dm)
         trainer.test(model, dm)
         model(dm.get_test_set()[0][0])
+
+    def test_one_estimator_elbo_logs(self) -> None:
+        """Cover the ELBO loss, calibration plotting and CSV-saving paths."""
+        trainer = TUTrainer(
+            accelerator="cpu",
+            max_epochs=1,
+            limit_train_batches=1,
+            limit_val_batches=1,
+            limit_test_batches=1,
+            enable_checkpointing=False,
+        )
+
+        root = Path(__file__).parent.absolute().parents[0] / "data"
+        dm = DummyRegressionDataModule(out_features=1, root=root, batch_size=4)
+
+        model = DummyRegressionBaseline(
+            in_features=dm.in_features,
+            output_dim=1,
+            loss=ELBOLoss(
+                model=None,
+                inner_loss=DistributionNLLLoss(),
+                kl_weight=1.0,
+                num_samples=2,
+                dist_family="normal",
+            ),
+            optim_recipe=optim_cifar10_resnet18,
+            baseline_type="single",
+            dist_family="normal",
+            save_to_csv=True,
+        )
+
+        trainer.fit(model, dm)
+        trainer.validate(model, dm)
+        trainer.test(model, dm)
 
     def test_regression_failures(self) -> None:
         with pytest.raises(ValueError, match=r"output_dim must be positive"):

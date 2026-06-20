@@ -20,26 +20,39 @@ class MatrixScaler(Scaler):
         eps: float = 1e-8,
         device: Literal["cpu", "cuda"] | device | None = None,
     ) -> None:
-        """Matrix scaling post-processing for calibrated probabilities.
+        r"""Matrix scaling post-processing for calibrated probabilities.
+
+        Generalises temperature and vector scaling by applying a full affine
+        transformation to the logits before the softmax:
+
+        .. math::
+            \tilde{\mathbf{p}}(\mathbf{x}) = \mathrm{softmax}\!\left(\mathbf{W} \mathbf{z}(\mathbf{x}) + \mathbf{b}\right),
+
+        where :math:`\mathbf{W} \in \mathbb{R}^{C \times C}` and
+        :math:`\mathbf{b} \in \mathbb{R}^C` are fit by minimising the cross-entropy on
+        a held-out calibration set. Matrix scaling has :math:`C^2 + C` parameters and
+        can therefore overfit on small calibration sets — consider :class:`VectorScaler`
+        or :class:`DirichletScaler` when calibration data is scarce.
 
         Args:
-            num_classes: Number of classes.
+            num_classes: Number of classes :math:`C`.
             model: Model to calibrate. Defaults to ``None``.
-            init_weight_temperature: Initial value for the weights. Defaults to ``1``.
+            init_weight_temperature: Initial value for the weight matrix (used as
+                :math:`1/T \cdot \mathbf{I}`). Defaults to ``1``.
             init_bias_temperature: Initial value for the bias. The inverse bias will be
                 set to the ``0`` vector if set to ``None``. Defaults to ``None``.
             lr: Learning rate for the optimizer. Defaults to ``0.1``.
-            max_iter: Maximum number of iterations for the optimizer. Defaults to ``100``.
+            max_iter: Maximum number of iterations for the optimizer. Defaults to ``200``.
             eps: Small value for stability. Defaults to ``1e-8``.
             device: Device to use for optimization. Defaults to ``None``.
 
         References:
-            [1] `On calibration of modern neural networks. In ICML 2017
-            <https://arxiv.org/abs/1706.04599>`_.
+            [1] `Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration
+            of modern neural networks. ICML 2017 <https://arxiv.org/abs/1706.04599>`_.
 
         Warning:
-            If the model is binary, we will by default apply the sigmoid before transposing the prediction to the
-            2-class case.
+            For binary models, a sigmoid is applied before the prediction is transposed
+            to the 2-class case.
         """
         super().__init__(model=model, lr=lr, max_iter=max_iter, eps=eps, device=device)
 

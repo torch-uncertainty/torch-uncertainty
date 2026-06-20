@@ -1,12 +1,12 @@
 import torch
 
 from torch_uncertainty import TULightningCLI
-from torch_uncertainty.datamodules import UCIRegressionDataModule
+from torch_uncertainty.datamodules import BostonHousingDataModule
 from torch_uncertainty.routines import RegressionRoutine
 
 
 def cli_main() -> TULightningCLI:
-    return TULightningCLI(RegressionRoutine, UCIRegressionDataModule)
+    return TULightningCLI(RegressionRoutine, BostonHousingDataModule)
 
 
 if __name__ == "__main__":

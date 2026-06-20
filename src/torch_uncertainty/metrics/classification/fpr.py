@@ -22,6 +22,19 @@ class FPRx(Metric):
         (normal samples misclassified as anomalies) when the model reaches
         a specified recall level for the positive class.
 
+        Formally, let :math:`\tau_x` be the threshold such that the true positive rate
+        equals the target recall level :math:`x`:
+
+        .. math::
+            \tau_x = \inf \left\{ \tau \;\middle|\;
+            \frac{|\{i : s_i \geq \tau,\, y_i = 1\}|}{|\{i : y_i = 1\}|} \geq x \right\},
+
+        where :math:`s_i` is the confidence score assigned to sample :math:`i` and
+        :math:`y_i \in \{0, 1\}` is its label. The metric is then
+
+        .. math::
+            \text{FPR}@x = \frac{|\{i : s_i \geq \tau_x,\, y_i = 0\}|}{|\{i : y_i = 0\}|}.
+
         Args:
             recall_level: The recall level at which to compute the FPR.
             pos_label: The positive label.

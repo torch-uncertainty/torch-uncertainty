@@ -9,12 +9,20 @@ class ThresholdAccuracy(Metric):
     total: Tensor
 
     def __init__(self, power: int, lmbda: float = 1.25, **kwargs) -> None:
-        r"""Compute the Threshold Accuracy metric, also referred to as d1, d2, or d3.
+        r"""Compute the Threshold Accuracy metric, also referred to as :math:`\delta_1`,
+        :math:`\delta_2`, or :math:`\delta_3`.
 
-        This metric evaluates the percentage of predictions that fall within a
-        specified threshold of their corresponding target values. The threshold
-        is determined based on the maximum ratio between predictions and targets
-        (or its inverse), raised to a specified power.
+        This metric is standard in monocular depth estimation. It reports the fraction
+        of pixels (or samples) whose prediction :math:`\hat{y}_i` and target :math:`y_i`
+        agree up to a multiplicative factor :math:`\lambda^k`:
+
+        .. math::
+            \delta_k = \frac{1}{N} \sum_{i=1}^{N}
+            \mathbf{1}\!\left[ \max\!\left(\frac{\hat{y}_i}{y_i},
+            \frac{y_i}{\hat{y}_i}\right) < \lambda^k \right],
+
+        where :math:`\lambda = 1.25` by default and :math:`k` is the :attr:`power`
+        argument. Higher values are better.
 
         Args:
             power: The power to raise the threshold to. Often in [1, 2, 3].

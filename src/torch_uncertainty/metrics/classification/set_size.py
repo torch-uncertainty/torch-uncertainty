@@ -20,7 +20,19 @@ class SetSize(Metric):
         reduction: Literal["mean", "sum", "none"] | None = "mean",
         **kwargs,
     ) -> None:
-        """Set size to compute the efficiency of conformal prediction methods.
+        r"""Average prediction-set size — the standard *efficiency* metric for conformal
+        prediction methods.
+
+        For a set-valued predictor :math:`\mathcal{C}(X) \subseteq \{1, \dots, C\}`,
+
+        .. math::
+            \text{SetSize} = \frac{1}{N} \sum_{i=1}^{N} |\mathcal{C}(x_i)|.
+
+        Smaller sets are more informative, hence ``higher_is_better = False``. Set size
+        is typically reported jointly with the empirical
+        :class:`~torch_uncertainty.metrics.classification.CoverageRate`: a useful
+        conformal predictor achieves the target coverage with as small a set as
+        possible.
 
         Args:
             reduction: Determines how to reduce over the :math:`B`/batch dimension:
@@ -48,7 +60,6 @@ class SetSize(Metric):
             self.add_state("sizes", default=[], dist_reduce_fx="cat")
         self.add_state("total", default=torch.tensor(0, dtype=torch.long), dist_reduce_fx="sum")
 
-    # pyrefly: ignore[bad-override]
     def update(self, preds: torch.Tensor, targets: torch.Tensor | None = None) -> None:
         """Update the metric state with predictions and targets.
 

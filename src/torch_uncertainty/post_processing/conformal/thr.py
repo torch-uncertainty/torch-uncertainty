@@ -18,23 +18,40 @@ class ConformalClsTHR(Conformal):
         enable_ts: bool = True,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        r"""Conformal prediction post-processing for calibrated models.
+        r"""Threshold-based conformal classifier (THR; Sadinle et al., 2019).
+
+        The simplest conformal classification rule. Defines the non-conformity score
+        of class :math:`c` as :math:`s(\mathbf{x}, c) = 1 - \hat{p}_c(\mathbf{x})`,
+        calibrates the empirical :math:`(1 - \alpha)`-quantile :math:`\hat{q}` of the
+        scores at the true class on a held-out calibration set, and at test time
+        outputs the prediction set
+
+        .. math::
+            \mathcal{C}(\mathbf{x}) = \{ c : \hat{p}_c(\mathbf{x}) \geq 1 - \hat{q} \},
+
+        guaranteeing marginal coverage of :math:`1 - \alpha`. The top-1 class is
+        always included to avoid empty sets. Probabilities can optionally be calibrated
+        first via temperature scaling (``enable_ts=True``), which usually yields smaller
+        prediction sets.
 
         Args:
-            alpha: The confidence level, meaning we allow :math:`1-\alpha` error.
+            alpha: Target mis-coverage level :math:`\alpha \in (0, 1)`.
             model: Model to be calibrated. Defaults to ``None``.
             ts_init_val: Initial value for the temperature. Defaults to ``1.0``.
             ts_lr: Learning rate for the temperature scaling optimizer. Defaults to ``0.1``.
             ts_max_iter: Maximum number of iterations for the temperature scaling
                 optimizer. Defaults to ``100``.
-            enable_ts: Whether to scale the logits. Defaults to ``True``.
-            device: device. Defaults to ``None``.
+            enable_ts: Whether to scale the logits via temperature scaling before
+                computing the conformal scores. Defaults to ``True``.
+            device: Device to use. Defaults to ``None``.
 
         Warning:
-            This implementation only works in the multiclass setting. Raise an issue if binary is needed.
+            This implementation only works in the multiclass setting. Raise an issue
+            if binary support is needed.
 
         Reference:
-            - `Least ambiguous set-valued classifiers with bounded error levels, Sadinle, M. et al., (2016) <https://arxiv.org/abs/1609.00451>`_.
+            - `Sadinle, M., Lei, J., & Wasserman, L. (2019). Least Ambiguous Set-Valued
+              Classifiers with Bounded Error Levels <https://arxiv.org/abs/1609.00451>`_.
 
         Code inspired by TorchCP.
         """

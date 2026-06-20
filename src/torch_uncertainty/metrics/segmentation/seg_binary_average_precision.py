@@ -21,8 +21,30 @@ class SegmentationBinaryAveragePrecision(Metric):
         validate_args: bool = True,
         **kwargs: Any,
     ) -> None:
-        """SegmentationBinaryAveragePrecision computes the Average Precision (AP) for binary segmentation tasks.
-        It aggregates the mean AP across batches and computes the average AP over all batches processed.
+        r"""Image-averaged binary Average Precision for dense segmentation tasks.
+
+        Per-image Average Precision summarises the precision-recall curve obtained by
+        sweeping a threshold over the pixel scores of image :math:`b`:
+
+        .. math::
+            \text{AP}_b = \sum_{k} \left( R_b(k) - R_b(k-1) \right) P_b(k),
+
+        where :math:`P_b(k)` and :math:`R_b(k)` are the precision and recall at the
+        :math:`k`-th threshold. The final metric is averaged over all :math:`B` images:
+
+        .. math::
+            \text{AP} = \frac{1}{B} \sum_{b=1}^{B} \text{AP}_b.
+
+        As for :class:`SegmentationBinaryAUROC`, image-wise averaging is the convention
+        used in the dense OOD-detection literature.
+
+        Args:
+            thresholds: Optional explicit thresholds for the PR curve, see
+                :class:`~torchmetrics.classification.BinaryAveragePrecision`.
+            ignore_index: Optional label value to ignore.
+            validate_args: Whether to validate input arguments.
+            kwargs: Additional keyword arguments, see `Advanced metric settings
+                <https://torchmetrics.readthedocs.io/en/stable/pages/overview.html#metric-kwargs>`_.
         """
         super().__init__(**kwargs)
         self.aupr_metric = BinaryAveragePrecision(

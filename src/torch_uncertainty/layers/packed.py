@@ -808,7 +808,7 @@ class PackedMultiheadAttention(nn.Module):
             alpha: The width multiplier of the embedding dimension.
             num_estimators: The number of estimators packed in the layer.
             gamma: Defaults to ``1``.
-            dropout: Dropout probability on ``attn_output_weights``. Defaults to ``0.0``(no dropout).
+            dropout: Dropout probability on ``attn_output_weights``. Defaults to ``0.0`` (no dropout).
             bias: If specified, adds bias to input / output projection layers. Defaults to ``True``.
             add_bias_kv: If specified, adds bias to the key and value sequences at
                 ``dim=0``. Defaults to ``False``.
@@ -816,17 +816,16 @@ class PackedMultiheadAttention(nn.Module):
                 value sequences at ``dim=1``. Defaults to ``False``.
             kdim: Total number of features for keys. Defaults to ``None`` (uses ``kdim=embed_dim``).
             vdim: Total number of features for values. Defaults to ``None`` (uses ``vdim=embed_dim``).
-            batch_first: If ``True``, then the input and output tensors are provided
-                as (batch, seq, feature). Defaults to ``False`` (seq, batch, feature).
+            batch_first: If ``True``, the input and output tensors are provided
+                as ``(batch, seq, feature)``. Defaults to ``False`` (``(seq, batch, feature)``).
             first: Whether this is the first layer of the network. Defaults to ``False``.
             last: Whether this is the last layer of the network. Defaults to ``False``.
             device: The device to use for the layer's parameters. Defaults to ``None``.
             dtype: The dtype to use for the layer's parameters. Defaults to ``None``.
 
-        Reference:
-            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_: Original Multihead Attention formulation.
-            - `Hierarchical Light Tranformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_
-              : Packed-Ensembles-style Multihead Attention formulation.
+        References:
+            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_ — original Multihead Attention formulation.
+            - `Hierarchical Light Transformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_ — Packed-Ensembles-style Multihead Attention formulation.
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -1171,9 +1170,8 @@ class PackedTransformerEncoderLayer(nn.Module):
                 ``None``.
 
         Reference:
-            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_: Original Multihead Attention formulation.
-            - `Hierarchical Light Tranformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_
-              : Packed-Ensembles-style Multihead Attention formulation.
+            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_: original Multihead Attention formulation.
+            - `Hierarchical Light Transformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_: Packed-Ensembles-style Multihead Attention formulation.
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -1382,9 +1380,8 @@ class PackedTransformerDecoderLayer(nn.Module):
                 ``None``.
 
         Reference:
-            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_: Original Multihead Attention formulation.
-            - `Hierarchical Light Tranformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_
-              : Packed-Ensembles-style Multihead Attention formulation.
+            - `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_: original Multihead Attention formulation.
+            - `Hierarchical Light Transformer Ensembles for Multimodal Trajectory Forecasting <https://arxiv.org/abs/2403.17678>`_: Packed-Ensembles-style Multihead Attention formulation.
         """
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()

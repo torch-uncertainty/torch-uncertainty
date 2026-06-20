@@ -69,6 +69,7 @@ class _DummySegmentation(nn.Module):
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.image_size = image_size
+        self.max_depth = 80.0
         self.conv = nn.Conv2d(in_channels, num_classes, kernel_size=3, padding=1)
         self.dropout = nn.Dropout(p=dropout_rate)
         if dist_family is None:

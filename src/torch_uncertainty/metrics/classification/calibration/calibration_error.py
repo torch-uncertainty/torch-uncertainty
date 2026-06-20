@@ -272,30 +272,37 @@ class CalibrationError:
         the reliability of probabilistic predictions, especially for downstream
         decision-making tasks.
 
-        Three norms are available for measuring calibration error:
+        Given top-class confidences :math:`\hat{p}_i` and accuracies
+        :math:`a_i = \mathbf{1}[\hat{y}_i = y_i]`, the :math:`N` samples are
+        assigned to :math:`M` bins :math:`B_1, \dots, B_M` uniformly spaced in
+        :math:`[0, 1]`. Three norms are available:
 
         **Expected Calibration Error (ECE):**
 
         .. math::
 
-            \text{ECE} = \sum_{i=1}^N b_i \lvert p_i - c_i \rvert
+            \text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N}
+            \left| \operatorname{acc}(B_m) - \operatorname{conf}(B_m) \right|
 
         **Maximum Calibration Error (MCE):**
 
         .. math::
 
-            \text{MCE} = \max_{i} \lvert p_i - c_i \rvert
+            \text{MCE} = \max_{m} \left| \operatorname{acc}(B_m) -
+            \operatorname{conf}(B_m) \right|
 
         **Root Mean Square Calibration Error (RMSCE):**
 
         .. math::
 
-            \text{RMSCE} = \sqrt{\sum_{i=1}^N b_i (p_i - c_i)^2}
+            \text{RMSCE} = \sqrt{\sum_{m=1}^{M} \frac{|B_m|}{N}
+            \left( \operatorname{acc}(B_m) - \operatorname{conf}(B_m) \right)^2}
 
-        Here:
-            - :math:`p_i` is the accuracy of bin :math:`i` (fraction of correct predictions).
-            - :math:`c_i` is the mean predicted confidence in bin :math:`i`.
-            - :math:`b_i` is the fraction of total samples falling into bin :math:`i`.
+        where :math:`\operatorname{acc}(B_m) = \tfrac{1}{|B_m|}\sum_{i \in B_m} a_i`
+        is the fraction of correct predictions in bin :math:`m`,
+        :math:`\operatorname{conf}(B_m) = \tfrac{1}{|B_m|}\sum_{i \in B_m} \hat{p}_i`
+        is the mean predicted confidence in bin :math:`m`, and :math:`|B_m|/N` is
+        the fraction of total samples in bin :math:`m`.
 
         Bins are constructed either uniformly in the range :math:`[0, 1]` or
         adaptively (if ``adaptive=True``).

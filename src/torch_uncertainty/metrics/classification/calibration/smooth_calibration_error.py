@@ -29,11 +29,26 @@ class SmoothCalibrationError(Metric):
     ):
         r"""Smooth Expected Calibration Error (SmECE).
 
-        This metric implements the Kernel Density Estimation based ECE as
-        proposed by Błasiok & Nakkiran (2023). It addresses the limitations of
-        standard binned ECE, such as bin-edge effects and poor resolution for
-        overconfident models, by using a continuous kernel and an adaptive
-        bandwidth selection strategy. Computed on the top label.
+        This metric implements the Kernel Density Estimation based ECE proposed by
+        Błasiok & Nakkiran (2023). It addresses the limitations of the standard binned
+        ECE — bin-edge effects, poor resolution for overconfident models — by replacing
+        the histogram with a kernel density estimate of the residuals.
+
+        Given top-class confidences :math:`\hat{p}_i \in [0, 1]` and accuracies
+        :math:`a_i \in \{0, 1\}`, define the kernel-smoothed conditional gap
+
+        .. math::
+            r_h(t) = \frac{\sum_{i=1}^{N} K_h(t, \hat{p}_i) (\hat{p}_i - a_i)}
+                          {\sum_{i=1}^{N} K_h(t, \hat{p}_i)},
+
+        where :math:`K_h` is a kernel of bandwidth :math:`h`. The Smooth ECE is then
+
+        .. math::
+            \text{SmECE} = \int_0^1 |r_h(t)| \, \hat{f}(t) \, \mathrm{d}t,
+
+        with :math:`\hat{f}(t) = \tfrac{1}{N}\sum_i K_h(t, \hat{p}_i)` the kernel
+        density of confidences. The bandwidth :math:`h` can be fixed or selected
+        adaptively via a fixed-point binary search.
 
         Args:
             kernel_type: The kernel to use. Choose between:
@@ -63,12 +78,12 @@ class SmoothCalibrationError(Metric):
             :math:`\max(p, 1-p)`).
 
         Note:
-            This implementation has been tested on a use case and provided the same values
-            (with 6 equal significant figures) as relplot's original implementation.
+            This implementation has been tested on a use case and provides the same values
+            as relplot's original implementation (to 6 significant figures).
 
         References:
             - Błasiok, J. & Nakkiran, P. Smooth ECE: Principled Reliability
-            Diagrams. ICLR 2024.
+              Diagrams via Kernel Smoothing. ICLR 2024.
         """
         super().__init__(**kwargs)
         if kernel_type not in ["logit", "reflected"]:

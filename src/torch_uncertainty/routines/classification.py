@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -24,6 +23,8 @@ from torch_uncertainty.metrics import (
     AUGRC,
     AURC,
     FPR95,
+    SCODAUGRC,
+    SCODAURC,
     BrierScore,
     CalibrationError,
     CategoricalNLL,
@@ -34,6 +35,8 @@ from torch_uncertainty.metrics import (
     GroupingLoss,
     MutualInformation,
     RiskAt80Cov,
+    SCODCovAt5Risk,
+    SCODRiskAt80Cov,
     SetSize,
     SmoothCalibrationError,
 )
@@ -43,9 +46,15 @@ from torch_uncertainty.ood_criteria import (
     TUOODCriterion,
     get_ood_criterion,
 )
-from torch_uncertainty.post_processing import Conformal, LaplaceApprox, PostProcessing
+from torch_uncertainty.post_processing import DEUP, Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import MIXUP_PARAMS, RepeatTarget, build_mixup
-from torch_uncertainty.utils import csv_writer, plot_hist, plot_per_class_accuracy
+from torch_uncertainty.utils import (
+    csv_writer,
+    get_logger_dir,
+    log_figure,
+    plot_hist,
+    plot_per_class_accuracy,
+)
 
 
 class ClassificationRoutine(LightningModule):
@@ -208,24 +217,24 @@ class ClassificationRoutine(LightningModule):
             "cal/SmECE": SmoothCalibrationError(),
             "sc/AURC": AURC(),
             "sc/AUGRC": AUGRC(),
-            "sc/Cov@5Risk": CovAt5Risk(),
-            "sc/Risk@80Cov": RiskAt80Cov(),
+            "sc/Cov_5Risk": CovAt5Risk(),
+            "sc/Risk_80Cov": RiskAt80Cov(),
         }
         groups = [
             ["cls/Acc"],
             ["cls/Brier"],
             ["cls/NLL"],
             ["cal/ECE", "cal/SmECE", "cal/MCE", "cal/aECE"],
-            ["sc/AURC", "sc/AUGRC", "sc/Cov@5Risk", "sc/Risk@80Cov"],
+            ["sc/AURC", "sc/AUGRC", "sc/Cov_5Risk", "sc/Risk_80Cov"],
         ]
 
         if self.binary_cls:
             metrics_dict |= {
                 "cls/AUROC": BinaryAUROC(),
                 "cls/AUPR": BinaryAveragePrecision(),
-                "cls/FRP95": FPR95(pos_label=1),
+                "cls/FPR95": FPR95(pos_label=1),
             }
-            groups.extend([["cls/AUROC", "cls/AUPR"], ["cls/FRP95"]])
+            groups.extend([["cls/AUROC", "cls/AUPR"], ["cls/FPR95"]])
 
         cls_metrics = MetricCollection(metrics_dict, compute_groups=groups)
         self.val_cls_metrics = cls_metrics.clone(prefix="val/")
@@ -239,7 +248,9 @@ class ClassificationRoutine(LightningModule):
                     "test/post/SetSize": SetSize(),
                 },
             )
-        elif self.post_processing is not None:
+
+        # DEUP is a post-processing method that does not change predictions, no need for more metrics
+        elif self.post_processing is not None and not isinstance(self.post_processing, DEUP):
             self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
 
         self.test_id_entropy = Entropy()
@@ -255,8 +266,16 @@ class ClassificationRoutine(LightningModule):
                     "AUROC": BinaryAUROC(),
                     "AUPR": BinaryAveragePrecision(),
                     "FPR95": FPR95(pos_label=1),
+                    "SCOD_AURC": SCODAURC(),
+                    "SCOD_AUGRC": SCODAUGRC(),
+                    "SCOD_Cov_5Risk": SCODCovAt5Risk(),
+                    "SCOD_Risk_80Cov": SCODRiskAt80Cov(),
                 },
-                compute_groups=[["AUROC", "AUPR"], ["FPR95"]],
+                compute_groups=[
+                    ["AUROC", "AUPR"],
+                    ["FPR95"],
+                    ["SCOD_AURC", "SCOD_AUGRC", "SCOD_Cov_5Risk", "SCOD_Risk_80Cov"],
+                ],
             )
             self.test_ood_metrics = ood_metrics.clone(prefix="ood/")
             self.test_ood_entropy = Entropy()
@@ -326,7 +345,7 @@ class ClassificationRoutine(LightningModule):
         return self.optim_recipe
 
     def on_train_start(self) -> None:  # coverage: ignore
-        """Put the hyperparameters in tensorboard."""
+        """Log the hyperparameters."""
         if self.loss is None:
             raise ValueError(
                 "To train a model, you must specify the `loss` argument in the routine. Got None."
@@ -477,12 +496,19 @@ class ClassificationRoutine(LightningModule):
         probs_per_est = torch.sigmoid(logits) if self.binary_cls else F.softmax(logits, dim=-1)
         probs = probs_per_est.mean(dim=1)
 
+        pp_probs: Tensor | None = None
+        pp_epistemic: Tensor | None = None
         if self.post_processing is not None:
-            pp_logits = self.post_processing(inputs)
-            if isinstance(self.post_processing, LaplaceApprox | Conformal):
-                pp_probs = pp_logits
+            pp_out = self.post_processing(inputs)
+            if isinstance(self.post_processing, DEUP):
+                pp_probs = None
+                pp_epistemic = pp_out
+            elif isinstance(self.post_processing, LaplaceApprox | Conformal):
+                pp_probs = pp_out
+                pp_epistemic = None
             else:
-                pp_probs = F.softmax(pp_logits, dim=-1)
+                pp_probs = F.softmax(pp_out, dim=-1)
+                pp_epistemic = None
 
         if self.ood_criterion.input_type == OODCriterionInputType.LOGIT:
             ood_scores = self.ood_criterion(logits)
@@ -491,7 +517,10 @@ class ClassificationRoutine(LightningModule):
         elif self.ood_criterion.input_type == OODCriterionInputType.ESTIMATOR_PROB:
             ood_scores = self.ood_criterion(probs_per_est)
         elif self.ood_criterion.input_type == OODCriterionInputType.POST_PROCESSING:
-            ood_scores = self.ood_criterion(pp_probs)
+            if isinstance(self.post_processing, DEUP):
+                ood_scores = self.ood_criterion(pp_epistemic)
+            else:
+                ood_scores = self.ood_criterion(pp_probs)
 
         if dataloader_idx == 0:
             # squeeze if binary classification only for binary metrics
@@ -515,7 +544,7 @@ class ClassificationRoutine(LightningModule):
             if self.id_score_storage is not None:
                 self.id_score_storage.append(ood_scores.detach().cpu())
 
-            if self.post_processing is not None:
+            if self.post_processing is not None and pp_probs is not None:
                 self.post_cls_metrics.update(pp_probs, targets)
 
         if self.eval_ood and dataloader_idx == 1:
@@ -561,7 +590,7 @@ class ClassificationRoutine(LightningModule):
             "test/cplx/params": self.num_params,
         }
 
-        if self.post_processing is not None:
+        if hasattr(self, "post_cls_metrics"):
             result_dict |= self.post_cls_metrics.compute()
 
         if self.eval_grouping_loss:
@@ -596,7 +625,7 @@ class ClassificationRoutine(LightningModule):
         self.test_id_entropy.reset()
         if not self.binary_cls:
             self.test_per_class_acc.reset()
-        if self.post_processing is not None:
+        if self.post_processing is not None and not isinstance(self.post_processing, DEUP):
             self.post_cls_metrics.reset()
         if self.eval_grouping_loss:
             self.test_grouping_loss.reset()
@@ -613,28 +642,25 @@ class ClassificationRoutine(LightningModule):
                 self.test_shift_ens_metrics.reset()
 
         if self.save_to_csv and self.logger is not None:
-            csv_writer(
-                Path(self.logger.log_dir) / self.csv_filename,
-                result_dict,
-            )
+            log_dir = get_logger_dir(self.logger)
+            if log_dir is not None:
+                log_dir.mkdir(parents=True, exist_ok=True)
+                csv_writer(log_dir / self.csv_filename, result_dict)
 
     def _plot_results(self):
         """Plot uncertainty quantification metrics."""
-        self.logger.experiment.add_figure(
-            "Reliabity diagram", self.test_cls_metrics["cal/ECE"].plot()[0]
-        )
-        self.logger.experiment.add_figure(
-            "Risk-Coverage curve",
-            self.test_cls_metrics["sc/AURC"].plot()[0],
-        )
-        self.logger.experiment.add_figure(
+        log_figure(self.logger, "Reliability diagram", self.test_cls_metrics["cal/ECE"].plot()[0])
+        log_figure(self.logger, "Risk-Coverage curve", self.test_cls_metrics["sc/AURC"].plot()[0])
+        log_figure(
+            self.logger,
             "Generalized Risk-Coverage curve",
             self.test_cls_metrics["sc/AUGRC"].plot()[0],
         )
 
         if self.post_processing is not None and not isinstance(self.post_processing, Conformal):
-            self.logger.experiment.add_figure(
-                "Reliabity diagram after calibration",
+            log_figure(
+                self.logger,
+                "Reliability diagram after calibration",
                 self.post_cls_metrics["cal/ECE"].plot()[0],
             )
 
@@ -654,7 +680,7 @@ class ClassificationRoutine(LightningModule):
                 20,
                 "Histogram of the OOD scores",
             )[0]
-            self.logger.experiment.add_figure("OOD Score Histogram", score_fig)
+            log_figure(self.logger, "OOD Score Histogram", score_fig)
 
 
 def _classification_routine_checks(

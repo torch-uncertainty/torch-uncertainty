@@ -23,22 +23,30 @@ class HistogramBinningScaler(PostProcessing):
         eps: float = 1e-6,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        """Histogram Binning post-processing for calibrated probabilities.
+        r"""Histogram Binning post-processing for calibrated probabilities (Zadrozny & Elkan, 2001).
 
-        Histogram binning is a non-parametric calibration method that partitions
-        the uncalibrated probability space into equal-width bins. For each bin,
-        it computes the empirical probability of the positive class.
+        A non-parametric calibration method that partitions the uncalibrated
+        probability space into :attr:`num_bins` equal-width bins. For each bin
+        :math:`B_m`, the calibrated probability is the empirical frequency of the
+        positive class among the calibration samples falling into the bin:
+
+        .. math::
+            \tilde{p}(\hat{p}) = \frac{\sum_{i \in B_m} \mathbf{1}[y_i = 1]}{|B_m|},
+            \quad \text{where } \hat{p} \in B_m.
+
+        For multi-class problems, a one-vs-rest binning is fit per class and the
+        resulting calibrated probabilities are renormalised to sum to one.
 
         Args:
             model: Model to calibrate. Defaults to ``None``.
-            num_bins: Number of equal-width bins to use. Defaults to ``15``.
+            num_bins: Number of equal-width bins. Defaults to ``15``.
             eps: Small value for stability when converting probs back to logits.
                 Defaults to ``1e-6``.
             device: Device to use for tensor operations. Defaults to ``None``.
 
         References:
-            [1] Obtaining calibrated probability estimates from decision trees
-            and naive bayesian classifiers. In ICML 2001.
+            [1] `Zadrozny, B., & Elkan, C. (2001). Obtaining calibrated probability
+            estimates from decision trees and naive Bayesian classifiers. ICML 2001
             <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_.
         """
         super().__init__(model)

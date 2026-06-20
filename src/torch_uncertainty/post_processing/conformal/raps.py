@@ -20,26 +20,46 @@ class ConformalClsRAPS(ConformalClsAPS):
         enable_ts: bool = False,
         device: Literal["cpu", "cuda"] | torch.device | None = None,
     ) -> None:
-        r"""Conformal prediction with RAPS scores.
+        r"""Conformal classification with Regularised Adaptive Prediction Sets
+        (RAPS; Angelopoulos, Bates, Jordan & Malik, 2021).
+
+        A regularised variant of :class:`ConformalClsAPS` that penalises the inclusion
+        of classes with a low predicted rank to produce *smaller* prediction sets
+        without sacrificing coverage. The non-conformity score adds a rank-based
+        regulariser to the APS score:
+
+        .. math::
+            s(\mathbf{x}, y) = \underbrace{\sum_{i=1}^{k} \hat{p}_{(i)} - U \cdot \hat{p}_{(k)}}_{\text{APS}}
+            + \lambda \cdot (k - k_\text{reg})_{+},
+
+        where :math:`k` is the rank of class :math:`y`, :math:`\lambda` is
+        :attr:`penalty`, :math:`k_\text{reg}` is :attr:`regularization_rank`, and
+        :math:`(\cdot)_+ = \max(\cdot, 0)`. Larger :math:`\lambda` and smaller
+        :math:`k_\text{reg}` produce tighter sets at the cost of a coarser score.
 
         Args:
-            alpha: The confidence level meaning we allow :math:`1-\alpha` error.
+            alpha: Target mis-coverage level :math:`\alpha \in (0, 1)`.
             model: Trained classification model. Defaults to ``None``.
-            randomized: Whether to use randomized smoothing in RAPS. Defaults to ``True``.
-            penalty: Regularization weight. Defaults to ``0.1``.
-            regularization_rank: Rank threshold for regularization. Defaults to ``1``.
+            randomized: Whether to use randomised tie-breaking. Defaults to ``True``.
+            penalty: Regularisation weight :math:`\lambda`. Defaults to ``0.1``.
+            regularization_rank: Rank threshold :math:`k_\text{reg}` above which the
+                penalty is applied. Defaults to ``1``.
             ts_init_val: Initial value for the temperature. Defaults to ``1.0``.
             ts_lr: Learning rate for the temperature scaling optimizer. Defaults to ``0.1``.
             ts_max_iter: Maximum number of iterations for the temperature scaling optimizer.
                 Defaults to ``100``.
-            enable_ts: Whether to scale the logits. Defaults to ``False``.
-            device: device. Defaults to ``None``.
+            enable_ts: Whether to apply temperature scaling before computing the
+                conformal scores. Defaults to ``False``.
+            device: Device to use. Defaults to ``None``.
 
         Warning:
-            This implementation only works in the multiclass setting. Raise an issue if binary is needed.
+            This implementation only works in the multiclass setting. Raise an issue
+            if binary support is needed.
 
         Reference:
-            - TODO:
+            - `Angelopoulos, A. N., Bates, S., Jordan, M., & Malik, J. (2021).
+              Uncertainty Sets for Image Classifiers using Conformal Prediction. ICLR 2021
+              <https://arxiv.org/abs/2009.14193>`_.
 
         Code inspired by TorchCP.
         """

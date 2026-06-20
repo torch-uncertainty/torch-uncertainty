@@ -6,9 +6,11 @@ API Reference
 Routines
 --------
 
-The routine are the main building blocks of the library. They define the framework
-in which the models are trained and evaluated. They allow for easy computation of different
-metrics crucial for uncertainty estimation in different contexts, namely classification, regression and segmentation.
+Routines are the main building blocks of the library. They define the framework in which
+models are trained and evaluated, and make it easy to compute the metrics crucial for
+uncertainty estimation across the supported tasks: classification, regression, segmentation,
+and pixelwise regression. See the :doc:`Evaluating Models <evaluation>` page for a full
+breakdown of the metrics computed by each routine.
 
 .. currentmodule:: torch_uncertainty.routines
 
@@ -268,6 +270,21 @@ Selective Classification
     RiskAtxCov
     RiskAt80Cov
 
+Selective Classification with OOD
+"""""""""""""""""""""""""""""""""
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+    SCODAUGRC
+    SCODAURC
+    SCODCovAtxRisk
+    SCODCovAt5Risk
+    SCODRiskAtxCov
+    SCODRiskAt80Cov
+
 Calibration
 """""""""""
 
@@ -406,6 +423,7 @@ Post-Processing Methods
     
     LaplaceApprox
     MCBatchNorm
+    DEUP
 
 
 Scaling Methods
@@ -485,19 +503,30 @@ Classification
     TinyImageNetDataModule
     
 
-UCI Tabular Classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tabular Classification
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
+    TabularClassificationDataModule
+    AdultCensusIncomeDataModule
+    AmazonAccessDataModule
+    APSFailureDataModule
     BankMarketingDataModule
+    CreditApprovalDataModule
     DOTA2GamesDataModule
+    GermanCreditDataModule
+    HiggsBosonDataModule
     HTRU2DataModule
+    KDDChurnDataModule
     OnlineShoppersDataModule
+    PimaDiabetesDataModule
     SpamBaseDataModule
+    TelcoChurnDataModule
+    WineQualityDataModule
     
 Regression
 ^^^^^^^^^^
@@ -506,7 +535,7 @@ Regression
     :nosignatures:
     :template: class.rst
 
-    UCIRegressionDataModule
+    TabularRegressionDataModule
 
 .. currentmodule:: torch_uncertainty.datamodules.segmentation
 
@@ -552,24 +581,32 @@ Classification
     TinyImageNetC
     OpenImageO
 
+Tabular Classification
+^^^^^^^^^^^^^^^^^^^^^^
 
-UCI Tabular Classification
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: torch_uncertainty.datasets.classification.uci
-
+.. currentmodule:: torch_uncertainty.datasets.classification.tabular
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
     :template: class.rst
 
+    TabularClassificationDataset
+    AdultCensusIncome
+    AmazonAccess
+    APSFailure
     BankMarketing
+    CreditApproval
     DOTA2Games
+    GermanCredit
+    HiggsBoson
     HTRU2
+    KDDChurn
     OnlineShoppers
+    PimaDiabetes
     SpamBase
-
+    TelcoChurn
+    WineQuality
 
 Regression
 ^^^^^^^^^^
@@ -581,7 +618,7 @@ Regression
     :nosignatures:
     :template: class.rst
 
-    UCIRegression
+    TabularRegressionDataset
 
 Segmentation
 ^^^^^^^^^^^^
