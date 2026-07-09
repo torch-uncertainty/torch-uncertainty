@@ -2,6 +2,7 @@ import contextlib
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
@@ -21,6 +22,7 @@ from torch_uncertainty.utils import (
     log_figure,
     log_image_array,
     plot_hist,
+    plot_per_class_accuracy,
 )
 from torch_uncertainty.utils.distributions import TUStudentT
 
@@ -81,6 +83,40 @@ class TestMisc:
     def test_plot_hist(self) -> None:
         conf = [torch.rand(20), torch.rand(20)]
         plot_hist(conf, bins=10, title="test")
+
+    def test_plot_per_class_accuracy_default_names(self) -> None:
+        acc = torch.tensor([0.9, 0.7, 0.5])
+        fig, ax = plot_per_class_accuracy(acc)
+        assert isinstance(fig, plt.Figure)
+        assert "Per-Class Accuracy" in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_custom_names(self) -> None:
+        acc = torch.tensor([0.8, 0.6])
+        fig, ax = plot_per_class_accuracy(acc, class_names=["cat", "dog"])
+        assert isinstance(fig, plt.Figure)
+        assert "Per-Class Accuracy" in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk(self) -> None:
+        acc = torch.rand(50)
+        fig, ax = plot_per_class_accuracy(acc, top_k=10)
+        assert "10/50" in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk_larger_than_classes(self) -> None:
+        acc = torch.tensor([0.9, 0.7, 0.5])
+        fig, ax = plot_per_class_accuracy(acc, top_k=100)
+        assert "Per-Class Accuracy" in ax.get_title()
+        assert "100/" not in ax.get_title()
+        plt.close(fig)
+
+    def test_plot_per_class_accuracy_topk_none(self) -> None:
+        acc = torch.rand(50)
+        fig, ax = plot_per_class_accuracy(acc, top_k=None)
+        assert "Per-Class Accuracy" in ax.get_title()
+        assert "/" not in ax.get_title()
+        plt.close(fig)
 
 
 class TestMiscLoggers:

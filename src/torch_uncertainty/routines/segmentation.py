@@ -44,7 +44,7 @@ from torch_uncertainty.ood_criteria import (
 )
 from torch_uncertainty.post_processing import PostProcessing
 from torch_uncertainty.utils import csv_writer, get_logger_dir, log_figure
-from torch_uncertainty.utils.plotting import show_segmentation_predictions
+from torch_uncertainty.utils.plotting import plot_per_class_accuracy, show_segmentation_predictions
 
 
 class SegmentationRoutine(LightningModule):
@@ -221,6 +221,9 @@ class SegmentationRoutine(LightningModule):
         self.test_sbsmpl_seg_metrics = SegmentationMetric(
             sbsmpl_seg_metrics.clone(prefix="test/"), subsampling_rate=self.metric_subsampling_rate
         )
+        self.test_per_class_acc = SegmentationMetric(
+            Accuracy(task="multiclass", average="none", num_classes=self.num_classes)
+        )
 
         if self.eval_ood:
             ood_metrics = MetricCollection(
@@ -383,6 +386,7 @@ class SegmentationRoutine(LightningModule):
             self.test_sbsmpl_seg_metrics.update(
                 probs, targets, ignore_mask=(ignore_mask | ood_mask)
             )
+            self.test_per_class_acc.update(probs, targets, ignore_mask=(ignore_mask | ood_mask))
 
         if self.eval_ood and dataloader_idx == 1:
             if self.ood_criterion.input_type == OODCriterionInputType.PROB:
@@ -437,6 +441,7 @@ class SegmentationRoutine(LightningModule):
 
         self.test_seg_metrics.reset()
         self.test_sbsmpl_seg_metrics.reset()
+        self.test_per_class_acc.reset()
         self.test_patch_seg_metrics.reset()
         if self.eval_ood:
             self.test_ood_metrics.reset()
@@ -449,6 +454,10 @@ class SegmentationRoutine(LightningModule):
 
     def _plot_results(self):
         """Plot uncertainty quantification metrics and segmentation figures."""
+        self.logger.experiment.add_figure(
+            "Per-Class Accuracy",
+            plot_per_class_accuracy(self.test_per_class_acc.compute())[0],
+        )
         log_figure(
             self.logger,
             "Calibration/Reliability diagram",

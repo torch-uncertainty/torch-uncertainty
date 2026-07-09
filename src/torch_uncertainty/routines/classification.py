@@ -48,7 +48,13 @@ from torch_uncertainty.ood_criteria import (
 )
 from torch_uncertainty.post_processing import DEUP, Conformal, LaplaceApprox, PostProcessing
 from torch_uncertainty.transforms import MIXUP_PARAMS, RepeatTarget, build_mixup
-from torch_uncertainty.utils import csv_writer, get_logger_dir, log_figure, plot_hist
+from torch_uncertainty.utils import (
+    csv_writer,
+    get_logger_dir,
+    log_figure,
+    plot_hist,
+    plot_per_class_accuracy,
+)
 
 
 class ClassificationRoutine(LightningModule):
@@ -248,6 +254,11 @@ class ClassificationRoutine(LightningModule):
             self.post_cls_metrics = cls_metrics.clone(prefix="test/post/")
 
         self.test_id_entropy = Entropy()
+
+        if not self.binary_cls:
+            self.test_per_class_acc = Accuracy(
+                task="multiclass", average="none", num_classes=self.num_classes
+            )
 
         if self.eval_ood:
             ood_metrics = MetricCollection(
@@ -518,6 +529,8 @@ class ClassificationRoutine(LightningModule):
                 targets,
             )
             self.test_id_entropy.update(probs)
+            if not self.binary_cls:
+                self.test_per_class_acc.update(probs, targets)
 
             if self.eval_grouping_loss:
                 self.test_grouping_loss.update(probs, targets, self.features)
@@ -610,6 +623,8 @@ class ClassificationRoutine(LightningModule):
         # reset metrics
         self.test_cls_metrics.reset()
         self.test_id_entropy.reset()
+        if not self.binary_cls:
+            self.test_per_class_acc.reset()
         if self.post_processing is not None and not isinstance(self.post_processing, DEUP):
             self.post_cls_metrics.reset()
         if self.eval_grouping_loss:
@@ -647,6 +662,12 @@ class ClassificationRoutine(LightningModule):
                 self.logger,
                 "Reliability diagram after calibration",
                 self.post_cls_metrics["cal/ECE"].plot()[0],
+            )
+
+        if not self.binary_cls:
+            self.logger.experiment.add_figure(
+                "Per-Class Accuracy",
+                plot_per_class_accuracy(self.test_per_class_acc.compute())[0],
             )
 
         # plot histograms of logits and likelihoods
