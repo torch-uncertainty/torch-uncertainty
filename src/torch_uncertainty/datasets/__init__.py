@@ -17,6 +17,7 @@ from .classification import (
     DOTA2Games,
     GermanCredit,
     HiggsBoson,
+    ImageNet200,
     ImageNetA,
     ImageNetC,
     ImageNetO,
