@@ -1,4 +1,5 @@
 # ruff: noqa: F401
+from .ambiguity import Ambiguity
 from .classification import (
     AUGRC,
     AURC,
