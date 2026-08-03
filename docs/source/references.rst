@@ -524,6 +524,28 @@ For the grouping loss, consider citing:
 * Paper: `ICLR 2023 <https://arxiv.org/pdf/2210.16315.pdf>`__.
 
 
+Ambiguity
+^^^^^^^^^
+
+For the ambiguity, consider citing:
+
+**Neural Network Ensembles, Cross Validation, and Active Learning**
+
+* Authors: *Anders Krogh and Jesper Vedelsby*
+* Paper: `NeurIPS 1994 <https://proceedings.neurips.cc/paper/1994/hash/b8c37e33defde51cf91e1e03e51657da-Abstract.html>`__.
+
+
+Disagreement
+^^^^^^^^^^^^
+
+For the disagreement, consider citing:
+
+**The Random Subspace Method for Constructing Decision Forests**
+
+* Authors: *Tin Kam Ho*
+* Paper: `IEEE Transactions on Pattern Analysis and Machine Intelligence 1998 <https://doi.org/10.1109/34.709601>`__.
+
+
 Interval (Winkler) Score
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
