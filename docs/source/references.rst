@@ -41,6 +41,17 @@ For Pinball / Quantile Regression, consider citing:
 * Paper: `Econometrica 1978 <https://www.jstor.org/stable/1913643>`__.
 
 
+Relaxed Quantile Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Relaxed Quantile Regression, consider citing:
+
+**Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise**
+
+* Authors: *Thomas Pouplin, Alan Jeffares, Nabeel Seedat, and Mihaela van der Schaar*
+* Paper: `ICML 2024 <https://arxiv.org/abs/2406.03258>`__.
+
+
 Deep Evidential Regression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
