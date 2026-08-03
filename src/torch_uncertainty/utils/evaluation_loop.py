@@ -22,6 +22,8 @@ PERCENTAGE_METRICS = [
     "AUGRC",
     "mAcc",
     "ECE",
+    "ECE+",
+    "ECE-",
     "MCE",
     "aECE",
     "SmECE",

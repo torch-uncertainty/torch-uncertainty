@@ -61,6 +61,29 @@ class TestCalibrationError:
             ValueError, match=r"`n_bins` does not exist in TorchUncertainty, use `num_bins`."
         ):
             CalibrationError(task="multiclass", num_classes=2, n_bins=1)
+        with pytest.raises(ValueError, match="`direction` must be one of"):
+            CalibrationError(task="binary", direction="invalid")
+        with pytest.raises(ValueError, match="only supported for non-adaptive L1 ECE"):
+            CalibrationError(task="binary", direction="over", norm="l2")
+
+    @pytest.mark.parametrize("task", ["binary", "multiclass"])
+    def test_directional_ece(self, task: Literal["binary", "multiclass"]) -> None:
+        if task == "binary":
+            preds = torch.tensor([0.55, 0.55, 0.90, 0.90])
+        else:
+            preds = torch.tensor([[0.45, 0.55], [0.45, 0.55], [0.10, 0.90], [0.10, 0.90]])
+        target = torch.tensor([1, 1, 1, 0])
+        kwargs = {"task": task, "num_bins": 4}
+        if task == "multiclass":
+            kwargs["num_classes"] = 2
+
+        ece = CalibrationError(**kwargs)(preds, target)
+        ece_plus = CalibrationError(**kwargs, direction="over")(preds, target)
+        ece_minus = CalibrationError(**kwargs, direction="under")(preds, target)
+
+        assert ece_plus.item() == pytest.approx(0.20)
+        assert ece_minus.item() == pytest.approx(0.225)
+        assert ece.item() == pytest.approx((ece_plus + ece_minus).item())
 
 
 class TestAdaptiveCalibrationError:

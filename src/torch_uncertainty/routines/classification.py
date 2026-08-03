@@ -203,6 +203,18 @@ class ClassificationRoutine(LightningModule):
                 num_bins=self.num_bins_calibration_error,
                 num_classes=self.num_classes,
             ),
+            "cal/ECE+": CalibrationError(
+                task=task,
+                num_bins=self.num_bins_calibration_error,
+                num_classes=self.num_classes,
+                direction="over",
+            ),
+            "cal/ECE-": CalibrationError(
+                task=task,
+                num_bins=self.num_bins_calibration_error,
+                num_classes=self.num_classes,
+                direction="under",
+            ),
             "cal/MCE": CalibrationError(
                 task=task,
                 num_bins=self.num_bins_calibration_error,
@@ -225,7 +237,7 @@ class ClassificationRoutine(LightningModule):
             ["cls/Acc"],
             ["cls/Brier"],
             ["cls/NLL"],
-            ["cal/ECE", "cal/SmECE", "cal/MCE", "cal/aECE"],
+            ["cal/ECE", "cal/ECE+", "cal/ECE-", "cal/SmECE", "cal/MCE", "cal/aECE"],
             ["sc/AURC", "sc/AUGRC", "sc/Cov_5Risk", "sc/Risk_80Cov"],
         ]
 
