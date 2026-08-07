@@ -8,7 +8,6 @@ from torch_uncertainty.losses import (
     BetaNLL,
     DERLoss,
     DistributionNLLLoss,
-    PinballLoss,
 )
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
@@ -112,54 +111,3 @@ class TestBetaNLL:
 
         with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
             BetaNLL(beta=1.0, reduction="median")
-
-
-class TestPinballLoss:
-    """Testing the PinballLoss class."""
-
-    def test_main(self) -> None:
-        # At τ=0.5 and perfect prediction the loss is zero.
-        loss = PinballLoss(quantile=0.5)
-        pred = torch.tensor([1.0])
-        target = torch.tensor([1.0])
-        assert loss(pred, target) == pytest.approx(0.0)
-
-        # tau 0.5 is MAE/2: underestimate and overestimate are symmetric.
-        pred_low = torch.tensor([0.0])
-        pred_high = torch.tensor([1.0])
-        target_one = torch.tensor([1.0])
-        target_zero = torch.tensor([0.0])
-        assert loss(pred_low, target_one) == pytest.approx(0.5)
-        assert loss(pred_high, target_zero) == pytest.approx(0.5)
-
-        # tau 0.9 penalises underestimation more heavily than overestimation.
-        loss_q90 = PinballLoss(quantile=0.9)
-        assert loss_q90(pred_low, target_one) == pytest.approx(0.9)
-        assert loss_q90(pred_high, target_zero) == pytest.approx(0.1)
-
-        # reduction "sum"
-        loss_sum = PinballLoss(quantile=0.5, reduction="sum")
-        preds = torch.tensor([0.0, 1.0])
-        targets = torch.tensor([1.0, 0.0])
-        assert loss_sum(preds, targets) == pytest.approx(1.0)
-
-        # reduction "none"
-        loss_none = PinballLoss(quantile=0.5, reduction="none")
-        result = loss_none(preds, targets)
-        assert result.tolist() == pytest.approx([0.5, 0.5])
-
-    def test_failures(self) -> None:
-        with pytest.raises(
-            ValueError,
-            match=r"The quantile parameter should be in \(0, 1\)",
-        ):
-            PinballLoss(quantile=0.0)
-
-        with pytest.raises(
-            ValueError,
-            match=r"The quantile parameter should be in \(0, 1\)",
-        ):
-            PinballLoss(quantile=1.0)
-
-        with pytest.raises(ValueError, match=r"is not a valid value for reduction."):
-            PinballLoss(quantile=0.5, reduction="median")

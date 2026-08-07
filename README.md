@@ -72,7 +72,7 @@ To date, the following deep-learning uncertainty quantification methods have bee
 - Stochastic Weight Averaging & Stochastic Weight Averaging Gaussian
 - [Deep Evidential Classification](https://torch-uncertainty.github.io/auto_tutorials/Classification/tutorial_evidential_classification.html) & [Regression](https://torch-uncertainty.github.io/auto_tutorials/Regression/tutorial_der_cubic.html)
 - Regression with Beta Gaussian NLL Loss
-- Quantile Regression with Pinball Loss
+- Quantile Regression with Pinball Loss and RQR
 - Test-time adaptation with Zero
 
 ### Augmentation methods

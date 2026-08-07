@@ -7,62 +7,6 @@ from torch.distributions import Distribution, Independent
 from torch_uncertainty.utils.distributions import NormalInverseGamma
 
 
-class PinballLoss(nn.Module):
-    def __init__(self, quantile: float = 0.5, reduction: str | None = "mean") -> None:
-        r"""The Pinball loss for quantile regression.
-
-        Also known as the quantile loss or check loss, the pinball loss at
-        quantile level :math:`\tau \in (0, 1)` is:
-
-        .. math::
-            \mathcal{L}_\tau(y, \hat{y}) =
-            \max\!\left(\tau\,(y - \hat{y}),\,(\tau - 1)\,(y - \hat{y})\right)
-            = \begin{cases}
-                \tau\,(y - \hat{y}) & \text{if } y \geq \hat{y}, \\
-                (1 - \tau)\,(\hat{y} - y) & \text{if } y < \hat{y}.
-            \end{cases}
-
-        For :math:`\tau = 0.5` the loss coincides with the mean absolute error
-        (MAE) scaled by :math:`\tfrac{1}{2}`.
-
-        Args:
-            quantile: The quantile level :math:`\tau \in (0, 1)`. Defaults to
-                ``0.5``.
-            reduction: Specifies the reduction to apply to the output.
-                Must be one of ``'none'``, ``'mean'`` or ``'sum'``. Defaults
-                to ``"mean"``.
-
-        References:
-            [1] `Koenker, R., & Bassett Jr, G. (1978). Regression quantiles.
-            Econometrica, <https://www.jstor.org/stable/1913643>`_.
-        """
-        super().__init__()
-
-        if not 0 < quantile < 1:
-            raise ValueError(f"The quantile parameter should be in (0, 1), but got {quantile}.")
-        self.quantile = quantile
-
-        if reduction not in ("none", "mean", "sum"):
-            raise ValueError(f"{reduction} is not a valid value for reduction.")
-        self.reduction = reduction
-
-    def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
-        """Compute the pinball loss.
-
-        Args:
-            predictions: The predicted quantile values.
-            targets: The target values.
-        """
-        residual = targets - predictions
-        loss = torch.maximum(self.quantile * residual, (self.quantile - 1) * residual)
-
-        if self.reduction == "mean":
-            return loss.mean()
-        if self.reduction == "sum":
-            return loss.sum()
-        return loss
-
-
 class DistributionNLLLoss(nn.Module):
     def __init__(self, reduction: Literal["mean", "sum"] | None = "mean") -> None:
         r"""Negative Log-Likelihood loss for probabilistic regression.

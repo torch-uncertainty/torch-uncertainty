@@ -5,6 +5,7 @@ import matplotlib.ticker as mticker
 import numpy as np
 import seaborn as sns
 import torch
+from torch import Tensor
 from torchmetrics.classification.calibration_error import (
     BinaryCalibrationError,
     MulticlassCalibrationError,
@@ -229,8 +230,35 @@ def custom_plot(
     )
 
 
-# overwrite the plot method of the original metrics
+def _calibration_error_compute(self: Any) -> Tensor:
+    confidences = dim_zero_cat(self.confidences)
+    accuracies = dim_zero_cat(self.accuracies)
+    bin_boundaries = torch.linspace(0, 1, self.n_bins + 1, device=confidences.device)
+    acc_bin, conf_bin, prop_bin = _binning_bucketize(confidences, accuracies, bin_boundaries)
+    gap = conf_bin - acc_bin
+    if self.direction == "over":
+        return (gap.clamp_min(0) * prop_bin).sum()
+    if self.direction == "under":
+        return ((-gap).clamp_min(0) * prop_bin).sum()
+    if self.norm == "l1":
+        return (gap.abs() * prop_bin).sum()
+    if self.norm == "l2":
+        return torch.sqrt((gap.square() * prop_bin).sum())
+    return gap.abs().max()
+
+
 class TUBinaryCalibrationError(BinaryCalibrationError):
+    def __init__(
+        self,
+        *args: Any,
+        direction: Literal["over", "under"] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.direction = direction
+
+    compute = _calibration_error_compute
+
     def plot(
         self,
         title: str = "Reliability Diagram",
@@ -243,6 +271,17 @@ class TUBinaryCalibrationError(BinaryCalibrationError):
 
 
 class TUMulticlassCalibrationError(MulticlassCalibrationError):
+    def __init__(
+        self,
+        *args: Any,
+        direction: Literal["over", "under"] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.direction = direction
+
+    compute = _calibration_error_compute
+
     def plot(
         self,
         title: str = "Reliability Diagram",
@@ -261,6 +300,7 @@ class CalibrationError:
         adaptive: bool = False,
         num_bins: int = 10,
         norm: Literal["l1", "l2", "max"] = "l1",
+        direction: Literal["over", "under"] | None = None,
         num_classes: int | None = None,
         ignore_index: int | None = None,
         validate_args: bool = True,
@@ -284,6 +324,19 @@ class CalibrationError:
 
             \text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N}
             \left| \operatorname{acc}(B_m) - \operatorname{conf}(B_m) \right|
+
+        For the L1 norm, setting ``direction="over"`` gives ECE+ by retaining
+        only overconfidence gaps, while ``direction="under"`` gives ECE- by
+        retaining only underconfidence gaps:
+
+        .. math::
+
+            \begin{aligned}
+            \operatorname{ECE}^{+} &= \sum_{m=1}^{M} \frac{|B_m|}{N}
+            [\operatorname{conf}(B_m) - \operatorname{acc}(B_m)]_{+}, \\
+            \operatorname{ECE}^{-} &= \sum_{m=1}^{M} \frac{|B_m|}{N}
+            [\operatorname{acc}(B_m) - \operatorname{conf}(B_m)]_{+}.
+            \end{aligned}
 
         **Maximum Calibration Error (MCE):**
 
@@ -314,6 +367,9 @@ class CalibrationError:
             num_bins : Number of bins to divide the probability space. Defaults to ``10``.
             norm: Specifies the type of norm to use: ``"l1"``, ``"l2"``, or ``"max"``.
                 Defaults to ``"l1"``.
+            direction: Whether to retain only overconfidence (``"over"``) or
+                underconfidence (``"under"``) terms. Only available with the
+                L1 norm and non-adaptive binning. Defaults to ``None``.
             num_classes: Number of classes for ``"multiclass"`` tasks.
                 Required when task is ``"multiclass"``. Defaults to ``None``.
             ignore_index: Index to ignore during calculations. Defaults to ``None``.
@@ -362,6 +418,10 @@ class CalibrationError:
         """
         if kwargs.get("n_bins") is not None:
             raise ValueError("`n_bins` does not exist in TorchUncertainty, use `num_bins`.")
+        if direction not in (None, "over", "under"):
+            raise ValueError("`direction` must be one of `None`, `'over'`, or `'under'`.")
+        if direction is not None and (adaptive or norm != "l1"):
+            raise ValueError("`direction` is only supported for non-adaptive L1 ECE.")
         if adaptive:
             return AdaptiveCalibrationError(
                 task=task,
@@ -377,6 +437,7 @@ class CalibrationError:
             {
                 "n_bins": num_bins,
                 "norm": norm,
+                "direction": direction,
                 "ignore_index": ignore_index,
                 "validate_args": validate_args,
             }

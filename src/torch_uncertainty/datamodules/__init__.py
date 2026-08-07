@@ -12,6 +12,7 @@ from .classification import (
     GermanCreditDataModule,
     HiggsBosonDataModule,
     HTRU2DataModule,
+    ImageNet200DataModule,
     ImageNetDataModule,
     KDDChurnDataModule,
     MNISTDataModule,

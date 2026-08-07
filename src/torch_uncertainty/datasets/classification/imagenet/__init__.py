@@ -1,4 +1,5 @@
 # ruff: noqa: F401
+from .imagenet200 import ImageNet200
 from .imagenet_a import ImageNetA
 from .imagenet_c import ImageNetC
 from .imagenet_o import ImageNetO

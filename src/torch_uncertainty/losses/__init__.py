@@ -9,4 +9,5 @@ from .classification import (
     FocalLoss,
     MixupMPLoss,
 )
-from .regression import BetaNLL, DERLoss, DistributionNLLLoss, PinballLoss
+from .quantile import PinballLoss, RQRLoss
+from .regression import BetaNLL, DERLoss, DistributionNLLLoss

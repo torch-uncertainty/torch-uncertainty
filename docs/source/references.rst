@@ -41,6 +41,17 @@ For Pinball / Quantile Regression, consider citing:
 * Paper: `Econometrica 1978 <https://www.jstor.org/stable/1913643>`__.
 
 
+Relaxed Quantile Regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Relaxed Quantile Regression, consider citing:
+
+**Relaxed Quantile Regression: Prediction Intervals for Asymmetric Noise**
+
+* Authors: *Thomas Pouplin, Alan Jeffares, Nabeel Seedat, and Mihaela van der Schaar*
+* Paper: `ICML 2024 <https://arxiv.org/abs/2406.03258>`__.
+
+
 Deep Evidential Regression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -511,6 +522,28 @@ For the grouping loss, consider citing:
 
 * Authors: *Alexandre Perez-Lebel, Marine Le Morvan, and Gaël Varoquaux*
 * Paper: `ICLR 2023 <https://arxiv.org/pdf/2210.16315.pdf>`__.
+
+
+Ambiguity
+^^^^^^^^^
+
+For the ambiguity, consider citing:
+
+**Neural Network Ensembles, Cross Validation, and Active Learning**
+
+* Authors: *Anders Krogh and Jesper Vedelsby*
+* Paper: `NeurIPS 1994 <https://proceedings.neurips.cc/paper/1994/hash/b8c37e33defde51cf91e1e03e51657da-Abstract.html>`__.
+
+
+Disagreement
+^^^^^^^^^^^^
+
+For the disagreement, consider citing:
+
+**The Random Subspace Method for Constructing Decision Forests**
+
+* Authors: *Tin Kam Ho*
+* Paper: `IEEE Transactions on Pattern Analysis and Machine Intelligence 1998 <https://doi.org/10.1109/34.709601>`__.
 
 
 Interval (Winkler) Score
