@@ -20,7 +20,7 @@ else:  # coverage: ignore
 
 
 class IsotonicRegressionScaler(PostProcessing):
-    ir_models: list[IsotonicRegression]
+    ir_models: list["IsotonicRegression"]
     num_classes: int
 
     def __init__(
