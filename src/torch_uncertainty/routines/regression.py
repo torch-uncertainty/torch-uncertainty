@@ -1,6 +1,7 @@
 import warnings
 from collections.abc import Callable
 
+import torch
 from einops import rearrange
 from lightning.pytorch import LightningModule
 from lightning.pytorch.loggers import Logger
@@ -41,6 +42,7 @@ class RegressionRoutine(LightningModule):
         loss: nn.Module | None = None,
         dist_family: str | None = None,
         dist_estimate: str | DistEstimate = "mean",
+        quantiles: list[float] | None = None,
         *,
         is_ensemble: bool = False,
         optim_recipe: Callable[[nn.Module], OptimizerLRScheduler]
@@ -60,6 +62,7 @@ class RegressionRoutine(LightningModule):
             output_dim: Number of outputs of the model.
             loss: Loss function to optimize the :attr:`model`. Defaults to ``None``.
             dist_family: Distribution family to use for probabilistic regression. If ``None``, performs point-wise regression. Defaults to ``None``.
+            quantiles: Quantile levels :math:`\tau \in (0, 1)` to predict, in increasing order. If ``None``, the routine does not use the quantile output mode. Mutually exclusive with :attr:`dist_family`. The head closest to :math:`\tau=0.5` is used as the point estimate for MAE/MSE/RMSE. Defaults to ``None``.
             dist_estimate: The estimate to use when computing point-wise metrics. Defaults to ``mean``.
             is_ensemble: Whether the model is an ensemble. Defaults to ``False``.
             optim_recipe: The optimizer and optionally the scheduler to use, or a callable that returns them. Defaults to ``None``.
@@ -94,6 +97,13 @@ class RegressionRoutine(LightningModule):
         self.dist_family = dist_family
         self.dist_estimate = DistEstimate(dist_estimate)
         self.probabilistic = dist_family is not None
+        self.quantiles = quantiles
+        self.quantile_mode = quantiles is not None
+        if self.quantile_mode:
+            _quantile_routine_checks(quantiles, self.probabilistic)
+            self.register_buffer("quantile_levels", torch.as_tensor(quantiles, dtype=torch.float))
+            # index of the head used as the point estimate for MAE/MSE/RMSE
+            self.median_index = int(torch.argmin((self.quantile_levels - 0.5).abs()).item())
         self.output_dim = output_dim
         self.loss = loss
         self.is_ensemble = is_ensemble
@@ -201,6 +211,10 @@ class RegressionRoutine(LightningModule):
                     "The model is probabilistic: the output must be a dictionary ",
                     "of PyTorch distribution parameters.",
                 )
+        elif self.quantile_mode:
+            # The last dimension indexes the quantile levels and must be preserved,
+            # even when a single level is requested.
+            pass
         else:
             if self.one_dim_regression:
                 pred = pred.squeeze(-1)
@@ -266,8 +280,13 @@ class RegressionRoutine(LightningModule):
             preds = get_dist_estimate(dist, self.dist_estimate)
             return preds, dist
 
-        preds = rearrange(preds, "(m b) c -> b m c", b=batch_size)
-        return preds.mean(dim=1), None
+        preds = rearrange(preds, "(m b) c -> b m c", b=batch_size).mean(dim=1)
+        if self.quantile_mode:
+            # Keep the full quantile predictions available for quantile metrics
+            # (see #327) and expose the median head as the point estimate.
+            self.last_quantile_preds = preds
+            return preds[:, self.median_index].unsqueeze(-1), None
+        return preds, None
 
     def validation_step(self, batch: tuple[Tensor, Tensor]) -> None:
         """Perform a single validation step based on the input tensors.
@@ -395,3 +414,22 @@ def _regression_routine_checks(output_dim: int) -> None:
     """
     if output_dim < 1:
         raise ValueError(f"output_dim must be positive, got {output_dim}.")
+
+
+def _quantile_routine_checks(quantiles: list[float], probabilistic: bool) -> None:
+    """Check the quantile levels requested for the quantile output mode.
+
+    Args:
+        quantiles: the requested quantile levels.
+        probabilistic: whether the routine is already in probabilistic mode.
+    """
+    if probabilistic:
+        raise ValueError("`dist_family` and `quantiles` are mutually exclusive.")
+    if len(quantiles) == 0:
+        raise ValueError("quantiles must not be empty.")
+    if any(not 0 < q < 1 for q in quantiles):
+        raise ValueError(f"quantiles must lie in (0, 1), got {quantiles}.")
+    if list(quantiles) != sorted(quantiles):
+        raise ValueError(f"quantiles must be sorted in increasing order, got {quantiles}.")
+    if len(set(quantiles)) != len(quantiles):
+        raise ValueError(f"quantiles must not contain duplicates, got {quantiles}.")
