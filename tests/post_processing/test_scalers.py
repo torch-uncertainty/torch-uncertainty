@@ -9,6 +9,7 @@ from torch_uncertainty.post_processing import (
     HistogramBinningScaler,
     IsotonicRegressionScaler,
     MatrixScaler,
+    PPAScaler,
     TemperatureScaler,
     VectorScaler,
 )
@@ -288,6 +289,90 @@ class TestHistogramBinningScaler:
         # Output should be stable and normalized probabilities
         calib_probs = torch.softmax(calib_logits, dim=-1)
         torch.testing.assert_close(calib_probs.sum(dim=-1), torch.ones(len(inputs)))
+
+
+class TestPPAScaler:
+    """Testing the PPAScaler class."""
+
+    def test_main(self) -> None:
+        scaler = PPAScaler(model=nn.Identity())
+        logits = torch.tensor([[-1.0, 1.0]])
+
+        assert not scaler.trained
+        assert torch.equal(scaler(logits), logits)
+
+        for eps in (0, 0.5, 1):
+            with pytest.raises(ValueError, match=r"eps must be strictly between 0 and 0\.5"):
+                PPAScaler(eps=eps)
+
+    def test_fit_binary(self) -> None:
+        probability = torch.tensor(0.6)
+        inputs = torch.logit(probability).repeat(10)
+        labels = torch.tensor([1] * 8 + [0] * 2)
+        dataloader = DataLoader(list(zip(inputs, labels, strict=True)), batch_size=10)
+
+        scaler = PPAScaler(model=nn.Identity())
+        scaler.fit(dataloader, progress=False)
+
+        calibrated_probs = torch.sigmoid(scaler(inputs))
+        torch.testing.assert_close(scaler.adjustment, torch.tensor(0.5))
+        torch.testing.assert_close(calibrated_probs, torch.full_like(inputs, 0.8))
+        assert scaler(inputs.unsqueeze(-1)).shape == (10, 1)
+        assert torch.mean((calibrated_probs - labels) ** 2) < torch.mean(
+            (probability - labels) ** 2
+        )
+
+    def test_fit_multiclass(self, multiclass_dataloader) -> None:
+        scaler = PPAScaler(model=nn.Identity())
+        scaler.fit(multiclass_dataloader, progress=False)
+
+        inputs, _ = next(iter(multiclass_dataloader))
+        calibrated_probs = torch.softmax(scaler(inputs), dim=-1)
+
+        assert scaler.num_classes == 3
+        torch.testing.assert_close(scaler.adjustment, torch.tensor(1.0))
+        assert torch.equal(calibrated_probs.argmax(dim=-1), inputs.argmax(dim=-1))
+        torch.testing.assert_close(
+            calibrated_probs.sum(dim=-1), torch.ones(calibrated_probs.shape[0])
+        )
+
+    def test_adjustment_lower_bound(self) -> None:
+        probability = torch.tensor(0.8)
+        inputs = torch.logit(probability).repeat(10)
+        labels = torch.tensor([1] * 5 + [0] * 5)
+        dataloader = DataLoader(list(zip(inputs, labels, strict=True)), batch_size=10)
+        scaler = PPAScaler(model=nn.Identity())
+
+        scaler.fit(dataloader, progress=False)
+
+        torch.testing.assert_close(scaler.adjustment, torch.tensor(0.0))
+        torch.testing.assert_close(torch.sigmoid(scaler(inputs)), probability.expand_as(inputs))
+
+    def test_uniform_probabilities(self) -> None:
+        inputs = torch.zeros((6, 3))
+        labels = torch.tensor([0, 1, 2, 0, 1, 2])
+        dataloader = DataLoader(list(zip(inputs, labels, strict=True)), batch_size=6)
+        scaler = PPAScaler(model=nn.Identity())
+
+        scaler.fit(dataloader, progress=False)
+
+        torch.testing.assert_close(scaler.adjustment, torch.tensor(0.0))
+        torch.testing.assert_close(
+            torch.softmax(scaler(inputs), dim=-1), torch.full_like(inputs, 1 / 3)
+        )
+
+    def test_tied_maxima(self) -> None:
+        inputs = torch.log(torch.tensor([[0.4, 0.4, 0.2]])).repeat(6, 1)
+        labels = torch.tensor([0, 1, 0, 1, 0, 1])
+        dataloader = DataLoader(list(zip(inputs, labels, strict=True)), batch_size=6)
+        scaler = PPAScaler(model=nn.Identity())
+
+        scaler.fit(dataloader, progress=False)
+        calibrated_probs = torch.softmax(scaler(inputs), dim=-1)
+
+        torch.testing.assert_close(scaler.adjustment, torch.tensor(1.0))
+        torch.testing.assert_close(calibrated_probs[:, 0], calibrated_probs[:, 1])
+        assert torch.all(calibrated_probs[:, 2] < 1e-5)
 
 
 class TestBBQScaler:

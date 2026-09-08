@@ -6,6 +6,7 @@ from .calibration import (
     HistogramBinningScaler,
     IsotonicRegressionScaler,
     MatrixScaler,
+    PPAScaler,
     TemperatureScaler,
     VectorScaler,
 )
