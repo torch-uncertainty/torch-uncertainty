@@ -340,6 +340,16 @@ For isotonic regression calibration, consider citing:
 * Authors: *Bianca Zadrozny and Charles Elkan*
 * Paper: `KDD 2002 <https://dl.acm.org/doi/10.1145/775047.775151>`__
 
+Parameterized Probability Adjustment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For Parameterized Probability Adjustment, consider citing:
+
+**Calibrating Random Forests**
+
+* Author: *Henrik Boström*
+* Paper: `ICMLA 2008 <https://doi.org/10.1109/ICMLA.2008.107>`__
+
 Monte-Carlo Batch Normalization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
