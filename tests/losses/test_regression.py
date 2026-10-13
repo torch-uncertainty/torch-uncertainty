@@ -60,6 +60,33 @@ class TestDERLoss:
             targets,
         ) == pytest.approx([2 * math.log(2), 2 * math.log(2)])
 
+    @pytest.mark.parametrize("reduction", ["mean", "sum"])
+    @pytest.mark.parametrize("independent", [False, True])
+    @pytest.mark.parametrize("mask_kind", ["partial", "none", "all"])
+    def test_masked_reduction(self, reduction: str, independent: bool, mask_kind: str) -> None:
+        loc = torch.tensor([[0.2], [-0.5], [1.0]], dtype=torch.float64, requires_grad=True)
+        lmbda = torch.full_like(loc, 2.0, requires_grad=True)
+        alpha = torch.full_like(loc, 3.0, requires_grad=True)
+        beta = torch.full_like(loc, 1.5, requires_grad=True)
+        base = NormalInverseGamma(loc, lmbda, alpha, beta)
+        dist = Independent(base, 0) if independent else base
+        targets = torch.tensor([[1.0], [2.0], [3.0]], dtype=torch.float64)
+        mask = torch.tensor([[False], [True], [False]])
+        if mask_kind != "partial":
+            mask = torch.full_like(mask, mask_kind == "all")
+        actual = DERLoss(reg_weight=0.1, reduction=reduction)(dist, targets, ignore_mask=mask)
+        per_item = -base.log_prob(targets) + 0.1 * (targets - loc).abs() * (2 * lmbda + alpha)
+        retained = per_item[~mask]
+        expected = retained.mean() if reduction == "mean" else retained.sum()
+        torch.testing.assert_close(actual, expected, equal_nan=True)
+        if mask_kind != "all":
+            parameters = (loc, lmbda, alpha, beta)
+            actual_grads = torch.autograd.grad(actual, parameters, retain_graph=True)
+            expected_grads = torch.autograd.grad(expected, parameters)
+            for actual_grad, expected_grad in zip(actual_grads, expected_grads, strict=True):
+                torch.testing.assert_close(actual_grad, expected_grad)
+                torch.testing.assert_close(actual_grad[mask], torch.zeros_like(actual_grad[mask]))
+
     def test_failures(self) -> None:
         with pytest.raises(
             ValueError,

@@ -113,9 +113,9 @@ class DERLoss(DistributionNLLLoss):
         loss = loss_nll + self.reg_weight * loss_reg
 
         if self.der_reduction == "mean":
-            return loss.mean()
+            return loss.nanmean()
         if self.der_reduction == "sum":
-            return loss.sum()
+            return loss.nansum()
         return loss
 
 
