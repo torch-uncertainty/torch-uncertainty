@@ -28,23 +28,15 @@ def _equal_binning_bucketize(
 
     Returns:
         tuple with binned accuracy, binned confidence and binned probabilities
+
+    Note:
+        Empty bins, which occur when ``num_bins`` exceeds the number of samples, are
+        dropped so that every returned bin holds at least one sample.
     """
-    confidences, indices = torch.sort(confidences)
-    accuracies = accuracies[indices]
-    acc_bin, conf_bin = (
-        list(accuracies.tensor_split(num_bins)),
-        list(confidences.tensor_split(num_bins)),
+    acc_bin, conf_bin, prop_bin, _, _ = _equal_binning_bucketize_with_bounds(
+        confidences, accuracies, num_bins
     )
-    count_bin = torch.as_tensor(
-        [len(cb) for cb in conf_bin],
-        dtype=confidences.dtype,
-        device=confidences.device,
-    )
-    return (
-        pad_sequence(acc_bin, batch_first=True).sum(1) / count_bin,
-        pad_sequence(conf_bin, batch_first=True).sum(1) / count_bin,
-        torch.as_tensor(count_bin) / len(confidences),
-    )
+    return acc_bin, conf_bin, prop_bin
 
 
 def _equal_binning_bucketize_with_bounds(
@@ -102,8 +94,10 @@ def _ace_compute(
             Defaults to ``False``.
 
     Returns:
-        Tensor: Adaptive Calibration error scalar.
+        Tensor: Adaptive Calibration error scalar. ``NaN`` if there are no samples.
     """
+    if confidences.numel() == 0:
+        return torch.tensor(float("nan"), dtype=confidences.dtype, device=confidences.device)
     with torch.no_grad():
         acc_bin, conf_bin, prop_bin = _equal_binning_bucketize(confidences, accuracies, num_bins)
 

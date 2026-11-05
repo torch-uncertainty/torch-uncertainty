@@ -214,6 +214,35 @@ class TestAdaptiveCalibrationError:
         with pytest.raises(TypeError, match=r"is expected to be `int`"):
             AdaptiveCalibrationError(task="multiclass", num_classes=None)
 
+    @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
+    def test_more_bins_than_samples(self, norm: str) -> None:
+        # Regression test for issue #300: empty bins used to yield NaN.
+        probs = torch.tensor([0.9, 0.2, 0.65, 0.4, 0.8])
+        targets = torch.tensor([1, 0, 0, 1, 1])
+        metric = AdaptiveCalibrationError(task="binary", num_bins=15, norm=norm)
+        metric.update(probs, targets)
+        value = metric.compute()
+        assert torch.isfinite(value)
+        # With one sample per non-empty bin, 15 bins must match 5 bins.
+        reference = AdaptiveCalibrationError(task="binary", num_bins=5, norm=norm)
+        reference.update(probs, targets)
+        assert value.item() == pytest.approx(reference.compute().item())
+
+        probs = torch.tensor([[0.7, 0.2, 0.1], [0.1, 0.3, 0.6], [0.4, 0.5, 0.1]])
+        metric = AdaptiveCalibrationError(task="multiclass", num_classes=3, num_bins=15, norm=norm)
+        metric.update(probs, torch.tensor([0, 2, 0]))
+        reference = AdaptiveCalibrationError(
+            task="multiclass", num_classes=3, num_bins=3, norm=norm
+        )
+        reference.update(probs, torch.tensor([0, 2, 0]))
+        assert metric.compute().item() == pytest.approx(reference.compute().item())
+
+    @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
+    def test_empty_input(self, norm: str) -> None:
+        metric = AdaptiveCalibrationError(task="binary", num_bins=15, norm=norm)
+        metric.update(torch.tensor([]), torch.tensor([], dtype=torch.long))
+        assert torch.isnan(metric.compute())
+
     def test_invalid_norm_in_compute(self) -> None:
         from torch_uncertainty.metrics.classification.calibration.adaptive_calibration_error import (
             _ace_compute,
