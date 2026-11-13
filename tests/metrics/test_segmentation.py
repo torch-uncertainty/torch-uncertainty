@@ -1,6 +1,8 @@
 import pytest
 import torch
+from torchmetrics import MetricCollection
 
+from torch_uncertainty.metrics.classification import CalibrationError
 from torch_uncertainty.metrics.segmentation import (
     MeanIntersectionOverUnion,
     PAvPU,
@@ -418,3 +420,87 @@ class TestSegmentationMetric:
             metric.update(preds, target)
         result = metric.compute()
         assert 0.0 <= result.item() <= 1.0
+
+    @pytest.mark.parametrize("as_collection", [False, True])
+    @pytest.mark.parametrize("use_mask", [False, True])
+    def test_forward_preserves_accumulated_state(self, as_collection, use_mask) -> None:
+        def make_inner():
+            ece = CalibrationError(task="multiclass", num_classes=2, num_bins=5)
+            return MetricCollection({"ece": ece}) if as_collection else ece
+
+        metric = SegmentationMetric(make_inner())
+        reference = make_inner()
+        preds = torch.tensor([[[[0.9, 0.8, 0.7]], [[0.1, 0.2, 0.3]]]])
+        mask = torch.tensor([[[False, False, True]]]) if use_mask else None
+        pixel_probs = preds.permute(0, 2, 3, 1).reshape(-1, 2)
+        if use_mask:
+            pixel_probs = pixel_probs[:2]
+
+        for label in (0, 1):
+            target = torch.full((1, 1, 3), label)
+            pixel_target = target.flatten()[: pixel_probs.size(0)]
+            batch_reference = make_inner()
+            expected_batch = batch_reference(pixel_probs, pixel_target)
+            torch.testing.assert_close(metric(preds, target, ignore_mask=mask), expected_batch)
+            reference.update(pixel_probs, pixel_target)
+            torch.testing.assert_close(metric.compute(), reference.compute())
+
+    def test_reset_invalidates_cached_result(self) -> None:
+        metric = SegmentationMetric(self._inner(num_classes=2))
+        preds = torch.tensor([[[[0.9]], [[0.1]]]])
+        target = torch.zeros((1, 1, 1), dtype=torch.long)
+        metric.update(preds, target)
+        torch.testing.assert_close(metric.compute(), torch.tensor(1.0))
+        metric.reset()
+        assert torch.isnan(metric.compute())
+
+        metric.update(preds, 1 - target)
+        torch.testing.assert_close(metric.compute(), torch.tensor(0.0))
+
+    def test_forward_subsampling_matches_direct_metric(self) -> None:
+        metric = SegmentationMetric(
+            CalibrationError(task="multiclass", num_classes=2, num_bins=5),
+            subsampling_rate=0.5,
+        )
+        reference = CalibrationError(task="multiclass", num_classes=2, num_bins=5)
+        preds = torch.tensor([[[[0.9, 0.8, 0.7, 0.6]], [[0.1, 0.2, 0.3, 0.4]]]])
+        targets = (torch.tensor([[[[0, 1, 0, 1]]]]), torch.tensor([[[[1, 0, 1, 0]]]]))
+        pixel_probs = preds.permute(0, 2, 3, 1).reshape(-1, 2)
+
+        for seed, target in enumerate(targets):
+            indices = torch.randperm(4, generator=torch.Generator().manual_seed(seed))[:2]
+            selected_probs = pixel_probs[indices.sort().values]
+            selected_targets = target.flatten()[indices.sort().values]
+            batch_reference = CalibrationError(task="multiclass", num_classes=2, num_bins=5)
+            with torch.random.fork_rng():
+                torch.manual_seed(seed)
+                batch_result = metric(preds, target)
+            torch.testing.assert_close(
+                batch_result, batch_reference(selected_probs, selected_targets)
+            )
+            reference.update(selected_probs, selected_targets)
+            torch.testing.assert_close(metric.compute(), reference.compute())
+
+    @pytest.mark.parametrize("as_collection", [False, True])
+    def test_interleaved_forward_update_invalidates_cached_compute(self, as_collection) -> None:
+        inner = CalibrationError(task="multiclass", num_classes=2, num_bins=5)
+        metric = SegmentationMetric(MetricCollection({"ece": inner}) if as_collection else inner)
+        preds = torch.tensor([[[[0.9]], [[0.1]]]])
+        correct = torch.zeros((1, 1, 1), dtype=torch.long)
+        incorrect = torch.ones_like(correct)
+
+        def check(result, expected):
+            if as_collection:
+                result = result["ece"]
+            torch.testing.assert_close(result, torch.tensor(expected))
+
+        metric.update(preds, correct)
+        check(metric.compute(), 0.1)
+        check(metric(preds, incorrect), 0.9)
+        check(metric.compute(), 0.4)
+        check(metric.compute(), 0.4)
+        metric.update(preds, correct)
+        check(metric.compute(), 0.9 - 2 / 3)
+        check(metric(preds, incorrect), 0.9)
+        check(metric.compute(), 0.4)
+        assert sum(confidences.numel() for confidences in inner.confidences) == 4
