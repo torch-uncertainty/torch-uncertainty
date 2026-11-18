@@ -193,11 +193,24 @@ def _aurc_rejection_rate_compute(
 ) -> Tensor:
     """Compute the cumulative error rates for a given set of scores and errors.
 
+    Samples with the same score cannot be separated by any threshold, so the errors of each
+    group of tied scores are spread evenly over the group. This gives the average over all the
+    orderings of the tied samples, and makes the result independent of the input order.
+
     Args:
         scores: uncertainty scores of shape :math:`(B,)`
         errors: binary errors of shape :math:`(B,)`
     """
-    errors = errors[scores.argsort(descending=True)]
+    order = scores.argsort(descending=True)
+    scores, errors = scores[order], errors[order]
+
+    _, group, group_sizes = torch.unique_consecutive(
+        scores, return_inverse=True, return_counts=True
+    )
+    errors_up_to_group_end = errors.cumsum(dim=-1)[group_sizes.cumsum(dim=-1) - 1]
+    group_errors = errors_up_to_group_end.diff(prepend=errors.new_zeros(1))
+    errors = (group_errors / group_sizes)[group]
+
     return errors.cumsum(dim=-1) / torch.arange(
         1, scores.size(0) + 1, dtype=scores.dtype, device=scores.device
     )

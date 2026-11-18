@@ -48,6 +48,17 @@ class TestAURC:
         metric = AURC()
         assert torch.isnan(metric(probs, targets)).all()
 
+    def test_tied_scores_do_not_depend_on_order(self) -> None:
+        # The last two samples have the same score, and only one of them is an error.
+        # No threshold can separate them, so the result must not depend on their order.
+        probs = torch.Tensor([[0.9, 0.1], [0.6, 0.4], [0.6, 0.4]])
+        # Risks at coverage 1/3, 2/3 and 1 are 0, 1/4 and 1/3: the tied pair adds
+        # half an error at each of its two positions.
+        value = (1 / 3) * ((0 + 1 / 4) / 2 + (1 / 4 + 1 / 3) / 2) / (1 - 1 / 3)
+        for targets in (torch.Tensor([0, 1, 0]), torch.Tensor([0, 0, 1])):
+            metric = AURC()
+            assert metric(probs, targets.long()).item() == pytest.approx(value)
+
     def test_plot(self) -> None:
         scores = torch.Tensor([0.2, 0.1, 0.5, 0.3, 0.4])
         values = torch.Tensor([0.1, 0.2, 0.3, 0.4, 0.5])
@@ -84,6 +95,14 @@ class TestAURC:
 
 class TestAUGRC:
     """Testing the AUGRC metric class."""
+
+    def test_tied_scores_do_not_depend_on_order(self) -> None:
+        probs = torch.Tensor([[0.9, 0.1], [0.6, 0.4], [0.6, 0.4]])
+        # Generalized risks at coverage 1/3, 2/3 and 1 are 0, 1/6 and 1/3.
+        value = (1 / 3) * ((0 + 1 / 6) / 2 + (1 / 6 + 1 / 3) / 2) / (1 - 1 / 3)
+        for targets in (torch.Tensor([0, 1, 0]), torch.Tensor([0, 0, 1])):
+            metric = AUGRC()
+            assert metric(probs, targets.long()).item() == pytest.approx(value)
 
     def test_plot(self) -> None:
         scores = torch.Tensor([0.2, 0.1, 0.5, 0.3, 0.4])
@@ -163,3 +182,11 @@ class TestRiskAtxCov:
         targets = torch.Tensor([0, 0, 1, 0, 1, 1])
         metric = RiskAtxCov(cov_threshold=0.55)
         assert metric(probs, targets) == 1 / 4
+
+    def test_coverage_inside_tied_scores(self) -> None:
+        # At 50% coverage, two of the three samples are accepted: the first one and
+        # one of the tied pair. On average half of an error is accepted, so the risk is 1/4.
+        probs = torch.Tensor([[0.9, 0.1], [0.6, 0.4], [0.6, 0.4]])
+        for targets in (torch.Tensor([0, 1, 0]), torch.Tensor([0, 0, 1])):
+            metric = RiskAtxCov(cov_threshold=0.5)
+            assert metric(probs, targets.long()) == pytest.approx(1 / 4)
